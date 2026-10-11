@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M3 · Task Room - Stream tab, Needs You</title>
-<meta name="description" content="T-0012 with Claude waiting for an answer. Left: brief, workspace, runs. Stream: message, thinking, tool calls, command output (closed and open), file change with a small diff, raw line, and the question. The answer options sit above the message box with Send and Stop. F3.1, F5.4, F5.6, F6.3, F6.4, F16.2">
+<title>Saarthi M3 · Task Room · Stream</title>
+<meta name="description" content="Task Room for T-0012: journey Wheel in the header, brief, workspace, runs, the Stream as a timeline, the Needs You question with answer buttons. F5.4, F5.6, F5.7, F6.3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -607,209 +607,65 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>2 need you</button>
+  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra wait" title="T-0012 · needs you"><span class="agent cl">CL</span><i class="ra-dot tone-bg-road"></i></div><small>12</small><div class="ra" title="T-0027 · crashed"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
-<style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .room-side .crit { font-size: 12.5px; }
-  .tab-body.rev { display: flex; flex-direction: column-reverse; padding-top: 6px; }
-  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-  .focus-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .st { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
-  .st-bar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
-  .run-pick { font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); background: var(--surface); }
-  .divline { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--faint); padding: 4px 0; }
-  .divline::before, .divline::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-  .msg { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
-  .msg .agent { height: 20px; display: grid; place-items: center; padding: 0; font-size: 10px; }
-  .msg .txt { font-size: 14px; line-height: 1.55; text-wrap: pretty; }
-  .in { margin-left: 38px; }
-  .toolrow { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: 12.5px; }
-  .toolrow .tool { font-family: 'JetBrains Mono', monospace; color: var(--blue); }
-  .toolrow .arg { font-family: 'JetBrains Mono', monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .think { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; }
-  .think .t { color: var(--muted); font-size: 12.5px; font-style: italic; }
-  .evbox { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); overflow: hidden; }
-  .box-head { display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 12.5px; }
-  .box-out { margin: 0; padding: 8px 12px 10px; border-top: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); white-space: pre-wrap; background: var(--term-bg); }
-  .diff { padding: 6px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; border-top: 1px solid var(--line); }
-  .diff div { padding: 0 12px; white-space: pre; }
-  .diff .a { background: var(--green-soft); color: var(--diff-add); }
-  .diff .c { color: var(--muted); }
-  .raw { padding: 6px 10px; border: 1px dashed var(--line-strong); border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ask { padding: 12px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent-soft); }
-  .ask .k { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 4px; }
-  .dock { border-top: 1px solid var(--line); padding: 12px 16px; background: var(--panel); flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
-  .needs-bar { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent-soft); }
-  .needs-bar .q { flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; text-wrap: pretty; }
-  .opt { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--accent); background: transparent; color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
-  .opt.first { background: var(--accent); color: var(--on-accent); }
-  .send { padding: 9px 16px; border-radius: 7px; border: none; background: var(--text); color: var(--bg); font-weight: 600; font-size: 13px; }
-  .stop { padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 13px; }
-  .msg-in { flex: 1; padding: 9px 12px; border-radius: 7px; font-size: 13.5px; }
-</style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage needs">Needs You</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">18m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.62</span></span>
-    <button class="btn primary disabled" title="One active run per task. R-0027 is waiting for you.">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage needs">Needs you</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 4 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="44.8 74.6" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="36.4" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Run · 4 of 8</b>Capture → Research → Brief → <span class="road">Run</span></div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>18m</b></span><span class="room-meta">Cost <b>$0.62</b></span>
+    <button class="btn primary">Run agent</button>
   </div>
-
   <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+    <div class="room-side">
+      <div class="col"><h3>Brief · v3</h3>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-        <div class="row wrap gap-4 mt-4"><span class="lbl" style="margin-right:4px">Focus</span><span class="focus-chip">app/auth/</span><span class="focus-chip">app/mail.py</span><span class="focus-chip">tests/auth/</span></div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>3 ahead</div>
-          <div><div class="k">Changed</div>2 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0026</span></div>
-        </div>
-        <div class="row" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row on">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 14m · $0.54</div></div>
-          <span class="accent strong" style="font-size:11.5px">Needs you</span>
-        </div>
-        <div class="run-row">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab on">Stream <span class="dot amber" style="width:6px;height:6px"></span></button>
-        <button class="tab">Terminal</button>
-        <button class="tab">Code <span class="n">2</span></button>
-        <button class="tab">Timeline</button>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
       </div>
-
-      <div class="subbar">
-        <span>Showing</span><span class="run-pick">R-0027 · Build ▾</span>
-        <span class="faint">46 events · newest at the bottom</span>
-        <span class="grow"></span>
-        <button class="btn xs">Pause scroll</button>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>3</b> ahead</span><span><b>2</b> files</span><span>checkpoint <b class="mono">#3</b></span></div>
+          <div class="row" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
       </div>
-      <div class="tab-body rev">
-        <div class="st">
-
-          <div class="divline"><span class="mono">10:41 · Run R-0027 started · Claude Code · Build</span></div>
-
-          <div class="msg">
-            <span class="agent cl">CL</span>
-            <div class="txt">I read the brief and the research notes. Plan: 1) add a token model, 2) add <span class="mono" style="font-size:13px">POST /auth/password-reset</span> and <span class="mono" style="font-size:13px">/auth/password-reset/confirm</span>, 3) send the email through the existing mailer, 4) add tests for expiry, reuse, and unknown email.</div>
-          </div>
-
-          <div class="in toolrow"><span class="tool">read_file</span><span class="arg">app/auth/routes.py</span><span class="faint">212 lines</span></div>
-
-          <div class="in think">
-            <div class="t">▸ Thinking · 3 lines</div>
-          </div>
-
-          <div class="in evbox">
-            <div class="box-head">
-              <span class="muted">File changed</span>
-              <span class="mono grow ellipsis">app/auth/reset.py</span>
-              <span class="mono green">+42</span><span class="mono red">−0</span>
-            </div>
-            <div class="diff">
-              <div class="a">+ def request_reset(email: str, db: Session) -&gt; None:</div>
-              <div class="a">+     user = db.query(User).filter_by(email=email).first()</div>
-              <div class="a">+     if user is None:</div>
-              <div class="a">+         return  # same 202 response, no user enumeration</div>
-              <div class="c">  … 38 more lines · open in Code tab</div>
-            </div>
-          </div>
-
-          <div class="in evbox">
-            <div class="box-head"><span class="faint">▸</span><span class="mono">$ uv run ruff check app/auth</span><span class="grow"></span><span class="green" style="font-size:12px">exit 0 · 0.3s</span></div>
-          </div>
-
-          <div class="in evbox">
-            <div class="box-head"><span class="faint">▾</span><span class="mono">$ uv run pytest tests/auth -q</span><span class="grow"></span><span class="green" style="font-size:12px">4 passed · 1.8s</span></div>
-            <pre class="box-out">....                                                  [100%]
-4 passed in 1.82s</pre>
-          </div>
-
-          <div class="in raw">raw · {"type":"system","subtype":"hook_response","hook":"PostToolUse","exit_code":0}</div>
-
-          <div class="msg">
-            <span class="agent cl">CL</span>
-            <div class="txt">The request step works and the 4 tests pass. Next is where to keep the tokens. I need one decision from you before I write the model.</div>
-          </div>
-
-          <div class="in ask">
-            <div class="row between"><span class="k">Question · waiting 3m</span><span class="xs faint mono">10:52</span></div>
-            <div class="pretty" style="font-size:14px">Should I add a new table <span class="mono" style="font-size:13px">password_reset_tokens</span> with an Alembic migration, or keep the tokens in Redis? The brief does not say if new tables are allowed.</div>
-          </div>
-
-          <div class="in row small muted"><span class="dot amber pulse"></span>Claude is waiting for your answer.</div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row on"><span class="agent cl">CL</span><span>R-0027 · build · 18m</span><span class="small road strong">waiting</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 4m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab on">Stream <span class="dot road pulse"></span></span><span class="tab">Terminal</span><span class="tab">Code <span class="n">2</span></span><span class="tab">Timeline</span></div>
+      <div class="tab-body">
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:41</span><span class="node ok"></span><div class="bx">Started build run R-0027 with <b>Claude</b> in the task's own worktree. Read <span class="mono">.saarthi/context/TASK.md</span>.</div></div>
+          <div class="tl-ev"><span class="tm">10:43</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">READ</span><span class="mono ellipsis">app/auth/routes.py</span><span class="r faint">212 lines</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:44</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">EDIT</span><span class="mono ellipsis">app/auth/reset.py</span><span class="r ok-t">+42 −0</span></div>
+            <div class="diff"><div class="a">+ def request_reset(email: str, db: Session) -> None:</div><div class="a">+     user = db.query(User).filter_by(email=email).first()</div><div class="a">+     if user is None:  # same 202, no user enumeration</div></div></div></div>
+          <div class="tl-ev"><span class="tm">10:47</span><span class="node ok"></span><div class="bx"><div class="tool-row"><span class="k">RUN</span><span class="mono ellipsis">uv run pytest tests/auth -q</span><span class="r ok-t">4 passed · 1.8s</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:52</span><span class="node road"></span><div class="bx">
+            <div class="qa"><div class="h">Claude needs you · 3 min</div>
+              <div class="q">Should I add a new <span class="mono" style="font-size:13.5px">password_reset_tokens</span> table with an Alembic migration, or keep the tokens in Redis? The brief doesn't say.</div>
+              <div class="row" style="gap:6px"><button class="btn primary">New table</button><button class="btn">Use Redis</button><button class="btn">Reply…</button></div></div></div></div>
         </div>
       </div>
-
-      <div class="dock">
-        <div class="needs-bar">
-          <div class="q"><span class="strong accent">Claude needs you · </span>New table <span class="mono" style="font-size:12.5px">password_reset_tokens</span> with a migration, or Redis?</div>
-          <div class="row" style="gap:6px;flex-shrink:0">
-            <button class="opt first">New table</button>
-            <button class="opt">Use Redis</button>
-          </div>
-        </div>
-        <div class="row">
-          <input class="input msg-in" placeholder="Answer Claude or add an instruction…" value="">
-          <button class="send">Send</button>
-          <button class="stop">Stop</button>
-        </div>
-      </div>
-    </section>
+      <div class="composer"><span class="box">Answer Claude, or add an instruction…</span><button class="btn primary">Send</button><button class="btn">Stop</button></div>
+    </div>
   </div>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M3 3/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 3/11 · Task Room - Stream tab, Needs You</span><span class="sep">|</span><a href="02_task_board.html">&larr; prev</a><a href="04_task_room_terminal.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M3 3/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 3/11 · Task Room · Stream</span><span class="sep">|</span><a href="02_task_board.html">&larr; prev</a><a href="04_task_room_terminal.html">next &rarr;</a></span></div>
 </body>
 </html>
