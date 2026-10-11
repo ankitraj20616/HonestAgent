@@ -10,7 +10,7 @@
   .finding .li { display: grid; grid-template-columns: 14px minmax(0, 1fr); font-size: 13px; line-height: 1.5; color: var(--text-2); }
   .finding .li > span:first-child { color: var(--faint); }
   .finding p { font-size: 13px; line-height: 1.55; color: var(--text-2); text-wrap: pretty; }
-  .mini { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
+  .mini:not(.daemon) { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
   .mini.off .t { color: var(--muted); }
 </style>
 <div class="fill">
