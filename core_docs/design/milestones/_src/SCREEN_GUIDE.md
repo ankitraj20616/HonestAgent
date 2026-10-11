@@ -1,40 +1,57 @@
 # How to write a milestone screen
 
-Source of the look: `core_docs/design/Saarthi Prototype.html` (dark only). Every screen here must look like it belongs to that prototype, in both light and dark mode.
+Look: **The Wheel**, dark only. Spec: `core_docs/design/2026-10-11-wheel-ui-design.md`. Mockups: `core_docs/design/wheel_mockups/`.
 
 ## Files
-- Write one fragment per screen: `_src/screens/<milestone folder>/<NN>_<slug>.html` (`01_`, `02_`, ... in user-flow order).
-- Build: `python3 _src/build.py <milestone folder>` (one milestone) or `python3 _src/build.py` (all + `index.html`).
-- Output (never edit by hand): `<milestone folder>/dark/<NN>_<slug>.html` and `<milestone folder>/light/<NN>_<slug>.html`.
-- Do not edit `theme.css`, `base.css` or `build.py` for one screen. If a style is missing, add a small `<style>` block at the top of the fragment that uses only `var(--...)` tokens.
-- Styles needed by **every** screen of one milestone may go in `_src/screens/<milestone folder>/_shared.css` (added to all screens of that milestone, after `base.css`). Only move a rule there if every screen of that milestone already has it, in the same order. Otherwise it can restyle screens that never had it.
+- One fragment per screen: `_src/screens/<milestone folder>/<NN>_<slug>.html` (`01_`, `02_`, ... in user-flow order).
+- Output is flat (never edit by hand): `<milestone folder>/<NN>_<slug>.html` and `index.html`. No light/dark folders.
+- Build all (also makes `index.html`): `python3 core_docs/design/milestones/_src/build.py`
+- Build one milestone (does not rebuild `index.html`): `python3 core_docs/design/milestones/_src/build.py M4_checks_proof_card`
+- Screenshots: `python3 core_docs/design/milestones/_src/shoot.py OUT_DIR [milestone...]`
+- Tests: `python3 -m pytest core_docs/design/milestones/_src/tests -q`
+- Do not edit `base.css` or `build.py` for one screen. Add a small `<style>` block at the top of the fragment, or put rules for the whole milestone in `_src/screens/<milestone>/_shared.css`.
 
 ## Front matter (first line of the fragment)
 ```html
-<!-- {"title": "Proof Card - failed", "note": "What the screen shows, in one line. F7.3, F7.4", "shell": "app",
-      "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 0, "cost": "$4.12", "slots": "1 of 4"} -->
+<!-- {"title": "Home", "note": "The Wheel. F1.3, F16.2", "shell": "app", "nav": "home", "dock": "full"} -->
 ```
-- `shell`: `app` = sidebar + top bar are added for you. `bare` = nothing added (spike windows, CLI terminals, first-run screens, notifications over a desktop).
-- `nav`: `deck` | `board` | `room` | `memory` | `playbooks` | `settings`.
-- `note`: shown in the gallery; end with the FSD F-numbers the screen covers.
+- `shell`: `app` adds the top bar and the agents dock/rail. `bare` adds nothing (spike windows, CLI terminals, first-run wizard).
+- `nav`: `home` | `board` | `memory` | `playbooks` | `settings`.
+- `dock`: `full` (Home only) or `rail` (default).
+- Other keys: `project`, `needs`, `cost`, `agents`, `slots`, `daemon`, `after_topbar`. See the docstring at the top of `_src/build.py`.
+- `note`: shown in the gallery. End it with the FSD F-numbers.
+
+## Drawing tags
+Use open and close tags. For `<x-wheel>`, `data=` must be the first attribute. The build stops otherwise.
+```html
+<x-wheel data='{"beads": [...], "counts": {...}, "hub": {...}, "lit": [...], "size": 520}'></x-wheel>
+<x-journey stage="run" tone="road" size="46" notches="0.2,0.6"></x-journey>
+<x-trust checks="50" criteria="28" second="8" size="250" label="TRUST SCORE"></x-trust>
+```
+
+## Copy a pattern from a reference screen
+| Page | Copy from | Classes in `base.css` |
+|---|---|---|
+| Home (dock full) | M3 `01_home` | `.bar-head` `.h-title` `.side-r` `.ask-card` (`.who`, `.q`) `.rv-row` `.mem-note` |
+| Board | M3 `02_task_board` | `.rim` `.seg8` `.cols8` `.col8` `.bcard` `.bead` |
+| Task Room | M3 `03_task_room_stream` | `.room-head` `.journey-box` `.room` `.room-side` `.tabs` `.tl` `.tl-ev` `.tool-row` `.qa` |
+| Proof | M4 `03_proof_green` | `.proof` `.proof-l` `.proof-r` `.gate` `.stats4` `.crit-row` |
+| Review | M5 `01_change_story` | `.review-tab` `.review-l` `.review-r` `.chap` `.risk` |
+
+Some rules only work inside a container:
+- `.legend` in `.proof-l`
+- `.ck-row` in `.proof-r`
+- `.diff` in `.tl-ev` or `.chap`
+- `.so`, `.fd`, `.decide` in `.review-r`
+- `.tl` only with `.tl-ev` children
+
+Before you add a new shared class name, search the older fragments for it. Clashes have happened (`.rail`, `.review`).
 
 ## Rules
-1. **No color literals.** No `#hex`, `rgb()`, `oklch()`, `hsl()` in `style=""` or `<style>`. Use theme variables (`var(--accent)`, `var(--line)`, ...) or classes. The build fails otherwise.
-2. **Use `base.css` classes first**: `page`, `card` (`hot`/`ok`/`bad`/`info`/`dashed`), `list-row`, `btn` (`primary`/`danger`/`ok`/`ghost`/`sm`/`xs`), `chip`, `seg`, `tag`, `agent cl|cx`, `dot amber|green|red|blue pulse`, `stage running|needs|verifying|review|failed|...`, `toggle on`, `check on`, `radio on`, `field`/`input`/`textarea`, `table`, `kv`, `stat`, `banner warn|err|ok|info`, `empty`, `board`/`lane`/`tcard`, `room-head`/`room`/`room-side`/`room-main`/`tabs`/`tab on`/`tab-body`/`composer`, `crit` + `box met|notsure|notmet`, `run-row`, `stream`/`ev`/`ev-card msg|think|user|needs|err|ok`/`ev-out`, `code` + `ln add|del|hl` + `tk-k|s|c|f|n`, `term`/`term-bar`/`term-body` + `p|c|g|r|y|d|b`, `scrim`/`modal`/`modal-head|body|foot`, `cmd-input`/`cmd-item`, `toast`, `notify`, `bare`/`window`/`window-bar`, `annot`.
-3. **Overlays** (dialogs, Command Bar): draw the screen under it, then a `.scrim` with the `.modal` on top, in the same fragment.
-4. **One world of sample data** (keep it the same everywhere):
-   - Projects: `acme-billing` (main demo), `saarthi`, `clinic-portal`.
-   - Demo task: **T-0012 "Add password reset API"** in `acme-billing`, Claude, branch `saarthi/T-0012-add-password-reset-api`, worktree `~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012`.
-   - Other tasks: T-0009 Rate-limit the login endpoint, T-0018 Invoice PDF export with line-item totals (Claude, running), T-0024 Show task cost on board cards (saarthi), T-0027 Event replay after WebSocket reconnect (saarthi, Codex), T-0031 Upgrade Alembic to 1.14 (saarthi, Codex, needs you).
-   - Checks: `tests` = `uv run pytest -q`, `lint` = `uv run ruff check .`, `types` = `uv run pyright` (not required).
-   - Daemon: `127.0.0.1:7878`, version `v0.9`. Date: Sunday, 11 October 2026.
-5. **Simple English** in all UI text. Short labels. Real commands, real file paths, real numbers.
-6. Design at **1440 x 900**. Nothing may overflow sideways. Long lists scroll inside their panel.
-7. Light and dark come from the same fragment, so check **both** screenshots.
-
-## Check your screens
-```bash
-google-chrome --headless=new --disable-gpu --no-sandbox --hide-scrollbars --window-size=1440,900 \
-  --virtual-time-budget=3000 --screenshot=/tmp/x.png "file://$PWD/<milestone>/<theme>/<file>.html"
-```
-Look at the PNG. Fix overlap, cut-off text, low contrast, empty space, and anything that does not match the prototype.
+1. **No color values** (`#hex`, `rgb()`, `oklch()`, `hsl()`) in CSS. Use tokens like `var(--accent)` or classes. The build lints this.
+2. **One sample world.** Demo task **T-0012 "Add password reset API"** in `acme-billing`. Other tasks: T-0009, T-0018, T-0024, T-0027, T-0031.
+3. **A screen shows only features of its milestone.** No Trust ring before M4. No second-opinion part before M5.
+4. **English UI names:** The Wheel, Beads, Agents, Needs You, Trust score.
+5. **Simple English**, short labels, real commands and numbers.
+6. Design at **1440x900**. No sideways overflow. Long lists scroll inside their panel.
+7. **Check every PNG** made by `shoot.py`. Fix overlap, cut-off text, low contrast, and empty space.

@@ -290,6 +290,13 @@
   - API call recordings (request + response).
 - **F7.6 Manual override** (Must)
   - User can move a task to Review with failing checks, but must type a reason. The reason is saved.
+- **F7.7 Trust score** (Must, M4; second-opinion part in M5)
+  - One number from 0 to 100 that sums up the proof of a task:
+    - Required checks: 50 points, by the share that pass.
+    - Brief criteria: 35 points, by the share marked Met ("Not sure" counts 0 until confirmed).
+    - Second opinion: 15 points if no high or medium finding is open, 8 if only medium findings are open, 0 if a high finding is open or no second opinion ran.
+  - The daemon computes it. The UI only shows it (Proof ring, Home, Board cards).
+  - It never blocks a move. The stage rules stay as in F2.5.
 
 ### F8. Second Opinion
 

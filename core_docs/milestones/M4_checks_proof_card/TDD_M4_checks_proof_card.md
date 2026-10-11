@@ -130,6 +130,14 @@ Entry points: `POST /tasks/{id}/proof/fix` and `POST /tasks/{id}/runs` with `mod
 A per-task `asyncio.Lock`; a global `asyncio.Semaphore(MAX_PARALLEL_CHECK_BATCHES)` (default 2).
 **Why:** Two `pytest` runs on one worktree fight. Many test suites at once freeze the laptop.
 
+### Decision 17 — Trust score is computed in the daemon from the Proof Card **(new)**
+`checks/trust.py: trust_score(card: ProofCard, findings: list[ReviewFinding] | None) -> int` returns 0..100:
+`round(50 * passed_required / required_total + 35 * met / criteria_total + second_part)`, where `second_part` is 0 in M4 (M5 fills it).
+If a task has no required checks, the checks part counts as full (it matches the `no_required_checks` warning rule).
+If the brief has no criteria, the criteria part is 0. `GET /tasks/{id}/proof` returns `trust_score` and `trust_parts: {checks, criteria, second}`.
+**Why:** spec `core_docs/design/2026-10-11-wheel-ui-design.md` section 7; all logic stays in the daemon (CLAUDE.md rule 1). It never gates a move.
+Test: `tests/unit/checks/test_trust.py` — all green 50+35, half checks 25, not-sure counts 0, no criteria → 0 for that part.
+
 ---
 
 ## 5. Modules and files

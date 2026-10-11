@@ -141,6 +141,10 @@ Set by the ship flow after push / PR. Guard `ship_done` on `(review, shipped)`, 
 `GET /tasks/{id}/review/file?path=` returns `git show <base_sha>:<old_path>` and `git show <head_sha>:<path>` (null when added/deleted; `binary: true` if git says so; size cap `REVIEW_FILE_MAX_BYTES`). The UI feeds them to `MergeView` (side by side) or `unifiedMergeView` (unified) from `@codemirror/merge`, read-only.
 **Why:** The merge view needs whole files, not hunks. Reading from the shas keeps it in sync with the story.
 
+### Decision 16 — Second-opinion part of the Trust score **(new)**
+`second_part` = 15 if no `review_findings` row with severity high or medium is `open`; 8 if only medium ones are open; 0 if a high one is open or no review run exists for the latest story. `ignored` and `sent` findings do not count as open.
+**Why:** spec section 7. Test: `tests/unit/checks/test_trust.py::test_second_opinion_part` covers all four cases.
+
 ---
 
 ## 5. Modules and files
