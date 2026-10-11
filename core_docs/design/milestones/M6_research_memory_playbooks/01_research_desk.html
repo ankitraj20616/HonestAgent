@@ -163,7 +163,7 @@ button { cursor: pointer; }
 .gear.on { border-color: var(--road); color: var(--road-text); background: var(--road-soft); }
 .cost-box { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; font-size: 13px; }
 .cost-box small { color: var(--faint); font-size: 10.5px; }
-.frame { display: grid; min-height: 0; }
+.frame { display: grid; min-height: 0; grid-row: 3; }
 .frame.full { grid-template-columns: 250px minmax(0, 1fr); }
 .frame.rail { grid-template-columns: 64px minmax(0, 1fr); }
 .dock { border-right: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 11px; min-height: 0; overflow: auto; }
@@ -183,12 +183,12 @@ button { cursor: pointer; }
 .spark-cx polyline { stroke: var(--codex); }
 .tone-road { color: var(--road-text); } .tone-bad { color: var(--bad); } .tone-ok { color: var(--ok); } .tone-muted { color: var(--muted); }
 .tone-bg-road { background: var(--road); } .tone-bg-bad { background: var(--bad); } .tone-bg-ok { background: var(--ok); } .tone-bg-muted { background: var(--faint); }
-.rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 0; min-height: 0; }
+aside.rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 0; min-height: 0; }
 .ra { position: relative; width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line2); display: grid; place-items: center; background: var(--surface); }
 .ra.wait { border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); }
 .ra.free { border-style: dashed; color: var(--faint); font-size: 16px; background: transparent; }
 .ra-dot { position: absolute; right: -3px; top: -3px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--bg); }
-.rail small { font-size: 9.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; margin-top: -8px; }
+aside.rail small { font-size: 9.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; margin-top: -8px; }
 .daemon { display: flex; gap: 8px; align-items: flex-start; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; background: var(--surface); }
 .daemon small { display: block; color: var(--faint); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
 .daemon .note { color: var(--muted); font-size: 11.5px; }
