@@ -153,8 +153,8 @@ Built-in views (always prefixed with `project = <KEY> AND`, ending `ORDER BY upd
 | Comment | `POST /rest/api/3/issue/{key}/comment` with an ADF body |
 | Remote link | `POST /rest/api/3/issue/{key}/remotelink` with `{object: {url, title}}` |
 
-- Auth: HTTP Basic, `email:token`. HTTPS only. Requests only go to the configured site.
-- Scoped tokens need `read:jira-work` (read) and `write:jira-work` (write back).
+- Auth: HTTP Basic, `email:token`. HTTPS only. Requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
+- Scoped tokens need `read:jira-work` (read), `write:jira-work` (write back) and `read:jira-user` (`/myself`). They only work through `https://api.atlassian.com/ex/jira/<cloudId>/rest/api/3/...`; login finds `cloudId` from `https://<site>/_edge/tenant_info` when the site URL gives 401, and saves `api = "gateway"` + `cloud_id` for the site.
 - Errors: 401 -> "Token wrong or expired. Run `saarthi jira login`." 403 -> "No permission on ACME". 404 -> "Ticket not found or no access". 429 -> wait `Retry-After` (max 3 tries). Network down -> show the cache with "Offline · last synced 12m ago".
 
 ### 4.4 ADF -> markdown
@@ -166,7 +166,8 @@ Jira gives descriptions and comments as ADF (JSON). `tickets/adf.py`:
 
 ### 4.5 Data (M10 migration)
 - **`tickets`** (cache): id (ULID), project_id, provider, key, summary, status, status_category (`todo`/`in_progress`/`done`), issue_type, priority, assignee, url, description_md, comments_md, labels (json), jira_updated_at, fetched_at. Unique `(project_id, key)`.
-- **`tasks.ticket_key`** (nullable, indexed). `tasks.ticket_url` already exists and is filled too.
+- **`ticket_views`**: project_id, view, jql, keys (json, ordered), truncated, synced_at. Key `(project_id, view)`. Remembers which tickets each view returned, so a view (for example Sprint) can be shown offline with its own "last synced" time.
+- **`tasks.ticket_key`** (nullable). Partial unique index `(project_id, ticket_key) WHERE ticket_key IS NOT NULL` (one task per ticket per project). `tasks.ticket_url` already exists and is filled too.
 - **`ticket_actions`**: id, task_id, ticket_key, kind (`transition`/`comment`/`link`), payload (json), trigger (for example `stage:review`, `ship.pr_created`), status (`pending`/`sent`/`skipped`/`failed`), error, created_at, decided_at.
 
 ### 4.6 Flows
@@ -180,10 +181,10 @@ Jira gives descriptions and comments as ADF (JSON). `tickets/adf.py`:
 
 **Link an existing task:** `saarthi task edit T-0012 --ticket ACME-142` (or the chip menu). Same as above but the brief is only drafted if the task has none.
 
-**Branch and PR:** a task with a ticket gets branch `saarthi/T-0033-acme-151-<slug>` and PR title `ACME-151: <title>`, so the GitHub-for-Jira app links them by itself.
+**Branch and PR:** a task with a ticket gets branch `saarthi/T-0033-ACME-151-<slug>` (key in capitals) and PR title `ACME-151: <title>`, so the GitHub-for-Jira app links them by itself.
 
 **Write back**
-1. On a stage move that has a mapping in `tickets.on_stage` -> one `transition` action. On `ship.pr_created` -> one `comment` ("PR opened: <url> · Saarthi T-0033") + one `link` action.
+1. On a stage move that has a mapping in `tickets.on_stage` -> one `transition` action, **only forward**: the target status must come later in the `on_stage` order (running < review < shipped) than the ticket's current status, or the current status is not in the mapping. A fix run (Review -> Running) does not propose "In Progress" again. On `ship.pr_created` -> one `comment` ("PR opened: <url> · Saarthi T-0033") + one `link` action.
 2. Event `ticket.action_proposed`. The Task Room shows a card: "Move ACME-151 to **In Review**? [Send] [Skip]". Home's Needs You list does **not** count it (it is not an agent waiting).
 3. Send -> call Jira -> `sent` + `ticket.action_sent`, or `failed` + `ticket.action_failed` with the reason (for example "No transition to In Review from To Do. Possible: In Progress, Done").
 4. `auto_send = true` sends at once; the card shows the result.
@@ -201,8 +202,8 @@ Jira gives descriptions and comments as ADF (JSON). `tickets/adf.py`:
 | GET | `/projects/{id}/tickets?view=&q=&refresh=` | List from cache (refresh first if asked or stale) |
 | POST | `/projects/{id}/tickets/sync` | `{view?, jql?}` -> refresh now |
 | GET | `/projects/{id}/tickets/{key}` | One ticket (fresh) + linked task id |
-| POST | `/projects/{id}/tickets/{key}/start` | Make a task -> `201 {task}`; 409 `ticket_linked {task_id}` |
-| POST | `/tasks/{id}/ticket` | `{key}` link an existing task |
+| POST | `/projects/{id}/tickets/{key}/start` | `{dry_run?}` Make a task -> `201 {task}`; 409 `ticket_linked {task_id}`. `dry_run` = preview only |
+| POST | `/tasks/{id}/ticket` | `{key}` link an existing task; `{key: null}` unlinks |
 | GET | `/tasks/{id}/ticket-actions` | List |
 | POST | `/ticket-actions/{id}/send` / `/skip` | Decide |
 
@@ -210,10 +211,11 @@ Jira gives descriptions and comments as ADF (JSON). `tickets/adf.py`:
 ```
 saarthi jira login --site acme.atlassian.net --email me@acme.com   # asks for the token, hidden
 saarthi jira status
+saarthi jira logout --site acme.atlassian.net
 saarthi tickets list [--view mine|sprint|<name>] [--jql "..."] [--refresh] [--json]
 saarthi tickets show ACME-151
-saarthi tickets start ACME-151
-saarthi task edit T-0012 --ticket ACME-142
+saarthi tickets start ACME-151 [--dry-run]
+saarthi task edit T-0012 --ticket ACME-142 | --no-ticket
 saarthi ticket actions T-0033
 saarthi ticket send <action_id> | saarthi ticket skip <action_id>
 ```

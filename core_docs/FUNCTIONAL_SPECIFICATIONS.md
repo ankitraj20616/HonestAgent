@@ -531,6 +531,7 @@
 - **F23.5 Write back with confirm** (Must, M10)
   - Move the ticket status, add a PR comment, add a link to the PR.
   - Every write needs my OK by default. A project can turn on auto send.
+  - Status moves only go forward (Running < Review < Shipped). A fix run after Review does not move the ticket back to "In Progress".
   - Home's "Needs You" list does not count these.
 - **F23.6 Cache and offline view** (Must, M10)
   - Tickets are cached. When Jira is not reachable, the cache shows with "last synced" time.

@@ -63,7 +63,7 @@ A milestone doc must not build something owned by a later milestone. It may only
 | M6 | `playbooks`, `memory_updates` (+ extra columns); + `research_items.run_id` |
 | M7 | `race_lanes`; + `runs.race_lane_id`, `tasks.race_id`, `tasks.port` |
 | M8 | `checkpoints` (index over git refs); + `runs.permission_profile`, `runs.sandboxed`, `runs.cost_estimated`. Budgets live in `settings`. |
-| M10 | `tickets` (cache), `ticket_actions`; + `tasks.ticket_key` (nullable, indexed; `tasks.ticket_url` already exists) |
+| M10 | `tickets` (cache), `ticket_views` (what each view returned, for offline), `ticket_actions`; + `tasks.ticket_key` (nullable, partial unique index per project; `tasks.ticket_url` already exists) |
 
 One Alembic migration per milestone that adds tables.
 

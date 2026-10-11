@@ -221,7 +221,7 @@ class AgentAdapter(Protocol):
 ### 4.13 Ticket Provider (`tickets/`)
 - **Job:** Read tickets from Jira Cloud and write back status, comment, and link (FSD F23). Behind one interface, like `AgentAdapter`.
 - **Input:** Project ticket settings, a JQL view, a ticket key, or a write-back action.
-- **Output:** Cached `tickets` rows, brief drafts, `ticket_actions`, `ticket.*` events.
+- **Output:** Cached `tickets` and `ticket_views` rows, brief drafts, `ticket_actions`, `ticket.*` events.
 - **Files:** `base.py` (protocol + models), `jira_cloud.py` (httpx), `fake.py`, `adf.py`, `brief.py`, `sync.py`, `actions.py`.
 
 ```python
@@ -248,8 +248,8 @@ class TicketProvider(Protocol):
 | Remote link | `POST /rest/api/3/issue/{key}/remotelink` with `{object: {url, title}}` |
 
   - The old `/rest/api/3/search` is removed. Use POST for search (GET with `nextPageToken=null` gives 400).
-  - Auth: HTTP Basic `email:token`. HTTPS only. Requests only go to the configured site.
-  - Scoped tokens need `read:jira-work` and `write:jira-work` (for write back).
+  - Auth: HTTP Basic `email:token`. HTTPS only. Requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
+  - Scoped tokens need `read:jira-work`, `write:jira-work` (for write back) and `read:jira-user` (`/myself`). They only work through `https://api.atlassian.com/ex/jira/<cloudId>/rest/api/3/...`. Login gets `cloudId` from `https://<site>/_edge/tenant_info` when the site URL gives 401.
   - 429: wait `Retry-After`, max 3 tries.
 - **ADF rules** (`adf.py`, own small code, no new library):
   - `adf_to_markdown(doc)` handles: paragraph, heading, text marks (strong, em, code, strike, link), bulletList, orderedList, listItem, codeBlock, blockquote, rule, hardBreak, mention, emoji, inlineCard, table (simple GFM), panel (blockquote), media (`[attachment: name]`).
@@ -260,6 +260,8 @@ class TicketProvider(Protocol):
   - Cache refresh: by hand, or when the panel opens and the cache is older than `TICKETS_STALE_SECONDS` (300). No background polling.
   - Write-back actions are stored in `ticket_actions` and need my OK unless `auto_send = true`.
   - One pending transition per task: a newer one replaces the older one (`skipped`).
+  - Transitions only move forward in `on_stage` order (running < review < shipped). A fix run (Review -> Running) proposes nothing.
+  - The cache remembers what each view returned (`ticket_views`), so views work offline.
 
 ---
 
@@ -288,7 +290,7 @@ class TicketProvider(Protocol):
 | priority | int | 1/2/3 |
 | labels | json | list of strings |
 | ticket_url | text | optional |
-| ticket_key | text | optional, indexed (M10). Example `ACME-142` |
+| ticket_key | text | optional (M10). Example `ACME-142`. Partial unique index `(project_id, ticket_key)` where not null |
 | branch | text | set when the worktree is made |
 | worktree_path | text | |
 | permission_profile | text | `read_only` / `safe_build` / `full` |
@@ -382,7 +384,17 @@ class TicketProvider(Protocol):
 | jira_updated_at | datetime | |
 | fetched_at | datetime | |
 
-### 5.11 `ticket_actions` (M10)
+### 5.11 `ticket_views` (M10, cache)
+| Field | Type | Note |
+|---|---|---|
+| project_id | text | FK. Key with `view` |
+| view | text | `mine`, `sprint`, a saved view name, or `adhoc` |
+| jql | text | the full JQL that was run |
+| keys | json | ticket keys in the order Jira gave them |
+| truncated | bool | stopped at `TICKETS_MAX_SYNC` |
+| synced_at | datetime | "last synced" for this view |
+
+### 5.12 `ticket_actions` (M10)
 | Field | Type | Note |
 |---|---|---|
 | id | text | ULID |
@@ -528,11 +540,11 @@ class TicketProvider(Protocol):
 4. Task Engine: make task `T-0033` with title = summary, `ticket_key`, `ticket_url`, label = issue type. Event `ticket.imported`.
 5. `brief.py` makes brief version 1 (not approved). Goal = summary + description up to the first acceptance heading. Acceptance = bullets under a heading like `acceptance criteria`, `AC`, `definition of done` (case ignored). Notes = the rest + `Ticket: <url>`.
 6. Newest 20 ticket comments become a research item, kind `snippet`, title "Jira comments", `send_to_agent = false`.
-7. Branch is `saarthi/T-0033-acme-151-<slug>`. PR title will be `ACME-151: <title>`.
+7. Branch is `saarthi/T-0033-ACME-151-<slug>` (key in capitals). PR title will be `ACME-151: <title>`.
 8. Ticket text is marked `<!-- from Jira, not trusted -->` in the Context Pack.
 
 ### 8.9 Ticket write back (M10)
-1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action. `ship.pr_created` -> one `comment` action + one `link` action.
+1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action, only **forward**: the target must come later in `on_stage` order (running < review < shipped) than the ticket's current status, or the current status is not in the mapping. `ship.pr_created` -> one `comment` action + one `link` action.
 2. Actions are saved as `pending`. Event `ticket.action_proposed`.
 3. Task Room shows a card: "Move ACME-151 to In Review? [Send] [Skip]". Home's Needs You list does not count it.
 4. Send -> `POST /ticket-actions/{id}/send`. For a transition: `transitions(key)`, match `to.name` ignoring case, then `transition()`.
@@ -782,7 +794,7 @@ email = "me@acme.com"
 - Secret masking before save and before send.
 - Agents run in the worktree folder. Sandbox with `bwrap` in M8.
 - No telemetry.
-- Jira token file `chmod 600`, kept outside the repo. The token never shows in logs or events.
+- Jira token file `chmod 600`, kept outside the repo. The token never shows in logs or events. Jira requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
 - Ticket text is untrusted. It is marked `<!-- from Jira, not trusted -->` in the Context Pack. The permission profile still applies.
 - Docs paths must stay inside the worktree or the data folder.
 
