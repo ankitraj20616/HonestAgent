@@ -19,7 +19,7 @@ Look: **The Wheel**, dark only. Spec: `core_docs/design/2026-10-11-wheel-ui-desi
 - `nav`: `home` | `board` | `memory` | `playbooks` | `tickets` | `settings`.
 - `dock`: `full` (Home only) or `rail` (default).
 - `tickets`: `true` adds the Tickets link to the top bar. Only M10 screens use it.
-- Other keys: `project`, `needs`, `cost`, `agents`, `slots`, `daemon`, `tickets`, `after_topbar`. See the docstring at the top of `_src/build.py`.
+- Other keys: `project`, `needs`, `cost`, `agents`, `slots`, `daemon`, `after_topbar`. See the docstring at the top of `_src/build.py`.
 - `note`: shown in the gallery. End it with the FSD F-numbers.
 
 ## Drawing tags
@@ -41,7 +41,7 @@ A Wheel smaller than 300px gets bigger text by itself (`.wheel.sm`). Use `"captu
 | Task Room | M3 `03_task_room_stream` | `.room-head` `.journey-box` `.room` `.room-side` `.tabs` `.tl` `.tl-ev` `.tool-row` `.qa` |
 | Proof | M4 `03_proof_green` | `.proof` `.proof-l` `.proof-r` `.gate` `.stats4` `.crit-row` |
 | Review | M5 `01_change_story` | `.review-tab` `.review-l` `.review-r` `.chap` `.risk` |
-| Docs tab | M3 `12_task_room_docs` (will exist soon) | `.room` `.tabs` |
+| Docs tab | M3 `12_task_room_docs` | `.room` `.tabs` |
 | Tickets | M10 `01_tickets_panel` | `.bar-head` `.h-title` |
 
 Some rules only work inside a container:
@@ -57,7 +57,7 @@ Before you add a new shared class name, search the older fragments for it. Clash
 1. **No color values** (`#hex`, `rgb()`, `oklch()`, `hsl()`) in CSS. Use tokens like `var(--accent)` or classes. The build lints this.
 2. **One sample world.** Demo task **T-0012 "Add password reset API"** in `acme-billing`. Other tasks: T-0009, T-0018, T-0024, T-0027, T-0031.
    Jira world (M10): site `acme.atlassian.net`, project key `ACME`. T-0012 is linked to ACME-142. ACME-151 "Export invoices as CSV" becomes T-0033. Other tickets: ACME-139 "Webhook retries", ACME-147 "Invoice PDF footer" (linked to T-0018), ACME-150 "Rate limit login" (bug), ACME-153 "Tax rounding error" (bug).
-   Task Room tab order: `Stream · Terminal · Proof · Review · Code · Docs · Timeline` (Proof from M4, Review from M5, Docs from M3).
+   Task Room tab order: `Stream · Terminal · Proof · Review · Research · Code · Docs · Timeline` (Docs from M3, Proof from M4, Review from M5, Research from M6).
 3. **A screen shows only features of its milestone.** No Trust ring before M4. No second-opinion part before M5.
 4. **English UI names:** The Wheel, Beads, Agents, Needs You, Trust score.
 5. **Simple English**, short labels, real commands and numbers.

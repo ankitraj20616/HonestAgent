@@ -58,7 +58,7 @@ At the end of M10 I can:
 |---|---|
 | **Jira site** | The client's Jira Cloud address, like `acme.atlassian.net`. One login per site. |
 | **API token** | A long password made at `id.atlassian.com`. Saarthi uses it with my email to talk to Jira. |
-| **Scoped token** | An API token that can only do some things. Saarthi needs "read Jira work" and "write Jira work". |
+| **Scoped token** | An API token that can only do some things. Saarthi needs "read Jira work", "write Jira work" and "read Jira user" (scopes `read:jira-work`, `write:jira-work`, `read:jira-user`). |
 | **JQL** | Jira's search language. Example: `assignee = currentUser() AND statusCategory != Done`. |
 | **View** | A saved search in the Tickets panel. "Mine" and "Sprint" are built in. More come from `project.toml`. |
 | **Ticket** | One Jira issue, like `ACME-151`. Saarthi keeps a copy (the cache). |
@@ -76,15 +76,16 @@ At the end of M10 I can:
 - **Example:**
   ```
   $ saarthi jira login --site acme.atlassian.net --email me@acme.com
-  API token (hidden): ****************
-  Connected to acme.atlassian.net as Ankit Raj (me@acme.com).
-  Token saved in ~/.config/saarthi/secrets/jira-acme.atlassian.net.token (only you can read it).
+  Jira API token for me@acme.com (hidden): ********
+  Checking https://acme.atlassian.net/rest/api/3/myself ... ok
+  Connected as Ankit R.  Token saved (chmod 600).
+    ~/.config/saarthi/secrets/jira-acme.atlassian.net.token · scopes read:jira-work, write:jira-work, read:jira-user
 
   $ saarthi jira status
   site                  email         user       state
-  acme.atlassian.net    me@acme.com   Ankit Raj  ok
+  acme.atlassian.net    me@acme.com   Ankit R.   ok
   ```
-  In the UI: Settings -> **Jira** -> site, email, token (hidden) -> **Test** -> "Connected as Ankit Raj" -> **Save**. The page also shows the scopes hint and, for the open project, its views and stage mapping (read only).
+  In the UI: Settings -> **Jira** -> site, email, token (hidden) -> **Test** -> "Connected as Ankit R." -> **Save**. The page also shows the scopes hint and, for the open project, its views and stage mapping (read only).
 - **Rules:**
   - Jira **Cloud** only. The site must end with `.atlassian.net`. Data Center is Later (F23.9).
   - The token is never saved if the check fails.
@@ -93,7 +94,7 @@ At the end of M10 I can:
   - A project turns tickets on with a `[tickets]` table in `.saarthi/project.toml` (site, project key, views, stage mapping). No secrets there.
   - `saarthi jira logout --site ...` (and **Forget** in Settings) deletes the token file.
 - **Acceptance criteria:**
-  - A good token prints "Connected ... as <name>". A wrong token prints "Token wrong or expired" and saves nothing.
+  - A good token prints "Connected as <name>". A wrong token prints "Token wrong or expired" and saves nothing.
   - The token file has mode `600`. `grep` for the token in the data folder and logs finds nothing.
   - `saarthi jira status` shows `token expired` (not a crash) when the token was revoked in Atlassian.
 
@@ -104,23 +105,25 @@ At the end of M10 I can:
 - **Example:**
   ```
   $ saarthi tickets list --view mine
-  Mine · ACME · 5 tickets · synced just now
-  key        type   status        priority  summary                  task
-  ACME-153   Bug    To Do         High      Tax rounding error       -
-  ACME-151   Story  To Do         Medium    Export invoices as CSV   -
-  ACME-150   Bug    In Progress   High      Rate limit login         -
-  ACME-147   Story  In Review     Medium    Invoice PDF footer       T-0018
-  ACME-142   Story  In Progress   Medium    Add password reset API   T-0012
+  Mine · ACME · synced just now · 6 tickets
+  KEY       TYPE   PRIORITY  STATUS       TASK    SUMMARY
+  ACME-142  Story  High      In Review    T-0012  Add password reset API
+  ACME-151  Story  High      To Do        -       Export invoices as CSV
+  ACME-147  Story  Medium    In Progress  T-0018  Invoice PDF footer
+  ACME-153  Bug    Highest   To Do        -       Tax rounding error
+  ACME-150  Bug    Medium    To Do        -       Rate limit login
+  ACME-139  Task   Low       To Do        -       Webhook retries
 
   $ saarthi tickets list --view Bugs
-  Bugs · ACME · 2 tickets · synced 3m ago
-  ACME-153   Bug    To Do         High      Tax rounding error       -
-  ACME-150   Bug    In Progress   High      Rate limit login         -
+  Bugs · ACME · synced 3m ago · 2 tickets
+  KEY       TYPE   PRIORITY  STATUS       TASK    SUMMARY
+  ACME-153  Bug    Highest   To Do        -       Tax rounding error
+  ACME-150  Bug    Medium    To Do        -       Rate limit login
 
   $ saarthi tickets show ACME-139
-  ACME-139  Webhook retries  (Story · To Do · Medium · assignee: Neha Gupta)
+  ACME-139  Webhook retries  (Task · To Do · Low)
   https://acme.atlassian.net/browse/ACME-139
-  ... description as markdown ... (2 comments)
+  ... description as markdown ...
   ```
   In the UI: top bar **Tickets** -> **Sprint** -> click ACME-139 -> the detail opens on the right.
 - **Rules:**
@@ -142,11 +145,11 @@ At the end of M10 I can:
 - **Example:**
   ```
   $ saarthi tickets start ACME-151
-  Created T-0033 "Export invoices as CSV" from ACME-151 (Inbox)
-    brief     version 1 from ticket: goal + 4 acceptance criteria
-    research  "Jira comments" (6 comments, send to agent: no)
-    branch    saarthi/T-0033-ACME-151-export-invoices-as-csv (made on first run)
-  Next: check the brief (saarthi brief edit T-0033), then move T-0033 to Ready.
+  Created T-0033  Export invoices as CSV  (label Story · ticket ACME-151)
+  Brief     draft v1 · goal + 3 acceptance criteria · not approved
+  Research  "Jira comments" · 2 comments · not sent to agent
+  Branch    saarthi/T-0033-ACME-151-export-invoices-as-csv  (worktree on first run)
+  Next      saarthi brief edit T-0033, then saarthi run T-0033
 
   $ saarthi tickets start ACME-147
   ACME-147 is already linked to T-0018. Opening nothing. Use: saarthi task show T-0018
@@ -154,13 +157,14 @@ At the end of M10 I can:
   $ saarthi task edit T-0012 --ticket ACME-142
   Linked T-0012 to ACME-142 (Add password reset API). Brief kept (T-0012 already has one).
   ```
-  In the UI: Tickets -> ACME-151 -> **Start as task** -> a dialog shows the task title, the branch name, the brief draft (goal, acceptance criteria) and "6 comments go to Research (not sent to the agent)" -> **Start** -> the Task Room of T-0033 opens. On a linked ticket the button says **Open T-0018** instead.
+  In the UI: Tickets -> ACME-151 -> **Start as task** -> a dialog shows the task title, the branch name, the brief draft (goal, acceptance criteria) and "2 Jira comments -> research snippet, not sent to the agent" -> **Start** -> the Task Room of T-0033 opens. On a linked ticket the button says **Open T-0018** instead.
 - **Rules:**
   - One ticket is linked to at most one task in a project. Starting a linked ticket opens its task (error code `ticket_linked` with the task id).
   - The new task starts in **Inbox**. Nothing runs by itself.
   - A task linked to a ticket gets the branch `saarthi/T-0033-ACME-151-<slug>` (key in capitals) and the PR title `ACME-151: <task title>`. The "GitHub for Jira" app then links branch and PR to the ticket by itself.
-  - Linking a task that already has a worktree does not rename its branch. The PR title still carries the key.
-  - Linking an existing task makes a brief draft **only** if the task has no brief yet. Its title is not changed.
+  - Linking a task that already has a worktree does not rename its branch (branches are never renamed). The PR title still carries the key. Example: T-0012 keeps `saarthi/T-0012-add-password-reset-api`; its PR title becomes `ACME-142: Add password reset API`.
+  - Linking an existing task makes a brief draft **only** if the task has no brief yet. If it has one, the brief is kept. Its title is not changed.
+  - Only **Start as task** imports the Jira comments as a research item. Linking does not.
   - `saarthi task edit T-0012 --ticket <key or Jira URL>` links. `--no-ticket` unlinks. A non-Jira URL keeps the old M1 behaviour (just a URL, no link).
   - The dialog preview changes nothing. Only **Start** makes the task (`--dry-run` in the CLI).
 - **Acceptance criteria:**
@@ -178,23 +182,23 @@ At the end of M10 I can:
 - **Why:** Most tickets already have the goal and the acceptance criteria. Fixed rules are fast, free and always give the same result.
 - **Example:** ACME-151 description in Jira:
   ```
-  Finance wants to download invoices for a month as CSV.
+  Finance wants one CSV file per month so they can load invoices into their accounting tool.
   ## Acceptance criteria
-  - Button "Export CSV" on the invoices page
-  - One row per invoice, columns: number, date, customer, total, tax
-  - Dates in ISO format
-  - Max 10,000 rows, else show an error
-  ## Notes
-  Use the same filters as the list.
+  - GET /invoices/export?month=2026-09 returns a CSV file
+  - Same columns as GET /invoices, in the same order
+  - Amounts have 2 decimals; dates are UTC ISO 8601
+  Out of scope: XLSX files.
   ```
-  Brief version 1 of T-0033: goal "Export invoices as CSV. Finance wants to download invoices for a month as CSV.", 4 acceptance criteria, notes "Use the same filters as the list. Ticket: https://acme.atlassian.net/browse/ACME-151". The Brief panel shows a small "from ACME-151" note.
+  The ticket has 2 comments: Marco D ("Keep the column order fixed. Their import maps columns by position.") and Priya S ("Finance opens it in Excel, so please add a UTF-8 BOM.").
+
+  Brief version 1 of T-0033: goal "Export invoices as CSV. Finance wants one CSV file per month so they can load invoices into their accounting tool.", 3 acceptance criteria (the three lines above), notes "Out of scope: XLSX files. Ticket: https://acme.atlassian.net/browse/ACME-151". The Brief panel shows a small "from ACME-151" note.
 - **Rules:**
   - The draft is saved as brief version 1 but the task stays in Inbox. "Approving" it means I read it, edit it if needed, and move the task to Ready myself.
   - No acceptance heading -> no acceptance criteria, the whole description goes to the goal, and a warning says "No acceptance criteria in ACME-xxx. Add them before Ready."
   - Ticket text is **not trusted**. In the Context Pack it is marked "from Jira, not trusted", so the agent treats it as data, not as orders. The permission profile still applies.
   - Images and attachments are not downloaded. They show as `[attachment: name]`.
 - **Acceptance criteria:**
-  - The ACME-151 example gives the goal, 4 criteria and the notes above, word for word.
+  - The ACME-151 example gives the goal, 3 criteria and the notes above, word for word.
   - A ticket with no AC heading gives an empty acceptance list and the warning.
   - Switching "Jira comments" to "send to agent: yes" puts it in the next Context Pack, inside the "not trusted" markers.
 
@@ -202,7 +206,7 @@ At the end of M10 I can:
 
 - **What:** A small chip with the ticket key and its Jira status, in the Task Room header and on Board cards.
 - **Why:** At a glance I see which task belongs to which ticket, and where the ticket is in Jira.
-- **Example:** Board -> the T-0012 card shows `ACME-142 · In Progress`. Task Room of T-0012 -> header chip `ACME-142 · In Progress` -> click -> menu: **Open in Jira**, **Refresh**, **Change ticket**, **Unlink**.
+- **Example:** Board -> the T-0012 card shows `ACME-142 · In Review`. Task Room of T-0012 -> header chip `ACME-142 · In Review` -> click -> menu: **Open in Jira**, **Refresh**, **Change ticket**, **Unlink**.
 - **Rules:**
   - The status on the chip is from the cache. It refreshes with the panel, with **Refresh**, and after a write back.
   - Colours follow the Jira status category (to do / in progress / done), in the Wheel look.
@@ -220,19 +224,24 @@ At the end of M10 I can:
 - **Example:**
   ```
   $ saarthi ticket actions T-0033
-  id        kind        ticket    what                          trigger           status
-  01JC9A2   transition  ACME-151  Move to "In Review"           stage:review      pending
-  $ saarthi ticket send 01JC9A2
-  Sent: ACME-151 moved to In Review.
+  ID          KIND        STATUS   TRIGGER         WHAT
+  01JC9A2D1X  transition  sent     stage:running  ACME-151 -> In Progress
+  01JC9F3K7Q  transition  pending  stage:review   ACME-151 -> In Review
+  $ saarthi ticket send 01JC9F3K7Q
+  Sent: ACME-151 -> In Review
 
-  (after saarthi ship T-0033)
-  01JC9B7   comment     ACME-151  PR opened: https://github.com/acme/billing/pull/48 · Saarthi T-0033   ship.pr_created  pending
-  01JC9B8   link        ACME-151  Link "PR #48: ACME-151: Export invoices as CSV"                    ship.pr_created  pending
-  $ saarthi ticket send 01JC9B7 && saarthi ticket send 01JC9B8
+  (after the approval and ship: PR #88 opened)
+  $ saarthi ticket actions T-0033
+  ID          KIND        STATUS   TRIGGER          WHAT
+  01JC9A2D1X  transition  sent     stage:running    ACME-151 -> In Progress
+  01JC9F3K7Q  transition  sent     stage:review     ACME-151 -> In Review
+  01JC9H8M2V  comment     pending  ship.pr_created  PR opened: github.com/acme/billing/pull/88 · Saarthi T-0033
+  01JC9H8M3W  link        pending  ship.pr_created  PR #88
+  $ saarthi ticket send 01JC9H8M2V && saarthi ticket send 01JC9H8M3W
   Sent: comment added to ACME-151.
   Sent: link added to ACME-151.
 
-  $ saarthi ticket send 01JC9C1
+  $ saarthi ticket send 01JC9C1P6T
   Failed: No transition to In Review from To Do. Possible: In Progress, Done
   ```
   In the UI: T-0033 moves to Review -> card "Move ACME-151 to **In Review**? [Send] [Skip]" -> Send -> the card turns green "Sent" and the chip shows `In Review`.
@@ -259,11 +268,11 @@ At the end of M10 I can:
 - **Example:**
   ```
   $ saarthi tickets list
-  Mine · ACME · 5 tickets · cached, last synced 12m ago
+  Mine · ACME · 6 tickets · cached, last synced 12m ago
   ! Offline: acme.atlassian.net cannot be reached.
 
   $ saarthi tickets list --refresh
-  Mine · ACME · 5 tickets · cached, last synced 2h ago
+  Mine · ACME · 6 tickets · cached, last synced 2h ago
   ! Jira: Token wrong or expired. Run `saarthi jira login --site acme.atlassian.net`.
   ```
   In the UI: banner "Offline · last synced 12m ago" above the list; on a 401, a red banner with the fix command and a **Copy** button.
@@ -287,7 +296,7 @@ At the end of M10 I can:
 
 ### 6.2 Link a task I already started
 1. T-0012 was made by hand. `saarthi task edit T-0012 --ticket ACME-142`.
-2. The chip shows `ACME-142 · In Progress`. The brief stays as it was.
+2. The chip shows `ACME-142 · In Review`. The brief stays as it was, and so does the branch `saarthi/T-0012-add-password-reset-api`. The next PR title is `ACME-142: Add password reset API`. Jira comments are not imported (only Start as task does that).
 
 ## 7. Done when
 
@@ -321,9 +330,9 @@ Use a free Jira Cloud site (TDD section 15).
 3. `saarthi tickets list --view mine`, `--view sprint`, `--view Bugs` -> same tickets as in Jira.
 4. `saarthi tickets list --jql "labels = csv"` -> one-off list, not saved as a view.
 5. `saarthi tickets start ACME-151 --dry-run` -> preview, no task made.
-6. `saarthi tickets start ACME-151` -> T-0033, brief v1 with 4 criteria, "Jira comments" item set to "no".
+6. `saarthi tickets start ACME-151` -> T-0033, brief v1 with 3 criteria, "Jira comments" item (2 comments) set to "no".
 7. Start ACME-151 again -> "already linked to T-0033".
-8. `saarthi task edit T-0012 --ticket ACME-142` -> chip shows; brief unchanged.
+8. `saarthi task edit T-0012 --ticket ACME-142` -> chip shows; brief and branch name unchanged; no research item added.
 9. Move T-0033 to Review -> one pending action; Jira unchanged. Send -> Jira shows In Review.
 10. Remove "In Review" from the workflow, propose again, Send -> fails with the list of possible statuses.
 11. Set `auto_send = true`, move a task to Running -> Jira changes with no click.

@@ -15,7 +15,7 @@
 | **Backend** | Python 3.12 daemon (FastAPI, SQLite) |
 | **Frontend** | Tauri 2 + React + TypeScript |
 | **Agents** | Claude Code CLI, Codex CLI |
-| **v1 time** | ~17 weeks side-project time (M0-M10) |
+| **v1 time** | about 19 weeks side-project time (M0-M10) |
 
 ---
 

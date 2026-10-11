@@ -128,7 +128,14 @@ Goal and Notes: CodeMirror with `@codemirror/lang-markdown` (already a dependenc
 Use M1's task-events read (the one behind `saarthi task show --json`). If M1 has no paged endpoint, M3 adds `GET /tasks/{id}/events?after=&limit=&group=` **(new)**. Timeline filter chips map to event groups (`task`, `run`, `agent`, `workspace`) sent as `group=`.
 
 ### Decision 20 — Docs tab only renders what M2 serves **(new)**
-The Docs tab uses `GET /tasks/{id}/docs` and `GET /tasks/{id}/docs/content?doc=` (M2 Decision 19). M3 adds no endpoint, table or event. `eventRouter.ts` invalidates `["docs", taskId]` on `doc.saved` and on `agent.file_changed` when `path` ends with `.md`; the open doc `["doc", taskId, docId]` is invalidated on the same events. Both events already reach `task:<id>` (it gets all events of that task). Markdown is rendered with `react-markdown` + `remark-gfm`. Raw HTML in markdown is not rendered (no `rehype-raw`), so a doc cannot inject markup. Mermaid is a plain code block (Later, F22.6). The outline is built from the rendered headings (`DocOutline`), with ids from `github-slugger` style slugs made in `lib/slug.ts` (no new library). "Open in editor" calls the existing `POST /projects/{id}/open` (Decision 13) with `task_id`, `target: "editor"` and the doc path; plan docs (data folder) use `source: "data"`, so the call passes the absolute path from the doc list. **Why:** the daemon already decides what a doc is; the UI must not copy that logic (rule 1). A plain code block for Mermaid keeps the bundle small.
+The Docs tab uses `GET /tasks/{id}/docs` and `GET /tasks/{id}/docs/content?doc=` (M2 Decision 19). M3 adds no endpoint, table or event.
+- **Refresh:** `eventRouter.ts` invalidates `["docs", taskId]` on `doc.saved` and on `agent.file_changed` when `path` ends with `.md`. The open doc `["doc", taskId, docId]` is invalidated on the same events. Both events already reach `task:<id>` (it gets all events of that task).
+- **Markdown:** rendered with `react-markdown` + `remark-gfm`. Raw HTML is not rendered (no `rehype-raw`), so a doc cannot inject markup. Mermaid is a plain code block (Later, F22.6).
+- **Outline:** built from the rendered headings (`DocOutline`), with ids from `github-slugger` style slugs made in `lib/slug.ts` (no new library).
+- **Open in editor:** calls the existing `POST /projects/{id}/open` (Decision 13) with `task_id`, `target: "editor"` and the doc path. Plan docs live in the data folder (`source: "data"`), so the call passes the absolute path from the doc list.
+- **Open: data-folder paths:** `/projects/{id}/open` also accepts a path inside the Saarthi data folder, for plan docs only. The daemon resolves the path and checks that it stays inside `~/.local/share/saarthi/tasks/<task_id>/docs/`. Any other path outside the worktree is refused (`400 bad_path`).
+
+**Why:** the daemon already decides what a doc is; the UI must not copy that logic (rule 1). A plain code block for Mermaid keeps the bundle small.
 
 ---
 

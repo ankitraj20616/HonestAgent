@@ -154,8 +154,8 @@ Every existing screen in `core_docs/design/milestones/` is redone in the Wheel s
 
 | Milestone | What changes |
 |---|---|
-| M0–M2 | Spike window and CLI terminals take the new colors and fonts. No app frame (there is no app yet). |
-| M2 | Plan docs in the CLI (`saarthi docs`). |
+| M0–M1 | Spike window and CLI terminals take the new colors and fonts. No app frame (there is no app yet). |
+| M2 | CLI terminals take the new colors and fonts. Plan docs in the CLI (`saarthi docs`). |
 | M3 | The Docs tab in the Task Room. Home becomes the Wheel. Board becomes rim + 8 columns. Task Room gets the journey Wheel and the timeline Stream. Overlays (Run dialog, Command Bar, quick capture) and Settings + Health use the new frame. |
 | M4 | Proof gets the Trust ring (checks + criteria parts). Board cards get the mini ring. |
 | M5 | Review becomes chapters + Second opinion card. The Trust ring adds the second-opinion part. |

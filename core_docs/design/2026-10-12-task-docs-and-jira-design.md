@@ -266,7 +266,7 @@ Provider + ADF 5 h · cache + views + API + CLI 4 h · start/link + brief draft 
 | M3 | `12_task_room_docs.html` | Docs tab: groups, plan open in the center, outline on the right |
 | M10 | `01_tickets_panel.html` | Tickets page: views (Mine / Sprint / Bugs), search, list with status pills and linked task beads, ticket detail on the right, "Start as task" |
 | M10 | `02_start_from_ticket.html` | Dialog: preview of task title, branch, brief draft (goal, AC from the ticket), comments as research; Start |
-| M10 | `03_task_room_ticket.html` | Task Room of T-0012 linked to ACME-142: Jira chip in the header, brief with "from ACME-142" note, Docs count |
+| M10 | `03_task_room_ticket.html` | Task Room of T-0012, linked to ACME-142 later (brief kept): Jira chip in the header, brief with "from ACME-142" note, Docs count |
 | M10 | `04_write_back_confirm.html` | Task moved to Review: card "Move ACME-142 to In Review?" + PR comment and link actions after ship |
 | M10 | `05_settings_jira.html` | Settings -> Jira: site, email, token (hidden), Test, scopes hint, per-project mapping view |
 | M10 | `06_tickets_cli.html` (bare) | `jira login`, `tickets list`, `tickets start`, `ticket actions/send` |
@@ -277,7 +277,7 @@ Provider + ADF 5 h · cache + views + API + CLI 4 h · start/link + brief draft 
 - M6 `05_context_pack_preview`: add the `plan` line.
 
 ### 5.4 Prototype
-New views: `room-docs` (M3 12), `tickets` (M10 01), `ticket-start` (M10 02, dialog), `room-ticket` (M10 03), `ticket-confirm` (M10 04). Clicks: `.tab` "Docs" -> `room-docs`; top bar "Tickets" -> `tickets`; "Start as task" -> `ticket-start`; Start -> `room-ticket`.
+New views: `room-docs` (M3 12), `tickets` (M10 01), `ticket-start` (M10 02, dialog), `room-ticket` (M10 03), `ticket-confirm` (M10 04). Clicks: `.tab` "Docs" -> `room-docs`; top bar "Tickets" -> `tickets`; "Start as task" -> `ticket-start`; "Start task" in the dialog -> `ticket-confirm` (demo jump: the new task T-0033 has run and reached Review); a ticket row ACME-142 -> `room-ticket`; `G T` opens Tickets.
 
 ### 5.5 Sample world
 Project `acme-billing`, Jira site `acme.atlassian.net`, key `ACME`. T-0012 "Add password reset API" is linked to **ACME-142**. New ticket **ACME-151** "Export invoices as CSV" becomes **T-0033**. Other tickets: ACME-139 "Webhook retries", ACME-147 "Invoice PDF footer" (linked to T-0018), ACME-150 "Rate limit login" (bug), ACME-153 "Tax rounding error" (bug).

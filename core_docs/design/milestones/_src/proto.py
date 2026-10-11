@@ -269,10 +269,7 @@ CLICKS: dict[str, list[Rule]] = {
     "room-ticket": [
         Rule(".btn", "ship", "Approve"),
     ],
-    "ticket-confirm": [
-        Rule(".btn", "room-ticket", "Send"),
-        Rule(".btn", "room-ticket", "Skip"),
-    ],
+    "ticket-confirm": [],  # Send / Skip only change the card; the top bar and tabs lead on
 }
 
 ROOM_VIEWS = {"room", "room-terminal", "room-timeline", "room-code", "room-docs", "proof-failed", "proof", "review", "diff",
@@ -319,7 +316,8 @@ SELFTEST: list[dict] = [
     {"key": ["g", "t"], "expect": "tickets"},
     {"click": [".btn", "Start as task"], "expect": "ticket-start"},
     {"click": [".btn", "Start task"], "expect": "ticket-confirm"},
-    {"click": [".btn", "Skip"], "expect": "room-ticket"},
+    {"key": ["g", "t"], "expect": "tickets"},
+    {"click": [".jt-row", "ACME-142"], "expect": "room-ticket"},
 ]
 
 

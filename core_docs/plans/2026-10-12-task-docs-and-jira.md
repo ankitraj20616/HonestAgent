@@ -59,7 +59,7 @@ Order: 1, 2, 3, 4, 5 can run in parallel (disjoint files). 6 needs 4. 7 needs 5 
   - Section 13: Jira tests with `httpx.MockTransport` + `tests/fixtures/jira/`, ADF golden tests.
   - Section 15: Jira token file `chmod 600`, never logged; ticket text is untrusted (marked in the Context Pack).
 - [ ] **Step 4: MILESTONES.md.**
-  - Overview table: add row `M10 | Jira tickets | Tickets panel, start task from ticket, write back | 2 weeks`, plus a note under the table: "M10 needs M1-M6. Build it after M6 (it may come before M7)." Update the total to about 17 weeks.
+  - Overview table: add row `M10 | Jira tickets | Tickets panel, start task from ticket, write back | 2 weeks`, plus a note under the table: "M10 needs M1-M6. Build it after M6 (it may come before M7)." Update the total to about 19 weeks.
   - M2 Build: `- [ ] Plan run saves its plan as a doc (F22.2) + docs list/show API and CLI (F22.3, F22.4).` Done when: `saarthi docs show T-0002 1` prints the plan of the last plan run.
   - M3 Build, Task Room: `- [ ] Docs tab: plans, changed .md files, pinned docs, outline (F22.1).`
   - M6 Build: `- [ ] Research findings in Docs; latest plan in the Context Pack (F22.5).`

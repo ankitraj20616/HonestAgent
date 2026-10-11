@@ -544,7 +544,11 @@ class TicketProvider(Protocol):
 8. Ticket text is marked `<!-- from Jira, not trusted -->` in the Context Pack.
 
 ### 8.9 Ticket write back (M10)
-1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action, only **forward**: the target must come later in `on_stage` order (running < review < shipped) than the ticket's current status, or the current status is not in the mapping. `ship.pr_created` -> one `comment` action + one `link` action.
+1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action, only **forward**:
+   - Stage order is running < review < shipped.
+   - The target stage must come later in that order than the stage that maps to the ticket's current Jira status.
+   - If the current Jira status maps to no stage, the action is proposed.
+   - `ship.pr_created` -> one `comment` action + one `link` action.
 2. Actions are saved as `pending`. Event `ticket.action_proposed`.
 3. Task Room shows a card: "Move ACME-151 to In Review? [Send] [Skip]". Home's Needs You list does not count it.
 4. Send -> `POST /ticket-actions/{id}/send`. For a transition: `transitions(key)`, match `to.name` ignoring case, then `transition()`.
@@ -603,8 +607,8 @@ class TicketProvider(Protocol):
 | GET | `/projects/{id}/tickets?view=&q=&refresh=` | List from cache (refresh first if asked or stale) (M10) |
 | POST | `/projects/{id}/tickets/sync` | `{view?, jql?}` -> refresh now (M10) |
 | GET | `/projects/{id}/tickets/{key}` | One ticket (fresh) + linked task id (M10) |
-| POST | `/projects/{id}/tickets/{key}/start` | Make a task -> `201 {task}`; 409 `ticket_linked {task_id}` (M10) |
-| POST | `/tasks/{id}/ticket` | `{key}` link an existing task (M10) |
+| POST | `/projects/{id}/tickets/{key}/start` | Body `{dry_run?}`. Make a task -> `201 {task}` (`dry_run` -> `200` preview, nothing saved); 409 `ticket_linked {task_id}` (M10) |
+| POST | `/tasks/{id}/ticket` | `{key}` links an existing task, `{key: null}` unlinks it (M10) |
 | GET | `/tasks/{id}/ticket-actions` | List write-back actions (M10) |
 | POST | `/ticket-actions/{id}/send` or `/skip` | Decide (M10) |
 
@@ -716,7 +720,7 @@ email = "me@acme.com"
 ### 11.2 Task Room
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│ T-0042  Add password reset API  [ACME-142]  [Running ●]  claude · 12m · $0.42  │
+│ T-0012  Add password reset API  [ACME-142]  [Running ●]  claude · 12m · $0.42  │
 ├───────────────┬────────────────────────────────────────────────────────────────┤
 │ Brief         │ Stream | Terminal | Proof | Review | Code | Docs | Timeline    │
 │ Research      │                                                                │

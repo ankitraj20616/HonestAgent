@@ -256,24 +256,29 @@ After M2:
   ```
   $ saarthi run T-0012 --agent claude --mode plan
   ...
-  10:41:07  msg   Plan ready: 6 steps, 3 files to touch, 2 risks.
-  10:41:07  END   done · 2m03s · $0.21 · checkpoint 1
-  Plan saved: plan-01JC5...md
-  Task T-0012 -> Ready.
+  10:41:02  msg   Plan ready: 5 steps, 1 open question (table or Redis).
+  10:41:05  END   run done · 2m03s · $0.09
+  Plan saved: plan-01JC5Q.md (6,120 chars) · saarthi docs show T-0012 1
 
+  (20 min later: build run R-0027 added a notes file on the task branch)
   $ saarthi docs list T-0012
-  #  Kind     Title                                  Path                                          Size    Updated
-  1  plan     Plan - Add password reset API          plan-01JC5...md                               6.1 KB  10:41
-  2  changed  Password reset API (added)             core_docs/plans/T-0012-reset-api.md           2.3 KB  10:52
-  3  pinned   CLAUDE.md                              CLAUDE.md                                     3.0 KB  09:10
-  4  pinned   AGENTS.md                              AGENTS.md                                     1.4 KB  09:10
-  5  pinned   Functional Specifications              core_docs/FUNCTIONAL_SPECIFICATIONS.md        88 KB   Oct 11
-  6  pinned   Tech Design Document                   core_docs/TDD-tech-design-doc.md              120 KB  Oct 11
-  1 plan · 1 changed file · 4 pinned
+  #  kind     title                            path                                    size
+  1  plan     Plan - Add password reset API    plan-01JC5Q.md                          6 KB
+  2  changed  T-0012 reset API notes           core_docs/plans/T-0012-reset-api.md     2 KB   added
+  3  pinned   acme-billing - rules for agents  CLAUDE.md                              3 KB
+  4  pinned   Agent notes                      AGENTS.md                               2 KB
+  5  pinned   Functional specifications        core_docs/FUNCTIONAL_SPECIFICATIONS.md  31 KB
+  6  pinned   Technical design                 core_docs/TDD-tech-design-doc.md        34 KB
+  6 docs · 1 plan · 1 changed · 4 pinned
 
   $ saarthi docs show T-0012 1
+  plan-01JC5Q.md · 6,120 chars · claude · run 01JC5Q · 10:41
   # Plan - Add password reset API
-  1. Add a `reset_tokens` table ...
+  ## Goal
+  Let a user reset a forgotten password by email. One-time link, valid for 30 minutes. ...
+  ## Steps
+  1. Token model. Add app/models/reset_token.py: user_id, token_hash, expires_at, used_at.
+  ...
   ```
 - **Rules:**
   - Four kinds of doc exist; M2 owns three: `plan`, `changed`, `pinned`. The fourth, `research`, comes in M6.

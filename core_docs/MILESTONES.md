@@ -28,7 +28,7 @@
 | M10 | Jira tickets | Tickets panel, start task from ticket, write back | 2 weeks |
 | Later | Phone glance, voice capture, more agents, team mode | - | - |
 
-Total for v1: about **17 weeks** of side-project time (plus buffer: plan for ~4 months).
+Total for v1: about **19 weeks** of side-project time (plus buffer: plan for ~4 months).
 
 > M10 needs M1-M6. Build it after M6 (it may come before M7).
 
@@ -271,7 +271,7 @@ Total for v1: about **17 weeks** of side-project time (plus buffer: plan for ~4 
 - [ ] `JiraCloudProvider` with `httpx`: myself, search (POST, `nextPageToken`), issue, transitions, comment, remote link. Retry on 429.
 - [ ] ADF -> markdown and markdown -> ADF (`adf.py`) with golden tests. Unknown nodes are kept.
 - [ ] Jira site setup: token file `chmod 600`, `saarthi jira login`, `saarthi jira status` (F23.1).
-- [ ] Migration: `tickets` cache, `ticket_actions`, `tasks.ticket_key`.
+- [ ] Migration: `tickets` cache, `ticket_views`, `ticket_actions`, `tasks.ticket_key`.
 - [ ] Ticket cache + views (Mine, Sprint, saved JQL) + stale refresh + offline view (F23.2, F23.6).
 - [ ] Start a task from a ticket: brief draft, comments as research, branch and PR name (F3.3, F23.3).
 - [ ] Link an existing task: `saarthi task edit T-0012 --ticket ACME-142`.

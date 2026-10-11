@@ -165,7 +165,14 @@ Each raw agent stdout line is written to `logs/runs/<run_id>.jsonl` as `{"kind":
 `GET /tasks/{id}` and task list items gain `active_run: {id, agent, mode, status} | null`. Run responses gain a computed `needs_input: {kind, question, options, live} | null` (from the latest `agent.needs_input` event). **Why:** the board card and the "Needs You" list in M3 need them without extra calls. No new columns.
 
 ### Decision 19 — Plan docs live in the data folder **(new)**
-A finished `plan` run writes its final message to `<DATA_DIR>/tasks/<task_id>/docs/plan-<run_id>.md` (F22.2), not to the worktree. **Why:** a plan run never touches the worktree (F5.2 rule, tested with the read-only flags), and the file must survive worktree cleanup. The `docs/` module is Saarthi's own code, not the repo's docs folder. Docs are files found at read time: no new table. `changed` docs come from git (`git diff --name-status <base>...HEAD -- '*.md'` and `git status --porcelain -- '*.md'`, list args, in the worktree). `pinned` docs come from `[docs] pinned` in `project.toml` (default `DEFAULT_PINNED_DOCS`), read from the worktree, or from the main checkout if the worktree does not exist yet. A file in both sets shows once, as `changed`, with `pinned: true`. Every path is resolved and must stay inside the worktree / data folder (`..` and symlinks out are refused). Doc IDs: `plan:<run_id>`, `wt:<path>`, `pin:<path>`; `research:<item_id>` comes in M6.
+A finished `plan` run writes its final message to `<DATA_DIR>/tasks/<task_id>/docs/plan-<run_id>.md` (F22.2), not to the worktree.
+- **Why:** a plan run never touches the worktree (F5.2 rule, tested with the read-only flags), and the file must survive worktree cleanup.
+- The `docs/` module is Saarthi's own code, not the repo's docs folder. Docs are files found at read time: no new table.
+- `changed` docs come from git (`git diff --name-status <base>...HEAD -- '*.md'` and `git status --porcelain -- '*.md'`, list args, in the worktree).
+- `pinned` docs come from `[docs] pinned` in `project.toml` (default `DEFAULT_PINNED_DOCS`), read from the worktree, or from the main checkout if the worktree does not exist yet.
+- A file in both sets shows once, as `changed`, with `pinned: true`.
+- Every path is resolved and must stay inside the worktree / data folder (`..` and symlinks out are refused).
+- Doc IDs: `plan:<run_id>`, `wt:<path>`, `pin:<path>`; `research:<item_id>` comes in M6.
 
 ---
 
@@ -277,6 +284,8 @@ All under `/api/v1`, bearer token, as in M1.
 | GET | `/tasks/{id}/docs` | - | `[{doc_id, kind, title, path, source: "data"\|"worktree"\|"main", size, updated_at, change: "added"\|"modified"\|null, pinned}]`; order and rules in Decision 19; `title` = first `# ` heading, else file name |
 | GET | `/tasks/{id}/docs/content` | `?doc=<doc_id>` | `{doc_id, markdown, size, updated_at, too_big}`; `400 bad_path`, `404 doc_not_found` |
 | GET | `/tasks/{id}/workspace` | - | `{exists, branch, path, base, ahead, behind, changed_files, last_checkpoint}` |
+
+In the docs list, `path` is the absolute data-folder path for plan docs (`source: "data"`) and the path relative to the worktree (or main checkout) for the other kinds.
 
 CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
 
