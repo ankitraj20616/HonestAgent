@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M4 · Proof Card - green</title>
-<meta name="description" content="After fix round 1 every required check passes and T-0012 moved to Review by itself. Stats: 6 files, +171 −4, 7 tests added. Brief coverage filled by a read-only side run; one item changed by me before Confirm. History keeps the red card. F7.3, F7.4, F2.5">
+<title>Saarthi M4 · Proof · green</title>
+<meta name="description" content="Proof tab after fix round 1: Trust ring (checks + criteria; second opinion arrives in M5), stats, checks, brief criteria to confirm. The gate passed and the task moved to Review. F7.3, F7.4, F7.7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -607,243 +607,66 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
-  <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
+  <div class="cost-box"><span class="mono">$4.80</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0027 · fixing"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .kv3 > .hl { border-color: var(--accent); background: var(--accent-soft); }
-  .room-side .crit { font-size: 12.5px; }
-  .tab .tdot { width: 6px; height: 6px; }
-  .side-run .tag { font-size: 10.5px; padding: 0 4px; }
-  /* proof tab */
-  .pf { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-  .pf-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
-  .pf-head.ok { border-color: var(--green); }
-  .pf-head.bad { border-color: var(--red); }
-  .pf-head.info { border-color: var(--blue); }
-  .pf-head .bdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--line-strong); }
-  .pf-head .bdot.green { background: var(--green); } .pf-head .bdot.red { background: var(--red); } .pf-head .bdot.blue { background: var(--blue); }
-  .pf-head h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
-  .pf-head .sub { font-size: 13px; color: var(--muted); }
-  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-  .pf-stat { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .pf-stat .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-  .pf-stat .v { font-family: 'JetBrains Mono', monospace; font-size: 18px; white-space: nowrap; }
-  .pf-stat .skeleton { width: 54px; height: 14px; margin: 6px 0 4px; }
-  .panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
-  .panel.open { overflow: visible; }
-  .panel-h { border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg-side); border-bottom: 1px solid var(--line); }
-  .panel-h .upper { color: var(--muted); }
-  .ck { border-bottom: 1px solid var(--line); }
-  .ck:last-child { border-bottom: none; }
-  .ck-row { display: grid; grid-template-columns: 12px 14px 64px minmax(0, 1fr) 70px 118px; gap: 10px; align-items: center; padding: 9px 14px; font-size: 13px; }
-  .ck-row .tw { color: var(--faint); font-size: 11px; }
-  .ck-row .cmd { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ck-row .req { font-size: 12px; color: var(--muted); }
-  .ck-row .res { font-size: 12px; text-align: right; font-weight: 600; white-space: nowrap; }
-  .ck-row .dot { width: 9px; height: 9px; }
-  .tail { margin: 0 14px 12px 50px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .tail-bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); background: var(--bg-side); border-bottom: 1px solid var(--line); }
-  .tail pre { margin: 0; padding: 9px 12px; background: var(--term-bg); color: var(--term-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; font-variant-ligatures: none; }
-  .tail .r { color: var(--red); } .tail .g { color: var(--green); } .tail .d { color: var(--faint); } .tail .b { font-weight: 600; }
-  .cov { display: grid; grid-template-columns: 22px minmax(0, 1fr) 128px; gap: 10px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
-  .cov:last-child { border-bottom: none; }
-  .cov .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--faint); padding-top: 1px; }
-  .cov .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .pick { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
-  .pick .car { color: var(--faint); font-weight: 400; }
-  .pick.met { color: var(--green); } .pick.notsure { color: var(--accent-text); } .pick.notmet { color: var(--red); }
-  .pick.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .pick-wrap { position: relative; }
-  .menu { position: absolute; right: 0; top: calc(100% + 4px); width: 150px; z-index: 5; padding: 4px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-sm); }
-  .menu div { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; }
-  .menu div.on { background: var(--chip-on); }
-  .hist { display: grid; grid-template-columns: 12px 62px 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-  .hist:last-child { border-bottom: none; }
-  .hist.on { background: var(--surface-2); }
-  .ovr { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 8px; }
-  /* review tab */
-  .rv { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-  .rv-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .rv-top h2 { font-size: 17px; font-weight: 600; }
-  .riskbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .rflag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--red); color: var(--red); white-space: nowrap; }
-  .rflag.sm { font-size: 11px; padding: 1px 7px; }
-  .grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
-  .grp-h { display: flex; flex-direction: column; gap: 5px; padding: 12px 16px; }
-  .grp-h .t { font-weight: 600; font-size: 14.5px; }
-  .grp-h .tw { color: var(--faint); font-size: 12px; width: 12px; }
-  .grp-why { font-size: 13.5px; color: var(--text-2); padding-left: 22px; text-wrap: pretty; }
-  .grp-files { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); padding-left: 22px; }
-  .hunks { border-top: 1px solid var(--line); padding: 6px 0 8px; background: var(--panel); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
-  .hunks .hh { padding: 2px 16px; color: var(--blue); }
-  .hunks .dl { padding: 0 16px; white-space: pre; color: var(--muted); }
-  .hunks .dl.add { background: var(--green-soft); color: var(--diff-add); }
-  .hunks .dl.del { background: var(--red-soft); color: var(--diff-del); }
-  .cmt-badge { font-size: 11.5px; color: var(--accent-text); white-space: nowrap; }
-  .so { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-  .so h3 { font-size: 14.5px; font-weight: 600; }
-  .decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+/* base.css .review (Review tab layout) also matches the "stage review" pill; keep the pill a pill */
+.room-head .stage.review { display: inline-flex; flex: none; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage review">Review</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">28m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$1.05</span></span>
-    <button class="btn primary">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 6 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="74.6 44.8" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-ok" cx="9.6" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Review · 6 of 8</b>Proof is green · waiting for your eyes</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>28m</b></span><span class="room-meta">Cost <b>$0.95</b></span>
+    <button class="btn">Run agent</button>
   </div>
-  <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
-        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
-        <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>5 ahead</div>
-          <div><div class="k">Changed</div>6 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0028</span></div>
-        </div>
-        <div class="row wrap" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0029</span> · Coverage <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:06 · 24s · $0.02</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0028</span> · Fix</div><div class="faint" style="font-size:11.5px">11:04 · 2m · $0.11</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab on">Proof <span class="dot tdot green"></span></button>
-        <button class="tab">Code <span class="n">6</span></button>
-        <button class="tab">Timeline</button>
+  <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab on">Proof <span class="dot ok"></span></span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
+  <div class="proof">
+    <div class="proof-l">
+      <svg class="trust" width="250" height="250" viewBox="0 0 250 250" role="img" aria-label="Trust score 78"><circle class="tr-bg" cx="125" cy="125" r="100"/><circle class="tr-c" cx="125" cy="125" r="100" stroke-dasharray="314.2 314.2" transform="rotate(-90.0 125 125)"/><circle class="tr-k" cx="125" cy="125" r="100" stroke-dasharray="175.9 452.4" transform="rotate(90.0 125 125)"/><text class="tr-num" x="125" y="137" text-anchor="middle">78</text><text class="tr-lbl" x="125" y="161" text-anchor="middle">TRUST SCORE</text></svg>
+      <div class="legend">
+        <div class="lg-row"><i class="sw-ok"></i><span>Required checks · 3 of 3 pass</span><b>50 / 50</b></div>
+        <div class="lg-row"><i class="sw-road"></i><span>Brief criteria · 4 met, 1 not sure</span><b>28 / 35</b></div>
+        <div class="lg-row"><i class="sw-off"></i><span class="faint">Second opinion · arrives in M5</span><b class="faint">0 / 15</b></div>
       </div>
-      <div class="tab-body">
-        <div class="pf">
-        <div class="pf-head ok">
-          <span class="bdot green"></span>
-          <div class="grow" style="min-width:240px">
-            <h2>All required checks green · 3 of 3 pass</h2>
-            <div class="sub">Card #2 after fix run R-0028 (round 1). The task moved to Review by itself at 11:06.</div>
-          </div>
-          <button class="btn">Run checks</button>
-          <button class="btn primary">Open Review</button>
-        </div>
-        <div class="pf-stats">
-          <div class="pf-stat"><div class="k">Files changed</div><div class="v">6</div></div>
-          <div class="pf-stat"><div class="k">Lines vs main</div><div class="v">+171 −4</div></div>
-          <div class="pf-stat"><div class="k">Tests added</div><div class="v green">7</div></div>
-          <div class="pf-stat"><div class="k">Run cost</div><div class="v">$0.95</div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-h"><span class="upper">Checks</span><span class="mono xs faint">.saarthi/project.toml</span><span class="grow"></span><span class="xs faint">Card #2 · 11:06</span></div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▸</span><span class="dot green"></span>
-              <span class="strong">lint</span>
-              <span class="cmd">uv run ruff check .</span>
-              <span class="req">required</span>
-              <span class="res green">Pass · 0.3s</span>
-            </div>
-          </div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▸</span><span class="dot green"></span>
-              <span class="strong">tests</span>
-              <span class="cmd">uv run pytest -q</span>
-              <span class="req">required</span>
-              <span class="res green">Pass · 6.6s</span>
-            </div>
-          </div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▸</span><span class="dot green"></span>
-              <span class="strong">types</span>
-              <span class="cmd">uv run pyright</span>
-              <span class="req">optional</span>
-              <span class="res green">Pass · 4.1s</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel open">
-          <div class="panel-h"><span class="upper">Brief coverage</span><span class="xs faint">agent view · Claude · side run R-0029 · not confirmed yet</span></div>
-          <div class="cov"><span class="n">1</span><div><div class="pretty">POST /auth/password-reset sends an email with a single-use link</div><div class="note">request_reset() in app/auth/reset.py; test_reset_sends_email</div></div><span class="pick met">Met<span class="car">▾</span></span></div>
-          <div class="cov"><span class="n">2</span><div><div class="pretty">The link expires after 30 minutes</div><div class="note">RESET_TOKEN_TTL_MINUTES = 30; test_token_expires_after_30_min</div></div><span class="pick met">Met<span class="car">▾</span></span></div>
-          <div class="cov"><span class="n">3</span><div><div class="pretty">A used or expired token returns 410</div><div class="note">TokenInvalid → 410 in routes.py; tests for used and expired tokens</div></div><span class="pick met">Met<span class="car">▾</span></span></div>
-          <div class="cov"><span class="n">4</span><div><div class="pretty">Unknown email still returns 202 (no user enumeration)</div><div class="note">Same 202 for unknown emails; test_unknown_email_returns_202</div></div><span class="pick met">Met<span class="car">▾</span></span></div>
-          <div class="cov"><span class="n">5</span><div><div class="pretty">Tests cover all of the above</div><div class="note">Agent: “No test checks that an unknown email sends no mail.”</div></div><span class="pick notsure mine">Not sure<span class="car">▾</span></span></div>
-          <div class="row between" style="padding:10px 14px;background:var(--bg-side);border-top:1px solid var(--line);border-radius:0 0 10px 10px">
-            <span class="small muted">Coverage never blocks Review. It is information for you.</span>
-            <div class="row"><button class="btn sm ghost">Ask again</button><button class="btn sm primary">Confirm coverage</button></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-h"><span class="upper">History</span><span class="grow"></span><span class="xs faint">one card per check batch</span></div>
-          <div class="hist on"><span class="dot green"></span><span class="mono">Card #2</span><span class="mono faint">11:06</span><span class="ellipsis text2">after R-0028 fix · all required pass</span><span class="xs faint nowrap">fix rounds reset to 0</span></div>
-          <div class="hist"><span class="dot red"></span><span class="mono">Card #1</span><span class="mono faint">11:02</span><span class="ellipsis text2">after R-0027 build · tests failed</span><span class="xs faint nowrap">view</span></div>
-        </div>
+      <div class="gate"><b>Gate passed · moved to Review by itself</b>All required checks are green. The Trust score helps you decide; it never blocks you.</div>
+    </div>
+    <div class="proof-r">
+      <div class="stats4">
+        <div><b>6</b><span>files changed</span></div>
+        <div><b><span class="ok-t">+171</span> <span class="bad-t" style="font-size:18px">−4</span></b><span>lines</span></div>
+        <div><b>7</b><span>tests added</span></div>
+        <div><b>1</b><span>fix round used</span></div>
+      </div>
+      <div><div class="upper">Checks · card #2 · 11:06</div>
+        <div class="ck-row"><span class="st">✓</span><b>lint</b><span class="cmd">uv run ruff check .</span><span class="req">required</span><span class="tm">0.3s</span></div>
+        <div class="ck-row"><span class="st">✓</span><b>tests</b><span class="cmd">uv run pytest -q</span><span class="req">required</span><span class="tm">6.4s</span></div>
+        <div class="ck-row"><span class="st">✓</span><b>types</b><span class="cmd">uv run pyright</span><span class="req">optional</span><span class="tm">4.1s</span></div>
+      </div>
+      <div><div class="row between"><span class="upper">Brief criteria · filled by side run R-0029, you confirm</span><button class="btn sm primary">Confirm coverage</button></div>
+        <div class="card pad-0 mt-8">
+          <div class="crit-row"><span>POST /auth/password-reset sends a single-use link</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>The link expires after 30 minutes</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>A used or expired token returns 410</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>Unknown email still returns 202 (no user enumeration)</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>Tests cover all of the above <span class="faint small">· "no test for the email text"</span></span><span class="seg"><span>Met</span><span class="on ns">Not sure</span><span>Not met</span></span></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M4 3/6</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M4 · 3/6 · Proof Card - green</span><span class="sep">|</span><a href="02_proof_failed.html">&larr; prev</a><a href="04_board_check_dots.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M4 3/6</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M4 · 3/6 · Proof · green</span><span class="sep">|</span><a href="02_proof_failed.html">&larr; prev</a><a href="04_board_check_dots.html">next &rarr;</a></span></div>
 </body>
 </html>
