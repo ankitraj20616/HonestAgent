@@ -1,0 +1,156 @@
+<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.12", "slots": "2 of 4", "title": "Review tab - Change Story", "note": "When T-0012 enters Review, a read-only side run groups the diff by purpose: 4 groups with 1-2 line explanations, files and sizes. Rule-based risk chips (auth, migration, config) sit on top and on each group. Story / Files toggle, Second Opinion, Approve / Reject; Ship stays off until approved. F10.1, F10.2, F10.3, F10.5, F10.6"} -->
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage review">Review</span>
+    <div class="grow"></div>
+    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">28m</span></span>
+    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$1.08</span></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <aside class="room-side">
+      <section class="side-sec">
+        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
+        <div class="lbl">Goal</div>
+        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="lbl mt-4">Acceptance criteria</div>
+        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
+        <div class="lbl mt-4">Notes</div>
+        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
+      </section>
+
+      <section class="side-sec" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
+        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+        <div class="kv3">
+          <div><div class="k">vs main</div>5 ahead</div>
+          <div><div class="k">Changed</div>6 files</div>
+          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0028</span></div>
+        </div>
+        <div class="row wrap" style="gap:5px">
+          <button class="btn xs">Open folder</button>
+          <button class="btn xs">Terminal here</button>
+          <button class="btn xs">Open in my editor</button>
+        </div>
+      </section>
+
+      <section class="side-sec" style="gap:6px">
+        <h3 style="margin-bottom:4px">Runs</h3>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0030</span> · Story <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:07 · 41s · $0.03</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0029</span> · Coverage <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:06 · 24s · $0.02</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0028</span> · Fix</div><div class="faint" style="font-size:11.5px">11:04 · 2m · $0.11</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab">Proof <span class="dot tdot green"></span></button>
+        <button class="tab on">Review</button>
+        <button class="tab">Code <span class="n">6</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="rv">
+        <div class="rv-top">
+          <h2>Change Story</h2>
+          <span class="small muted">6 files · <span class="green">+171</span> <span class="red">−4</span> · 4 groups · grouped by <span class="agent sm cl">CL</span> Claude</span>
+          <div class="grow"></div>
+          <button class="btn sm ghost">Rebuild</button>
+          <div class="seg"><button class="on">Story</button><button>Files</button></div>
+        </div>
+        <div class="mono xs faint" style="margin-top:-6px">Story #1 · from checkpoint ck-0028 · base origin/main 4e1d0c2 · built 11:07 by side run R-0030</div>
+        <div class="riskbar">
+          <span class="upper" style="margin-right:2px">Risk flags</span>
+          <span class="rflag">auth · 3 files</span><span class="rflag">migration · 1</span><span class="rflag">config · 1</span>
+          <span class="grow"></span>
+          <span class="xs faint">no deleted file · no new dependency · no big file</span>
+        </div>
+        <div class="grp">
+          <div class="grp-h">
+            <div class="row wrap" style="gap:10px"><span class="tw">▾</span><span class="t">New API endpoints</span><span class="rflag sm">auth</span><span class="grow"></span><span class="mono small muted">+58 −4 · 3 hunks</span><button class="btn xs ghost">Comment</button></div>
+            <div class="grp-why">Two endpoints: ask for a reset link, and confirm with a new password. Tokens are hashed with SHA-256 before they are saved.</div>
+            <div class="grp-files">app/auth/reset.py · app/auth/routes.py</div>
+          </div>
+          <div class="hunks">
+            <div class="hh">@@ app/auth/routes.py  -38,7 +39,18 @@</div>
+            <div class="dl ">     return login_user(body.email, body.password, db)</div>
+            <div class="dl "> </div>
+            <div class="dl "> </div>
+            <div class="dl del">-# TODO: real password reset (ticket #4821)</div>
+            <div class="dl del">-@router.post("/forgot-password")</div>
+            <div class="dl del">-def forgot_password():</div>
+            <div class="dl del">-    raise HTTPException(501, "Email support to reset your password")</div>
+            <div class="dl add">+@router.post("/password-reset", status_code=202)</div>
+            <div class="dl add">+def password_reset(body: reset.ResetRequest, db: DbSession):</div>
+            <div class="dl add">+    """Send a reset link. Same answer for unknown emails."""</div>
+            <div class="dl add">+    reset.request_reset(body.email, db)</div>
+            <div class="dl add">+    return {"status": "ok"}</div>
+            <div class="hh" style="color:var(--accent-text);background:transparent">2 more hunks · Open in diff view →</div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="grp-h">
+            <div class="row wrap" style="gap:10px"><span class="tw">▸</span><span class="t">Database change</span><span class="rflag sm">migration</span><span class="grow"></span><span class="mono small muted">+31 · 2 hunks</span><button class="btn xs ghost">Comment</button></div>
+            <div class="grp-why">New table password_reset_tokens (user_id, token_hash, expires_at, used_at) with an index on token_hash.</div>
+            <div class="grp-files">migrations/versions/0042_password_reset_tokens.py · app/models/password_reset.py</div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="grp-h">
+            <div class="row wrap" style="gap:10px"><span class="tw">▸</span><span class="t">Tests</span><span class="rflag sm">auth</span><span class="grow"></span><span class="mono small muted">+80 · 1 hunk</span><button class="btn xs ghost">Comment</button></div>
+            <div class="grp-why">7 tests: happy path, expired token, reused token, unknown email, weak password, and two for the email text.</div>
+            <div class="grp-files">tests/auth/test_password_reset.py</div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="grp-h">
+            <div class="row wrap" style="gap:10px"><span class="tw">▸</span><span class="t">Config</span><span class="rflag sm">config</span><span class="grow"></span><span class="mono small muted">+2 · 1 hunk</span><button class="btn xs ghost">Comment</button></div>
+            <div class="grp-why">New setting RESET_TOKEN_TTL_MINUTES, default 30.</div>
+            <div class="grp-files">app/settings.py</div>
+          </div>
+        </div>
+        <div class="so">
+          <div class="row wrap" style="gap:10px">
+            <h3>Second opinion</h3>
+            <span class="small muted">Claude built it. Codex reviews it, read-only. It cannot change files.</span>
+            <div class="grow"></div>
+            <span class="xs faint"><span class="dot green" style="width:6px;height:6px"></span> codex ready</span>
+            <button class="btn">Get second opinion</button>
+          </div>
+        </div>
+        <div class="decide">
+          <span class="small muted grow">Approve is saved on this story. If the code changes, the new story needs a new approval.</span>
+          <button class="btn danger" style="background:transparent">Reject…</button>
+          <button class="btn ok">Approve</button>
+          <button class="btn disabled" title="Approve the review first">Ship…</button>
+        </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

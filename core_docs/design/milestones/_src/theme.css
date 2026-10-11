@@ -1,0 +1,109 @@
+/* Saarthi design tokens.
+   Dark values are taken 1:1 from "Saarthi Prototype.html".
+   Light values are the same roles on warm paper. Screens use ONLY these variables. */
+
+/*@dark*/
+:root {
+  --bg: #121110;
+  --bg-side: #161513;
+  --bg-header: #141311;
+  --panel: #151412;
+  --surface: #191816;
+  --surface-2: #211F1C;
+  --surface-3: #24221F;
+  --surface-hover: #262420;
+  --chip-on: #2A2723;
+
+  --line: #2D2A26;
+  --line-strong: #3A3631;
+  --line-hover: #4A463F;
+
+  --text: #ECE8E1;
+  --text-2: #D9D3C9;
+  --muted: #A39D93;
+  --faint: #6F6A62;
+
+  --accent: oklch(0.78 0.13 70);
+  --accent-text: oklch(0.78 0.13 70);
+  --on-accent: #1A1408;
+  --accent-soft: rgba(232, 170, 80, 0.08);
+  --accent-faint: rgba(232, 170, 80, 0.03);
+  --accent-line: rgba(232, 170, 80, 0.18);
+  --accent-glow: 0 0 22px -6px oklch(0.78 0.13 70);
+
+  --green: oklch(0.76 0.13 150);
+  --red: oklch(0.72 0.14 25);
+  --blue: oklch(0.74 0.11 245);
+  --green-soft: rgba(120, 200, 140, 0.08);
+  --red-soft: rgba(230, 120, 100, 0.08);
+  --blue-soft: rgba(120, 160, 230, 0.08);
+  --diff-add: #BFE3C6;
+  --diff-del: #E8B4A8;
+
+  --agent-claude: oklch(0.78 0.13 70);
+  --agent-codex: oklch(0.74 0.11 245);
+  --agent-ink: #14120F;
+
+  --term-bg: #0C0B0A;
+  --term-text: #D9D3C9;
+  --term-bar: #1A1917;
+
+  --overlay: rgba(8, 7, 6, 0.66);
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+/*@end*/
+
+/*@light*/
+:root {
+  --bg: #F7F5F1;
+  --bg-side: #F0EDE7;
+  --bg-header: #FBFAF7;
+  --panel: #FAF8F4;
+  --surface: #FFFFFF;
+  --surface-2: #F4F1EC;
+  --surface-3: #ECE7DF;
+  --surface-hover: #EFEBE4;
+  --chip-on: #E8E3DA;
+
+  --line: #E3DDD3;
+  --line-strong: #D3CCC0;
+  --line-hover: #B9B1A4;
+
+  --text: #1F1C18;
+  --text-2: #37322C;
+  --muted: #6B645A;
+  --faint: #948D82;
+
+  --accent: oklch(0.78 0.13 70);
+  --accent-text: oklch(0.54 0.13 60);
+  --on-accent: #1A1408;
+  --accent-soft: rgba(205, 135, 35, 0.09);
+  --accent-faint: rgba(205, 135, 35, 0.03);
+  --accent-line: rgba(205, 135, 35, 0.28);
+  --accent-glow: 0 0 0 3px rgba(205, 135, 35, 0.16);
+
+  --green: oklch(0.56 0.13 150);
+  --red: oklch(0.55 0.17 28);
+  --blue: oklch(0.54 0.12 250);
+  --green-soft: rgba(40, 150, 80, 0.09);
+  --red-soft: rgba(200, 60, 40, 0.08);
+  --blue-soft: rgba(50, 100, 200, 0.08);
+  --diff-add: #1C6B33;
+  --diff-del: #9A2E1E;
+
+  --agent-claude: oklch(0.82 0.12 72);
+  --agent-codex: oklch(0.82 0.08 245);
+  --agent-ink: #14120F;
+
+  --term-bg: #FBFAF7;
+  --term-text: #2A2622;
+  --term-bar: #EEEAE3;
+
+  --overlay: rgba(40, 34, 26, 0.32);
+  --shadow: 0 24px 64px rgba(60, 45, 20, 0.18);
+  --shadow-sm: 0 4px 16px rgba(60, 45, 20, 0.12);
+  color-scheme: light;
+}
+/*@end*/

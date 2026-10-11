@@ -1,0 +1,152 @@
+<!-- {"title": "Context Pack preview", "note": "Preview from the run dialog: the exact .saarthi/context/TASK.md the agent will read. Section table, keyword scores for memory files, the 20,000-char memory budget, research items in and out. F5.3, F12.2, F4.6", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.23", "slots": "2 of 4"} -->
+<style>
+  .cp { width: min(1200px, calc(100vw - 32px)); max-height: 94vh; }
+  .cp-body { display: grid; grid-template-columns: 440px minmax(0, 1fr); min-height: 0; height: 664px; border-top: 1px solid var(--line); }
+  .cp-left { overflow: auto; padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 14px; border-right: 1px solid var(--line); }
+  .cp-right { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--panel); }
+  .sec { display: grid; grid-template-columns: 74px minmax(0, 1fr) 62px; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .sec .n { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .mm { display: grid; grid-template-columns: minmax(0, 1fr) 36px 52px 50px; gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12px; }
+  .mm .n { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .mm.head { color: var(--faint); font-size: 11px; border-top: none; padding-top: 0; }
+  .kw { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface-3); color: var(--text-2); }
+  .st { font-size: 11px; font-weight: 600; }
+  .md .ln > span:last-child { white-space: pre-wrap; }
+  .md .h { color: var(--accent-text); font-weight: 600; }
+  .md .h2 { color: var(--blue); font-weight: 600; }
+  .fold { display: grid; grid-template-columns: 44px minmax(0, 1fr); }
+  .fold > span:last-child { margin: 1px 0; padding: 0 8px; width: fit-content; border-radius: 4px; background: var(--surface-3); color: var(--muted); font-size: 11.5px; }
+  .jump { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+  .jump .chip { padding: 2px 9px; font-size: 11.5px; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage ready">Ready</span>
+    <div class="grow"></div>
+    <span class="small muted">Time <span class="mono" style="color:var(--text)">17m</span></span>
+    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.11</span></span>
+    <button class="btn primary" style="padding:7px 14px">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <section class="col" style="gap:10px">
+        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved 10:38</span></div>
+        <div class="xs faint">Goal</div>
+        <div style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+      </section>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Brief</button><button class="tab">Research <span class="n">7</span></button></div>
+      <div class="tab-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" style="padding-top:3vh">
+  <div class="modal cp">
+    <div class="modal-head" style="padding-bottom:12px">
+      <div class="grow">
+        <div class="row"><h2>Context Pack preview</h2><span class="mono small muted">.saarthi/context/TASK.md</span></div>
+        <div class="small muted mt-4">The exact text the agent reads first. The preview and the run use the same builder.</div>
+      </div>
+      <span class="tag">build</span><span class="agent cl">CL</span><span class="tag amber">plan-then-build</span>
+      <span class="mono" style="font-size:15px;margin-left:8px">27,190 <span class="small muted">chars</span></span>
+    </div>
+    <div class="cp-body">
+      <div class="cp-left">
+        <div class="col" style="gap:0">
+          <div class="upper" style="margin-bottom:6px">Sections, in order</div>
+          <div class="sec"><span class="muted">Header</span><span>T-0012 · build · claude</span><span class="n">180</span></div>
+          <div class="sec"><span class="muted">Playbook</span><span>plan-then-build <span class="tag">builtin</span> <span class="green xs">0 warnings</span></span><span class="n">1,120</span></div>
+          <div class="sec"><span class="muted">Brief</span><span>version 3</span><span class="n">1,480</span></div>
+          <div class="sec"><span class="muted">Research</span><span>5 of 7 items <span class="faint">(2 switched off)</span></span><span class="n">4,210</span></div>
+          <div class="sec"><span class="muted">Listed</span><span>4 files, by path only</span><span class="n">240</span></div>
+          <div class="sec"><span class="muted">Memory</span><span>3 inlined, 2 listed</span><span class="n">19,960</span></div>
+        </div>
+
+        <div class="col" style="gap:6px">
+          <div class="row between"><span class="upper">Memory budget</span><span class="mono xs muted">19,960 / 20,000 chars · 5 / 5 files</span></div>
+          <div class="progress" style="height:8px;display:flex"><span style="width:49.4%;border-radius:0"></span><span style="width:11.6%;border-radius:0;opacity:.75"></span><span style="width:38.8%;border-radius:0;opacity:.5"></span></div>
+          <div class="row xs faint" style="gap:12px"><span>project_memory 9,880</span><span>auth 2,330</span><span>ADR-002 7,750 (cut)</span></div>
+        </div>
+
+        <div class="col" style="gap:0">
+          <div class="upper" style="margin-bottom:6px">Memory matches · <span class="mono" style="text-transform:none">core_docs/</span></div>
+          <div class="mm head"><span>file</span><span class="n">score</span><span>state</span><span class="n">chars</span></div>
+          <div class="mm"><span class="mono ellipsis">memory/project_memory.md</span><span class="n">14</span><span class="st green">full</span><span class="n">9,880</span></div>
+          <div class="mm"><span class="mono ellipsis">learnings/auth.md</span><span class="n">11</span><span class="st green">full</span><span class="n">2,330</span></div>
+          <div class="mm"><span class="mono ellipsis">decisions/ADR-002-session-tokens.md</span><span class="n">7</span><span class="st accent">cut</span><span class="n">7,750</span></div>
+          <div class="mm"><span class="mono ellipsis">plans/m1_accounts.md</span><span class="n">4</span><span class="st blue">listed</span><span class="n faint">0</span></div>
+          <div class="mm"><span class="mono ellipsis">learnings/testing.md</span><span class="n">2</span><span class="st blue">listed</span><span class="n faint">0</span></div>
+          <div class="mm faint"><span class="mono ellipsis">README.md</span><span class="n">1</span><span class="st">skipped</span><span class="xs" style="text-align:right">under 2</span></div>
+          <div class="mm faint"><span class="mono ellipsis">timeline/timeline.md</span><span class="n">–</span><span class="st">excluded</span><span class="xs" style="text-align:right">toml</span></div>
+        </div>
+
+        <div class="col" style="gap:4px">
+          <div class="upper" style="margin-bottom:2px">Research items</div>
+          <div class="small"><span class="blue st">IN&nbsp;</span> Agent finding · Client request · OWASP link · Python <span class="mono">secrets</span> docs · Staging log</div>
+          <div class="small faint"><span class="st">OFF</span> Ask client about SMS · Full staging log, 10 Oct</div>
+        </div>
+        <div class="col" style="gap:6px">
+          <div class="row between"><span class="upper">Keywords</span><span class="xs faint">from title, goal, criteria · max 20</span></div>
+          <div class="mono xs text2" style="line-height:1.7">password reset api users forgotten email support ticket 4821 post auth sends single link expires minutes used expired token enumeration</div>
+        </div>
+      </div>
+
+      <div class="cp-right">
+        <div class="jump">
+          <span class="xs faint">Jump to</span>
+          <span class="chip">Header</span><span class="chip">Playbook</span><span class="chip">Brief</span><span class="chip">Research</span><span class="chip">Rules</span><span class="chip on">Memory</span>
+          <span class="grow"></span>
+          <button class="btn xs">Copy</button>
+        </div>
+        <div class="code md" style="border:none;border-radius:0;background:transparent;flex:1;padding:8px 0;font-size:12px">
+          <div class="ln"><span>1</span><span class="h"># T-0012 · Add password reset API</span></div>
+          <div class="ln"><span>2</span><span class="muted">mode: build · agent: claude · project: acme-billing</span></div>
+          <div class="ln"><span>3</span><span class="muted">branch: saarthi/T-0012-add-password-reset-api</span></div>
+          <div class="ln"><span>4</span><span> </span></div>
+          <div class="ln"><span>5</span><span class="h">## Playbook: Plan first, then build</span></div>
+          <div class="fold"><span></span><span>▸ 9 lines folded</span></div>
+          <div class="ln"><span>15</span><span class="h">## Brief (version 3)</span></div>
+          <div class="fold"><span></span><span>▸ 17 lines folded</span></div>
+          <div class="ln"><span>33</span><span class="h">## Research (5 of 7 items)</span></div>
+          <div class="fold"><span></span><span>▸ 41 lines folded</span></div>
+          <div class="ln"><span>75</span><span class="h">## Project rules (read these files yourself)</span></div>
+          <div class="ln"><span>76</span><span>- CLAUDE.md</span></div>
+          <div class="ln"><span>77</span><span>- AGENTS.md</span></div>
+          <div class="ln"><span>78</span><span>- core_docs/FUNCTIONAL_SPECIFICATIONS.md</span></div>
+          <div class="ln"><span>79</span><span>- core_docs/TDD-tech-design-doc.md</span></div>
+          <div class="ln"><span>80</span><span> </span></div>
+          <div class="ln hl"><span>81</span><span class="h">## Memory (matched by keywords: 3 files, 19,960 chars)</span></div>
+          <div class="ln"><span>82</span><span class="h2">### core_docs/memory/project_memory.md  (score 14)</span></div>
+          <div class="ln"><span>83</span><span># Project memory</span></div>
+          <div class="ln"><span>84</span><span>Big wins and hard bugs. Problem -&gt; Root cause -&gt; Fix -&gt; Result.</span></div>
+          <div class="ln"><span>85</span><span>## Flaky login test (T-0011)</span></div>
+          <div class="ln"><span>86</span><span>- Problem: test_login_rate_limit fails about 1 in 10 runs.</span></div>
+          <div class="ln"><span>87</span><span>- Root cause: the limiter used wall-clock time.</span></div>
+          <div class="fold"><span></span><span>▸ 96 lines folded</span></div>
+          <div class="ln"><span>184</span><span class="h2">### core_docs/learnings/auth.md  (score 11)</span></div>
+          <div class="ln"><span>185</span><span>- Always return the same response for known and unknown emails.</span></div>
+          <div class="ln"><span>186</span><span>- Hash reset tokens before saving. Never log them.</span></div>
+          <div class="ln"><span>187</span><span>- Compare secrets with hmac.compare_digest, not ==.</span></div>
+          <div class="fold"><span></span><span>▸ 22 lines folded</span></div>
+          <div class="ln"><span>210</span><span class="h2">### core_docs/decisions/ADR-002-session-tokens.md  (score 7, cut)</span></div>
+          <div class="ln"><span>211</span><span># ADR-002: Session tokens</span></div>
+          <div class="fold"><span></span><span>▸ 88 lines folded</span></div>
+          <div class="ln hl"><span>300</span><span class="accent">&gt; (cut at 7,750 chars - read the full file: core_docs/decisions/ADR-002-session-tokens.md)</span></div>
+          <div class="ln"><span>301</span><span> </span></div>
+          <div class="ln"><span>302</span><span class="h2">### Also related (read if needed)</span></div>
+          <div class="ln"><span>303</span><span>- core_docs/plans/m1_accounts.md  (score 4)</span></div>
+          <div class="ln"><span>304</span><span>- core_docs/learnings/testing.md  (score 2)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="mono xs faint grow ellipsis">$ saarthi context T-0012 --mode build --playbook plan-then-build --show</span>
+      <button class="btn ghost">Back to run dialog</button>
+      <button class="btn primary">Start run</button>
+    </div>
+  </div>
+</div>

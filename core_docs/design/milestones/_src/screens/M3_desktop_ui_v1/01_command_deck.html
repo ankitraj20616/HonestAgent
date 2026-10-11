@@ -1,0 +1,99 @@
+<!-- {"title": "Command Deck", "note": "Home screen: Needs You list, running agents, projects with today's cost, tasks ready for review. F1.3, F5.6, F16.2", "shell": "app", "nav": "deck", "crumb": "Command Deck", "needs": 2, "cost": "$4.12", "slots": "2 of 4"} -->
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="muted" style="font-size:13px">Sunday, 11 October</div>
+      <h1 class="title">Command Deck</h1>
+    </div>
+    <div class="row">
+      <button class="btn">Open board</button>
+      <button class="btn primary">New task</button>
+    </div>
+  </div>
+
+  <section class="card hot" style="padding:18px 18px 8px">
+    <div class="row gap-12" style="margin-bottom:10px">
+      <span class="dot lg amber pulse"></span>
+      <h2 class="accent" style="font-size:15px;font-weight:600">Needs You</h2>
+      <span class="muted" style="font-size:12.5px">Agents are waiting for an answer or permission</span>
+    </div>
+    <div class="list-row" style="gap:14px;padding:12px 4px">
+      <span class="mono accent" style="font-size:12px">T-0012</span>
+      <div style="min-width:0">
+        <div class="strong">Add password reset API</div>
+        <div class="text2 pretty" style="font-size:13.5px;margin-top:2px">Should I add a new <span class="mono">password_reset_tokens</span> table, or store the token on the <span class="mono">users</span> table?</div>
+      </div>
+      <div class="row gap-12 small muted nowrap">
+        <span>Claude · acme-billing · 3m ago</span>
+        <button class="btn sm primary">Answer</button>
+      </div>
+    </div>
+    <div class="list-row" style="gap:14px;padding:12px 4px">
+      <span class="mono accent" style="font-size:12px">T-0031</span>
+      <div style="min-width:0">
+        <div class="strong">Upgrade Alembic to 1.14</div>
+        <div class="text2 pretty" style="font-size:13.5px;margin-top:2px">Allow running <span class="mono">uv lock --upgrade-package alembic</span>? It changes <span class="mono">uv.lock</span>.</div>
+      </div>
+      <div class="row gap-12 small muted nowrap">
+        <span>Codex · saarthi · 9m ago</span>
+        <button class="btn sm primary">Answer</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-2">
+    <section class="card">
+      <div class="card-head"><h2>Running now</h2><span class="small muted">2 of 4 slots</span></div>
+      <div class="list-row">
+        <span class="agent cl">CL</span>
+        <div style="min-width:0">
+          <div class="ellipsis">Invoice PDF export with line-item totals</div>
+          <div class="mono small faint">T-0018 · acme-billing · build</div>
+        </div>
+        <div class="row"><span class="dot amber pulse"></span><span class="mono" style="font-size:13px">12m 04s</span></div>
+      </div>
+      <div class="list-row">
+        <span class="agent cx">CX</span>
+        <div style="min-width:0">
+          <div class="ellipsis">Event replay after WebSocket reconnect</div>
+          <div class="mono small faint">T-0027 · saarthi · fix</div>
+        </div>
+        <div class="row"><span class="dot amber pulse"></span><span class="mono" style="font-size:13px">3m 41s</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Projects</h2><span class="small muted">open · running · today</span></div>
+      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
+        <span class="mono">acme-billing</span><span class="muted" style="text-align:right">9 open</span>
+        <span class="accent" style="text-align:right">1 running</span><span class="mono" style="text-align:right">$2.31</span>
+      </div>
+      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
+        <span class="mono">saarthi</span><span class="muted" style="text-align:right">4 open</span>
+        <span class="accent" style="text-align:right">1 running</span><span class="mono" style="text-align:right">$1.47</span>
+      </div>
+      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
+        <span class="mono">clinic-portal</span><span class="muted" style="text-align:right">2 open</span>
+        <span class="faint" style="text-align:right">0 running</span><span class="mono" style="text-align:right">$0.34</span>
+      </div>
+      <div class="row between base" style="padding-top:12px;border-top:1px solid var(--line)">
+        <span class="muted" style="font-size:13px">Today's cost, all projects</span>
+        <span class="mono" style="font-size:20px;font-weight:500">$4.12</span>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2>Ready for your review</h2><span class="small muted">In the Review stage · open the task to look at the work</span></div>
+    <div class="list-row">
+      <span class="dot green"></span>
+      <span>Rate-limit the login endpoint <span class="mono small faint">T-0009</span></span>
+      <span class="small muted">acme-billing</span>
+    </div>
+    <div class="list-row">
+      <span class="dot green"></span>
+      <span>Show task cost on board cards <span class="mono small faint">T-0024</span></span>
+      <span class="small muted">saarthi</span>
+    </div>
+  </section>
+</div>

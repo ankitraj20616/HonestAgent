@@ -1,0 +1,39 @@
+<!-- {"title": "Empty board - first project", "note": "Fresh install, right after the wizard: acme-billing has no tasks. All lanes empty, one line of help and one main button (Press N). Toast confirms the project was added. FSD M9 5.5 (Empty), TDD 5.3 Board row", "shell": "app", "nav": "board", "crumb": "Task Board", "needs": 0, "cost": "$0.00", "slots": "0 of 4", "projects": [["acme-billing", 0, ""]], "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"}} -->
+<style>
+  .lane-ghost { height: 92px; border: 1px dashed var(--line-strong); border-radius: 8px; }
+  .board-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; padding: 16px 20px; }
+  .board-empty { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .board-empty .box { pointer-events: auto; width: 440px; padding: 28px 28px 24px; border-radius: 12px; border: 1px solid var(--line-strong);
+    background: var(--surface); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .key { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line-strong); border-bottom-width: 3px; display: grid; place-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--accent-text); background: var(--surface-2); }
+</style>
+<div class="fill">
+  <div class="toolbar">
+    <h1>Task Board</h1>
+    <div class="input" style="width:240px;color:var(--faint)">Filter by title, ID or label</div>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <div class="grow"></div>
+    <span class="small faint">Drag cards between stages. The daemon checks every move.</span>
+  </div>
+  <div class="board-wrap">
+    <div class="board" style="opacity:.55"><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--faint)"></span><span class="strong" style="font-size:13px">Inbox</span><span class="faint small">0</span></div>
+<div class="lane-ghost"></div></div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Research</span><span class="faint small">0</span></div>
+</div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--muted)"></span><span class="strong" style="font-size:13px">Ready</span><span class="faint small">0</span></div>
+</div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--accent)"></span><span class="strong" style="font-size:13px">Running</span><span class="faint small">0</span></div>
+</div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Verifying</span><span class="faint small">0</span></div>
+</div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Review</span><span class="faint small">0</span></div>
+</div><div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Shipped</span><span class="faint small">0</span></div>
+</div></div>
+    <div class="board-empty">
+      <div class="box">
+        <div class="key">N</div>
+        <div style="font-size:17px;font-weight:600;margin-top:4px">No tasks yet</div>
+        <div class="muted pretty" style="font-size:13.5px">Press <span class="kbd">N</span> to create one. It starts in Inbox.</div>
+        <button class="btn primary mt-8">New task</button>
+        <div class="xs faint mt-4">From any app: <span class="kbd">Ctrl Alt N</span> quick capture</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast"><span class="dot green"></span><span>Project <span class="mono">acme-billing</span> added. Wrote <span class="mono">.saarthi/project.toml</span></span></div>

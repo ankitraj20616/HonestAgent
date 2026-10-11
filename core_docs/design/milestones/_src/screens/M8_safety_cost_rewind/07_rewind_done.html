@@ -1,0 +1,83 @@
+<!-- {"title": "After rewind", "note": "After the rewind: #5 'before rewind to #1' saved first, workspace files now match #1, task moved Review -> Ready, workspace.rewound in the Timeline, and a one-click way back (Rewind to #5). F14.3", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.80", "slots": "1 of 4"} -->
+<style>
+  .room.wide-side { grid-template-columns: 380px minmax(0, 1fr); }
+  .cp { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; }
+  .cp.now { border-color: var(--green); background: var(--green-soft); }
+  .cp.new { border-color: var(--accent); }
+  .cp .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--line); border-radius: 4px; }
+  .cp .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .tl { display: grid; grid-template-columns: 48px 170px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: baseline; }
+  .tl .t { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--faint); }
+  .tl .e { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .fl { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; padding: 6px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; border-top: 1px solid var(--line); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage ready">Ready</span>
+    <div class="grow"></div>
+    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$2.40</span></span>
+    <button class="btn">Run checks</button>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room wide-side">
+    <aside class="room-side">
+      <section class="col" style="gap:6px">
+        <div class="row between"><h3>Checkpoints</h3><span class="xs faint">5 · newest first</span></div>
+        <div class="cp new"><span class="n">#5</span><div style="min-width:0"><div>before rewind to #1 <span class="tag amber">new</span></div><div class="xs faint">11:31 · <span class="st"><span class="green">+0</span> ~1 <span class="red">−0</span></span> · your latest files</div></div><button class="btn xs primary">Rewind</button></div>
+        <div class="cp"><span class="n">#4</span><div style="min-width:0"><div>end of run 01JAX3 <span class="muted">(claude, fix)</span></div><div class="xs faint">11:24 · <span class="st"><span class="green">+0</span> ~2 <span class="red">−0</span></span></div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp"><span class="n">#3</span><div style="min-width:0"><div>before sync <span class="muted">(Update from main)</span></div><div class="xs faint">11:15 · <span class="st"><span class="green">+0</span> ~1 <span class="red">−0</span></span></div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp"><span class="n">#2</span><div style="min-width:0"><div>end of run 01JC5A1B2C <span class="muted">(claude, race lane)</span></div><div class="xs faint">10:59 · <span class="st"><span class="green">+5</span> ~1 <span class="red">−0</span></span> · winner</div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp now"><span class="n">#1</span><div style="min-width:0"><div>end of run 01JC5A1B3D <span class="muted">(codex, race lane)</span></div><div class="xs green">files match now · 10:53</div></div><span class="row xs green"><span class="dot green"></span>here</span></div>
+      </section>
+      <section class="col" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="mono small accent" style="word-break:break-all">saarthi/T-0012-add-password-reset-api-claude</div>
+        <div class="kv"><div><div class="k">Branch, HEAD</div>not moved</div><div><div class="k">Changed files</div>9 vs main</div></div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot amber"></span></button>
+        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab on">Timeline</button>
+      </div>
+      <div class="tab-body" style="display:flex;flex-direction:column;gap:16px;max-width:980px">
+        <div class="banner info" style="align-items:flex-start">
+          <span class="dot blue" style="margin-top:6px"></span>
+          <div class="grow">
+            <div class="strong">Workspace now matches #1 (codex, race lane)</div>
+            <div class="small muted">The Proof Card is from older files. Run checks again before Review.</div>
+          </div>
+          <button class="btn sm">Rewind to #5</button>
+          <button class="btn sm primary">Run checks</button>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)">
+          <div class="row between" style="padding:10px 12px;background:var(--panel)"><span class="upper">Files changed by the rewind</span><span class="mono xs muted">9 written · 4 deleted · .env untouched</span></div>
+          <div class="fl"><span class="green">A</span><span>app/auth/tokens.py</span><span class="green">+28</span></div>
+          <div class="fl"><span class="accent">M</span><span>app/auth/routes.py</span><span><span class="green">+31</span> <span class="red">−6</span></span></div>
+          <div class="fl"><span class="accent">M</span><span>pyproject.toml · uv.lock</span><span><span class="green">+12</span> <span class="red">−2</span></span></div>
+          <div class="fl"><span class="red">D</span><span class="faint">app/models/password_reset.py</span><span class="red">−12</span></div>
+          <div class="fl"><span class="red">D</span><span class="faint">tests/auth/test_password_reset.py</span><span class="red">−80</span></div>
+          <div class="fl"><span></span><span class="faint" style="font-family:'IBM Plex Sans',sans-serif">+ 8 more · open the Code tab to look around</span><span></span></div>
+        </div>
+
+        <div>
+          <div class="upper" style="margin-bottom:6px">Timeline</div>
+          <div class="tl"><span class="t">11:31</span><span class="e accent">workspace.rewound</span><span>from #5 to #1 · 9 written, 4 deleted · stage moved to <span class="mono">ready</span></span></div>
+          <div class="tl"><span class="t">11:31</span><span class="e">task.stage_changed</span><span>Review → Ready · reason <span class="mono">rewound</span></span></div>
+          <div class="tl"><span class="t">11:31</span><span class="e blue">workspace.checkpoint</span><span>#5 · <span class="mono">pre_rewind</span> · before rewind to #1</span></div>
+          <div class="tl"><span class="t">11:30</span><span class="e">you</span><span>Confirmed rewind past a base change (<span class="mono">confirm_base_change</span>)</span></div>
+          <div class="tl"><span class="t">11:24</span><span class="e blue">workspace.checkpoint</span><span>#4 · <span class="mono">run_end</span> · run 01JAX3</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast">
+  <span class="dot green"></span>
+  <span>Saved current state as #5. Workspace now matches #1.</span>
+  <button class="btn xs">Rewind to #5 to come back</button>
+</div>

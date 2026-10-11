@@ -1,0 +1,84 @@
+<!-- {"title": "Settings and Health", "note": "Settings saved in the daemon: theme, editor / terminal / folder commands, max parallel runs, worktree root, agent CLI paths, quick capture shortcut. Health: daemon, live connection, git, rg, claude, codex, gh login, and UI event delay p50/p95 over the last 200 events. F21.1, F21.2, F2.2", "shell": "app", "nav": "settings", "crumb": "Settings and Health", "needs": 2, "cost": "$4.12", "slots": "2 of 4"} -->
+<style>
+  .set-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 14px; align-items: start; padding: 11px 0; border-top: 1px solid var(--line); }
+  .set-row:first-of-type { border-top: none; }
+  .set-row > .k { font-size: 13px; padding-top: 6px; }
+  .set-row .input { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  .stepper { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .stepper button { width: 30px; height: 30px; border: none; background: var(--surface-2); }
+  .stepper span { min-width: 40px; text-align: center; font-family: 'JetBrains Mono', monospace; }
+  .h-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+  .h-row .v { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); text-align: right; }
+  .lat { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .lat > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 46px; position: relative; padding-top: 4px; }
+  .bars span { flex: 1; background: var(--green); opacity: .75; border-radius: 1px 1px 0 0; }
+  .bars span.slow { background: var(--accent); opacity: 1; }
+  .bars .target { position: absolute; left: 0; right: 0; top: 4px; border-top: 1px dashed var(--red); }
+  .bars .target b { position: absolute; right: 0; top: -15px; font-size: 10.5px; font-weight: 500; color: var(--red); }
+</style>
+<div class="page" style="max-width:1180px;gap:18px;padding-top:24px">
+  <div class="page-head">
+    <div><h1 class="title" style="font-size:24px">Settings and Health</h1>
+      <div class="muted small" style="margin-top:2px">Settings live in the daemon. Same as <span class="mono">saarthi settings set &lt;key&gt; &lt;value&gt;</span>.</div></div>
+  </div>
+
+  <div class="grid-2" style="grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);align-items:start">
+    <section class="card">
+      <div class="card-head"><h2>Settings</h2><span class="xs faint">saved 2 min ago</span></div>
+      <div class="set-row"><span class="k">Theme</span>
+        <div class="row"><div class="seg"><button>Light</button><button>Dark</button><button class="on">System</button></div><span class="xs faint">Also the terminal and code viewer</span></div></div>
+      <div class="set-row"><span class="k">Editor command</span>
+        <div class="field"><input class="input" value="code --goto {path}:{line}"><span class="hint"><span class="mono">{path}</span> and <span class="mono">{line}</span> are filled in. Default: <span class="mono">xdg-open {path}</span></span></div></div>
+      <div class="set-row"><span class="k">Terminal command</span>
+        <input class="input" value="gnome-terminal --working-directory={path}"></div>
+      <div class="set-row"><span class="k">Folder command</span>
+        <input class="input" value="xdg-open {path}"></div>
+      <div class="set-row"><span class="k">Max parallel runs</span>
+        <div class="row gap-12"><div class="stepper"><button>−</button><span>4</span><button>+</button></div><span class="xs faint">1 to 16. Extra runs wait in a queue.</span></div></div>
+      <div class="set-row"><span class="k">Worktree root folder</span>
+        <div class="field"><input class="input" value="~/.local/share/saarthi/worktrees"><span class="hint">Used for new worktrees only.</span></div></div>
+      <div class="set-row"><span class="k">claude path</span>
+        <input class="input" value="/home/ankit/.local/bin/claude"></div>
+      <div class="set-row"><span class="k">codex path</span>
+        <input class="input" value="/usr/local/bin/codex"></div>
+      <div class="set-row"><span class="k">Quick capture</span>
+        <div class="field"><div class="row"><span class="kbd" style="font-size:12px;padding:3px 8px">Ctrl Alt N</span><span class="xs faint">global shortcut</span></div>
+          <span class="hint">On Wayland, if the shortcut does not work: Settings → Keyboard → Custom shortcut, command <span class="mono">saarthi-desktop --quick-capture</span></span></div></div>
+      <div class="row between" style="padding-top:12px;border-top:1px solid var(--line)">
+        <span class="xs faint">Saved in the daemon, so the CLI sees the same values.</span>
+        <div class="row"><button class="btn ghost sm">Reset to defaults</button><button class="btn primary sm">Save</button></div>
+      </div>
+    </section>
+
+    <div class="col gap-16">
+      <section class="card">
+        <div class="card-head" style="margin-bottom:4px"><h2>Health</h2><button class="btn xs">Check again</button></div>
+        <div class="h-row" style="border-top:none"><span class="dot green"></span><span>Daemon <span class="mono small">saarthid</span></span><span class="v">running · v0.9 · up 3h 12m</span></div>
+        <div class="h-row"><span class="dot green"></span><span>Live connection</span><span class="v">connected · last event #48213</span></div>
+        <div class="h-row"><span class="dot green"></span><span>git</span><span class="v">2.43.0</span></div>
+        <div class="h-row"><span class="dot green"></span><span>ripgrep <span class="mono small">rg</span> <span class="xs faint">(Code search)</span></span><span class="v">14.1.0</span></div>
+        <div class="h-row"><span class="dot green"></span><span>claude CLI</span><span class="v">2.0.14 · logged in</span></div>
+        <div class="h-row"><span class="dot green"></span><span>codex CLI</span><span class="v">0.46.0 · logged in</span></div>
+        <div class="h-row"><span class="dot red"></span><span>gh CLI<div class="xs red" style="margin-top:2px">Not logged in. Run: <span class="mono">gh auth login</span></div></span><span class="v">2.45.0 · not logged in</span></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>UI event delay</h2><span class="xs faint">daemon → screen · last 200 events</span></div>
+        <div class="lat">
+          <div class="stat"><span class="k">p50</span><span class="v green">42 ms</span></div>
+          <div class="stat"><span class="k">p95</span><span class="v green">118 ms</span></div>
+          <div class="stat"><span class="k">Target (p95)</span><span class="v">300 ms</span></div>
+        </div>
+        <div class="bars mt-12">
+          <span class="target"><b>300 ms</b></span>
+          <span style="height:14%"></span><span style="height:12%"></span><span style="height:16%"></span><span style="height:11%"></span><span style="height:13%"></span><span style="height:20%"></span><span style="height:12%"></span><span style="height:14%"></span><span style="height:15%"></span><span style="height:13%"></span>
+          <span style="height:11%"></span><span style="height:17%"></span><span style="height:39%" class="slow"></span><span style="height:14%"></span><span style="height:12%"></span><span style="height:13%"></span><span style="height:15%"></span><span style="height:12%"></span><span style="height:14%"></span><span style="height:18%"></span>
+          <span style="height:13%"></span><span style="height:12%"></span><span style="height:11%"></span><span style="height:14%"></span><span style="height:16%"></span><span style="height:13%"></span><span style="height:12%"></span><span style="height:31%" class="slow"></span><span style="height:14%"></span><span style="height:13%"></span>
+          <span style="height:12%"></span><span style="height:15%"></span><span style="height:14%"></span><span style="height:12%"></span><span style="height:13%"></span><span style="height:17%"></span><span style="height:12%"></span><span style="height:14%"></span><span style="height:13%"></span><span style="height:15%"></span>
+        </div>
+        <div class="row between xs faint mt-4"><span>older</span><span>Each bar: 5 events. Amber: a batch over 100 ms.</span><span>now</span></div>
+      </section>
+    </div>
+  </div>
+</div>

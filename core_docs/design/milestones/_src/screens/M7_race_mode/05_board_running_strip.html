@@ -1,0 +1,110 @@
+<!-- {"title": "Board: running now strip", "note": "Task Board with the running-now strip on top: one live card per active run (lane, agent, status, time, cost, last action, port). Needs-input cards glow and come first. The racing task stays one card with a Race badge. F6.7, M7 strip", "shell": "app", "nav": "board", "crumb": "Task Board", "needs": 2, "cost": "$4.51", "slots": "3 of 4"} -->
+<style>
+  .strip-wrap { padding: 12px 20px 14px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; gap: 10px; }
+  .strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .rcard { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+  .rcard.needs { border-color: var(--accent); box-shadow: var(--accent-glow); background: var(--accent-soft); }
+  .rcard.slot { border-style: dashed; background: transparent; justify-content: center; align-items: center; color: var(--faint); font-size: 12px; }
+  .rcard .last { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rcard .nums { display: flex; gap: 10px; font-size: 11.5px; color: var(--muted); }
+  .rcard .nums b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+  .board.fit { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+  .board.fit .lane { min-height: 0; padding: 6px; }
+  .board.fit .tcard { padding: 8px 9px; }
+  .board.fit .meta > .mono { white-space: nowrap; flex-shrink: 0; }
+  .board.fit .flag { white-space: nowrap; }
+  .pline { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--faint); }
+  .board.fit .tcard .title { font-size: 13px; }
+  .race-tag { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 0 6px; border-radius: 8px; border: 1px solid var(--accent); color: var(--accent-text); }
+  .port { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); }
+</style>
+<div class="fill">
+  <div class="toolbar">
+    <h1>Task Board</h1>
+    <div class="input" style="width:220px;color:var(--faint)">Filter by title, ID or label</div>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <div class="grow"></div>
+    <span class="small faint">Drag cards between stages. The daemon checks every move.</span>
+  </div>
+
+  <div class="strip-wrap">
+    <div class="row">
+      <span class="dot amber pulse"></span><span class="strong" style="font-size:13px">Running now</span>
+      <span class="small muted">3 runs · 3 of 4 slots · acme-billing</span>
+      <span class="grow"></span>
+      <span class="xs faint">Click a card to open its Stream. Each workspace has its own port block.</span>
+    </div>
+    <div class="strip">
+      <div class="rcard needs">
+        <div class="row"><span class="agent sm cx">CX</span><span class="mono small accent">T-0012</span><span class="small muted">· codex lane</span><span class="grow"></span><span class="flag amber"><span class="dot amber pulse"></span>Needs input</span></div>
+        <div class="last" style="color:var(--accent-text)">asks: "New table or users table?"</div>
+        <div class="nums"><span>Time <b>06m 40s</b></span><span>Cost <b>$0.18</b></span><span class="grow"></span><span class="port">:41020</span></div>
+      </div>
+      <div class="rcard">
+        <div class="row"><span class="agent sm cl">CL</span><span class="mono small accent">T-0012</span><span class="small muted">· claude lane</span><span class="grow"></span><span class="flag amber">Running</span></div>
+        <div class="last">Edit tests/auth/test_password_reset.py</div>
+        <div class="nums"><span>Time <b>06m 58s</b></span><span>Cost <b>$0.21</b></span><span class="grow"></span><span class="port">:41010</span></div>
+      </div>
+      <div class="rcard">
+        <div class="row"><span class="agent sm cl">CL</span><span class="mono small accent">T-0018</span><span class="small muted">· build</span><span class="grow"></span><span class="flag amber">Running</span></div>
+        <div class="last">Bash: uv run pytest -q</div>
+        <div class="nums"><span>Time <b>12m 40s</b></span><span>Cost <b>$0.55</b></span><span class="grow"></span><span class="port">:41000</span></div>
+      </div>
+      <div class="rcard slot">1 slot free</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px">
+    <div class="board fit">
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--faint)"></span><span class="strong" style="font-size:13px">Inbox</span><span class="small faint">2</span></div>
+        <div class="tcard"><div class="title">Dark mode for the settings page</div><div class="meta"><span class="mono faint">T-0014</span><span class="tag">P3</span><span class="ellipsis">ui</span></div></div>
+        <div class="tcard"><div class="title">Add audit log for admin actions</div><div class="meta"><span class="mono faint">T-0016</span><span class="tag">P2</span><span class="ellipsis">security</span></div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Research</span><span class="small faint">1</span></div>
+        <div class="tcard"><div class="title">Investigate slow dashboard query</div><div class="meta"><span class="mono faint">T-0015</span><span class="tag">P2</span><span class="ellipsis">perf</span></div>
+          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">05m</span><span class="mono">$0.09</span></div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--muted)"></span><span class="strong" style="font-size:13px">Ready</span><span class="small faint">0</span></div>
+        <div class="small faint" style="padding:6px 4px">Nothing ready.</div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--accent)"></span><span class="strong" style="font-size:13px">Running</span><span class="small faint">2</span></div>
+        <div class="tcard needs">
+          <div class="row between"><span class="flag amber"><span class="dot amber pulse"></span>Needs you</span><span class="race-tag">Race</span></div>
+          <div class="title">Add password reset API</div>
+          <div class="meta"><span class="mono faint">T-0012</span><span class="tag">P1</span><span class="ellipsis">auth, api</span></div>
+          <div class="foot" style="flex-direction:column;align-items:stretch;gap:4px">
+            <div class="row"><span class="agent sm cl">CL</span><span class="mono">7m</span><span class="grow"></span><span class="port">:41010</span></div>
+            <div class="row"><span class="agent sm cx">CX</span><span class="mono">7m</span><span class="grow"></span><span class="port">:41020</span></div>
+            <div class="row"><span class="muted">2 lanes</span><span class="grow"></span><span class="mono">$0.39</span></div>
+          </div>
+        </div>
+        <div class="tcard">
+          <div class="title">Invoice PDF export with line-item totals</div>
+          <div class="meta"><span class="mono faint">T-0018</span><span class="tag">P2</span><span class="ellipsis">billing</span></div>
+          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">12m</span><span class="mono">$0.55</span><span class="grow"></span><span class="dot amber pulse"></span></div>
+          <div class="pline"><span>ports</span><span class="mono">41000-41009</span></div>
+        </div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Verifying</span><span class="small faint">0</span></div>
+        <div class="small faint" style="padding:6px 4px">No checks running.</div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Review</span><span class="small faint">1</span></div>
+        <div class="tcard"><div class="title">Rate-limit the login endpoint</div><div class="meta"><span class="mono faint">T-0009</span><span class="tag">P1</span><span class="ellipsis">auth</span></div>
+          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">30m</span><span class="mono">$0.77</span><span class="grow"></span><span class="dot green"></span></div>
+          <div class="pline"><span>ports</span><span class="mono">41030-41039</span></div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Shipped</span><span class="small faint">1</span></div>
+        <div class="tcard ghost" style="opacity:.7"><div class="title">Upgrade FastAPI to 0.115</div><div class="meta"><span class="mono faint">T-0008</span><span class="tag">P2</span><span class="ellipsis">deps</span></div>
+          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">33m</span><span class="mono">$0.71</span><span class="grow"></span><span class="dot green"></span></div>
+          <div class="pline"><span>worktree removed · ports freed</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>

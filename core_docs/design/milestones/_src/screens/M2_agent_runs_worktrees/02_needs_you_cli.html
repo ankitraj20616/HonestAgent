@@ -1,0 +1,109 @@
+<!-- {"title": "Needs You in the CLI", "note": "Claude asks a live question: run watch shows the yellow ASK panel with the exact run say command, notify-send pops a desktop notification, and run say answers it. Codex ended with a question and run say resumes the session. F5.6, F5.7, F19.1", "shell": "bare"} -->
+<style>
+  .desk { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+  .topbar-os { height: 28px; flex-shrink: 0; display: flex; align-items: center; padding: 0 14px; gap: 14px; background: var(--term-bar);
+               border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+  .topbar-os .clock { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 600; }
+  .cli { flex: 1; min-height: 0; padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 14px; }
+  .cli-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr); gap: 16px; }
+  .cli .term { box-shadow: var(--shadow-sm); }
+  .cli .term-bar .wtitle { flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .cli .term-body { white-space: pre; overflow: hidden; font-size: 12.5px; line-height: 1.6; padding: 16px 18px; }
+  .cli .term .m { color: var(--muted); }
+  .cli .term .ex { color: var(--red); }
+  .ask { display: inline-block; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft); padding: 8px 14px 9px; margin: 2px 0 4px 66px; white-space: pre; }
+  .ask .t { color: var(--accent-text); font-weight: 700; }
+  .notify { top: 34px; right: auto; left: 462px; width: 372px; padding: 10px 12px; }
+  .notify .ttl { font-weight: 600; font-size: 13.5px; }
+</style>
+<div class="desk">
+  <div class="topbar-os" style="position:relative">
+    <span class="strong">Activities</span>
+    <span class="clock mono">Sun 11 Oct  10:54</span>
+    <span class="grow"></span>
+    <span class="mono faint">EN</span><span class="faint">▾</span>
+  </div>
+
+  <div class="cli">
+    <div class="cli-grid">
+      <div class="term">
+        <div class="term-bar"><div class="lights"><span></span><span></span><span></span></div><span class="wtitle">~/OFFICE/acme-billing — run watch T-0012</span><span class="mono xs faint">bash</span></div>
+<div class="term-body"><span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi run watch T-0012
+<span class="d">Run 01JC7Q2M4R · claude · build · 31 earlier events</span>
+<span class="d">10:43:41</span>  <span class="d">out</span>    <span class="g">5 passed in 0.39s</span>
+<span class="d">10:43:58</span>  <span class="g">file</span>   app/email/templates/password_reset.txt  <span class="g">(+14</span> <span class="r">-0)</span>
+<span class="d">10:44:06</span>  <span class="c">tool</span>   <span class="b">Read </span> app/db/migrations/0041_invoice_totals.py
+<span class="d">10:51:52</span>  msg    Before I write the migration I need one design choice.
+<span class="d">10:52:04</span>  <span class="p b">ASK</span>
+<span class="ask"><span class="t">Needs You · T-0012</span>  <span class="d">question · live</span>
+
+Should I add a new <span class="b">password_reset_tokens</span> table,
+or store the token on the <span class="b">users</span> table?
+
+  <span class="d">1.</span> New table password_reset_tokens
+  <span class="d">2.</span> Columns reset_token_hash + reset_expires_at on users
+
+<span class="d">Answer:</span> saarthi run say 01JC7Q2M4R "&lt;your answer&gt;"</span>
+<span class="d">          Task T-0012 -&gt; Needs You · the agent is waiting</span>
+<span class="d">10:53:20</span>  <span class="b">you</span>    New table password_reset_tokens. Store only a hash.
+<span class="d">10:53:22</span>  msg    Got it. Adding a new table with a hashed token.
+<span class="d">10:53:31</span>  <span class="c">tool</span>   <span class="b">Write</span> app/db/migrations/0042_password_reset_tokens.py
+<span class="d">10:53:31</span>  <span class="g">file</span>   app/db/migrations/0042_password_reset_tokens.py  <span class="g">(+31</span> <span class="r">-0)</span>
+<span class="d">10:53:40</span>  <span class="c">tool</span>   <span class="b">Edit </span> app/auth/reset.py
+<span class="d">10:53:40</span>  <span class="g">file</span>   app/auth/reset.py  <span class="g">(+11</span> <span class="r">-6)</span>
+<span class="d">10:53:52</span>  <span class="c">tool</span>   <span class="b">Bash </span> uv run alembic upgrade head
+<span class="d">10:53:55</span>  <span class="d">out</span>    <span class="m">INFO  Running upgrade 0041 -&gt; 0042, password reset tokens</span>
+<span class="d">10:54:02</span>  <span class="c">tool</span>   <span class="b">Bash </span> uv run pytest -q tests/auth
+<span class="d">10:54:06</span>  <span class="d">out</span>    <span class="g">7 passed in 0.44s</span>
+<span class="cursor"></span></div>
+      </div>
+
+      <div class="term">
+        <div class="term-bar"><div class="lights"><span></span><span></span><span></span></div><span class="wtitle">~/OFFICE/acme-billing — answer</span><span class="mono xs faint">bash</span></div>
+<div class="term-body"><span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi task list \
+    --all-projects --stage needs-you
+<span class="b">acme-billing</span>
+<span class="b">ID      STAGE      P   TITLE</span>
+T-0012  <span class="p">Needs You</span>  <span class="y">P1</span>  Add password reset API
+<span class="b">saarthi</span>
+<span class="b">ID      STAGE      P   TITLE</span>
+T-0031  <span class="p">Needs You</span>  P2  Upgrade Alembic to 1.14
+
+<span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi run say T-0012 \
+    "New table password_reset_tokens. Store only a hash."
+<span class="g">Sent.</span> Run 01JC7Q2M4R is running again.
+Task T-0012 -&gt; Running.
+
+<span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi run watch T-0031 --from-start \
+    | tail -3
+<span class="d">09:43:10</span>  msg    uv.lock pins alembic 1.13.3.
+<span class="d">09:43:12</span>  <span class="p b">ASK</span>    Allow running uv lock --upgrade-package alembic?
+                 It changes uv.lock.  <span class="d">ended · resume to answer</span>
+
+<span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi run say T-0031 "Yes, run it."
+<span class="g">Sent.</span> Resumed run 01JC6N8H1T (codex session 0199b7e4…).
+Task T-0031 -&gt; Running.
+
+<span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> saarthi run say T-0031 \
+    "Also note the upgrade in CHANGELOG.md."
+<span class="y">Queued.</span> Codex will get it when this step ends.
+<span class="c">~/OFFICE/acme-billing</span> <span class="d">main</span> <span class="p">$</span> <span class="cursor"></span></div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="gap:22px">
+      <div class="annot">Two ways an agent needs you. <b>Live</b>: Claude asks through its question tool and waits; the answer goes straight in. <b>Ended</b>: the run stopped on a question; the answer resumes the same session.</div>
+      <div class="annot">One <span class="mono">notify-send</span> call per question, not per line. If <span class="mono">notify-send</span> is missing, Saarthi logs one warning and goes on. Native notifications come in M3.</div>
+      <div class="annot">Don't want to answer an ended question? <span class="mono">saarthi run stop T-0031</span> closes it as done. Every message you send is saved as an <span class="mono">agent.message</span> event.</div>
+    </div>
+  </div>
+
+  <div class="notify">
+    <div class="logo">S</div>
+    <div class="col" style="gap:3px">
+      <div class="row between"><span class="app-name">Saarthi · acme-billing · Claude</span><span class="app-name">10:52</span></div>
+      <div class="ttl">Needs You · T-0012</div>
+      <div class="text2 pretty" style="font-size:13px">Should I add a new <span class="mono">password_reset_tokens</span> table, or store the token on the <span class="mono">users</span> table?</div>
+    </div>
+  </div>
+</div>

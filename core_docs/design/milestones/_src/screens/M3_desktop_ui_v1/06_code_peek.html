@@ -1,0 +1,197 @@
+<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.21", "slots": "2 of 4", "title": "Code Peek - search and read", "note": "Code tab on the task worktree: file tree, ripgrep text search, read-only CodeMirror view, Open in my editor at the line. Edit is off while R-0027 is running. F17.1, F17.2, F17.4"} -->
+<style>
+  .side-sec { display: flex; flex-direction: column; gap: 9px; }
+  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
+  .room-side { gap: 18px; }
+  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
+  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
+  .kv3 .k { color: var(--faint); font-size: 10.5px; }
+  .room-side .crit { font-size: 12.5px; }
+  .focus-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .run-pick { font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); background: var(--surface); }
+
+  .peek { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); margin: 14px 20px 16px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .peek-left { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--bg-side); }
+  .peek-search { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
+  .peek-search .seg { align-self: flex-start; }
+  .peek-search .seg > * { padding: 3px 10px; font-size: 12px; }
+  .res { padding: 6px 6px 8px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+  .res-file { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); padding: 4px 6px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .res-hit { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; padding: 3px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .res-hit .n { color: var(--faint); text-align: right; }
+  .res-hit .p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .res-hit.on { background: var(--surface-3); }
+  .hit { background: var(--accent-soft); color: inherit; border-bottom: 1.5px solid var(--accent); border-radius: 2px; }
+  .tree { flex: 1; min-height: 0; overflow: auto; padding: 6px 6px 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .tree .it { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+  .tree .it.on { background: var(--surface-3); }
+  .tree .dir { color: var(--muted); }
+  .tree .st { width: 10px; font-size: 11px; font-weight: 600; }
+  .tree .st.a { color: var(--green); } .tree .st.m { color: var(--accent-text); }
+  .peek-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg); }
+  .peek-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .peek-main .code { flex: 1; border: none; border-radius: 0; background: var(--bg); padding: 8px 0; line-height: 1.65; }
+  .peek-status { white-space: nowrap; display: flex; align-items: center; gap: 12px; padding: 5px 12px; border-top: 1px solid var(--line); background: var(--surface); font-size: 11.5px; color: var(--faint); }
+  .rule-note { margin: 10px 12px 0; }
+  .ed-cursor { display: inline-block; width: 2px; height: 15px; background: var(--accent); vertical-align: text-bottom; margin-left: 1px; }
+  .rules { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+  .rules .ok::before { content: '✓ '; color: var(--green); font-weight: 700; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage running">Running</span>
+    <div class="grow"></div>
+    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">21m</span></span>
+    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.71</span></span>
+    <button class="btn primary disabled" title="One active run per task. R-0027 is running.">Run agent</button>
+  </div>
+
+  <div class="room">
+    <aside class="room-side">
+      <section class="side-sec">
+        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
+        <div class="lbl">Goal</div>
+        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="lbl mt-4">Acceptance criteria</div>
+
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
+        <div class="lbl mt-4">Notes</div>
+        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
+        <div class="row wrap gap-4 mt-4"><span class="lbl" style="margin-right:4px">Focus</span><span class="focus-chip">app/auth/</span><span class="focus-chip">app/mail.py</span><span class="focus-chip">tests/auth/</span></div>
+      </section>
+
+      <section class="side-sec" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
+        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+        <div class="kv3">
+          <div><div class="k">vs main</div>3 ahead</div>
+          <div><div class="k">Changed</div>4 files</div>
+          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0026</span></div>
+        </div>
+        <div class="row" style="gap:5px">
+          <button class="btn xs">Open folder</button>
+          <button class="btn xs">Terminal here</button>
+          <button class="btn xs">Open in my editor</button>
+        </div>
+      </section>
+
+      <section class="side-sec" style="gap:6px">
+        <h3 style="margin-bottom:4px">Runs</h3>
+        <div class="run-row on">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 17m · $0.63</div></div>
+          <span class="accent strong" style="font-size:11.5px">Running</span>
+        </div>
+        <div class="run-row">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+      </section>
+    </aside>
+
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab on">Code <span class="n">4</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+
+      <div class="peek">
+        <div class="peek-left">
+          <div class="peek-search">
+            <div class="seg"><button>Files</button><button class="on">Text</button></div>
+            <input class="input focus mono" style="font-size:12.5px" value="token_hash">
+            <div class="xs faint">4 matches in 3 files · ripgrep · 38 ms</div>
+          </div>
+          <div class="res">
+            <div class="res-file">app/auth/reset.py</div>
+            <div class="res-hit on"><span class="n">27</span><span class="p"><mark class="hit">token_hash</mark>=hash_token(token),</span></div>
+            <div class="res-file">app/models/password_reset.py</div>
+            <div class="res-hit"><span class="n">10</span><span class="p"><mark class="hit">token_hash</mark> = Column(String(64), index=…</span></div>
+            <div class="res-file">migrations/…/0042_password_reset_tokens.py</div>
+            <div class="res-hit"><span class="n">14</span><span class="p">sa.Column("<mark class="hit">token_hash</mark>", sa.String(64…</span></div>
+            <div class="res-hit"><span class="n">19</span><span class="p">op.create_index("ix_<mark class="hit">token_hash</mark>"…</span></div>
+          </div>
+          <div class="tree">
+            <div class="upper" style="padding:4px 8px 6px;font-family:'IBM Plex Sans',sans-serif">Worktree · T-0012</div>
+            <div class="it dir">▾ app/</div>
+            <div class="it dir" style="padding-left:22px">▾ auth/</div>
+            <div class="it" style="padding-left:36px"><span class="st"></span>__init__.py</div>
+            <div class="it on" style="padding-left:36px"><span class="st a">A</span>reset.py</div>
+            <div class="it" style="padding-left:36px"><span class="st m">M</span>routes.py</div>
+            <div class="it" style="padding-left:36px"><span class="st"></span>schemas.py</div>
+            <div class="it dir" style="padding-left:22px">▾ models/</div>
+            <div class="it" style="padding-left:36px"><span class="st a">A</span>password_reset.py</div>
+            <div class="it" style="padding-left:36px"><span class="st"></span>user.py</div>
+            <div class="it" style="padding-left:22px"><span class="st"></span>mail.py</div>
+            <div class="it" style="padding-left:22px"><span class="st"></span>settings.py</div>
+            <div class="it dir">▾ migrations/versions/</div>
+            <div class="it" style="padding-left:22px"><span class="st a">A</span>0042_password_reset_tokens.py</div>
+            <div class="it dir">▸ templates/</div>
+            <div class="it dir">▸ tests/</div>
+            <div class="it" style="padding-left:8px"><span class="st"></span>pyproject.toml</div>
+            <div class="it" style="padding-left:8px"><span class="st"></span>uv.lock</div>
+          </div>
+        </div>
+        <div class="peek-main">
+          <div class="peek-bar">
+            <span class="mono" style="font-size:12.5px">app/auth/reset.py</span>
+            <span class="tag green">added</span>
+            <span class="xs faint">read-only</span>
+            <span class="grow"></span>
+            <button class="btn xs disabled" title="R-0027 is running">Edit</button>
+            <button class="btn xs">Open in my editor <span class="mono faint">:27</span></button>
+          </div>
+          <div class="banner warn rule-note small">
+            <span class="dot amber pulse"></span>
+            <div><b>Edit is off while R-0027 is running.</b> <span class="text2">The agent may be writing this file. Tiny edits are allowed only in the task worktree, and only when no run is active.</span></div>
+          </div>
+          <div class="code">
+<div class="ln"><span>1</span><span><span class="tk-k">import</span> hashlib</span></div>
+<div class="ln"><span>2</span><span><span class="tk-k">import</span> hmac</span></div>
+<div class="ln"><span>3</span><span><span class="tk-k">import</span> secrets</span></div>
+<div class="ln"><span>4</span><span><span class="tk-k">from</span> datetime <span class="tk-k">import</span> datetime, timedelta, timezone</span></div>
+<div class="ln"><span>5</span><span> </span></div>
+<div class="ln"><span>6</span><span><span class="tk-k">from</span> sqlalchemy.orm <span class="tk-k">import</span> Session</span></div>
+<div class="ln"><span>7</span><span> </span></div>
+<div class="ln"><span>8</span><span><span class="tk-k">from</span> app.mail <span class="tk-k">import</span> send_mail</span></div>
+<div class="ln"><span>9</span><span><span class="tk-k">from</span> app.models <span class="tk-k">import</span> PasswordResetToken, User</span></div>
+<div class="ln"><span>10</span><span><span class="tk-k">from</span> app.settings <span class="tk-k">import</span> settings</span></div>
+<div class="ln"><span>11</span><span> </span></div>
+<div class="ln"><span>12</span><span> </span></div>
+<div class="ln"><span>13</span><span><span class="tk-k">def</span> <span class="tk-f">hash_token</span>(token: str) -&gt; str:</span></div>
+<div class="ln"><span>14</span><span>    <span class="tk-k">return</span> hashlib.sha256(token.encode()).hexdigest()</span></div>
+<div class="ln"><span>15</span><span> </span></div>
+<div class="ln"><span>16</span><span> </span></div>
+<div class="ln"><span>17</span><span><span class="tk-k">def</span> <span class="tk-f">request_reset</span>(email: str, db: Session) -&gt; <span class="tk-k">None</span>:</span></div>
+<div class="ln"><span>18</span><span>    user = db.query(User).filter_by(email=email).first()</span></div>
+<div class="ln"><span>19</span><span>    <span class="tk-k">if</span> user <span class="tk-k">is</span> <span class="tk-k">None</span>:</span></div>
+<div class="ln"><span>20</span><span>        <span class="tk-k">return</span>  <span class="tk-c"># same 202 response, no user enumeration</span></span></div>
+<div class="ln"><span>21</span><span>    token = secrets.token_urlsafe(<span class="tk-n">32</span>)</span></div>
+<div class="ln"><span>22</span><span>    expires = datetime.now(timezone.utc) + timedelta(</span></div>
+<div class="ln"><span>23</span><span>        minutes=settings.RESET_TOKEN_TTL_MINUTES</span></div>
+<div class="ln"><span>24</span><span>    )</span></div>
+<div class="ln"><span>25</span><span>    db.add(PasswordResetToken(</span></div>
+<div class="ln"><span>26</span><span>        user_id=user.id,</span></div>
+<div class="ln hl"><span>27</span><span>        <mark class="hit">token_hash</mark>=hash_token(token),</span></div>
+<div class="ln"><span>28</span><span>        expires_at=expires,</span></div>
+<div class="ln"><span>29</span><span>    ))</span></div>
+<div class="ln"><span>30</span><span>    db.commit()</span></div>
+<div class="ln"><span>31</span><span>    send_mail(user.email, <span class="tk-s">&quot;reset_password&quot;</span>, {<span class="tk-s">&quot;token&quot;</span>: token})</span></div>
+          </div>
+          <div class="peek-status"><span>Python</span><span>UTF-8 · LF</span><span>32 lines · 1.1 KB</span><span class="grow"></span><span>Worktree <span class="mono">saarthi/T-0012-add-password-reset-api</span></span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

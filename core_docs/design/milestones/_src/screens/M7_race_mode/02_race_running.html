@@ -1,0 +1,122 @@
+<!-- {"title": "Race running", "note": "Task Room during a race: one task, two lanes side by side with live streams, time, cost and port. The codex lane asks a question, so the task is in Needs You. F9.1, F6.7", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 2, "cost": "$4.51", "slots": "3 of 4"} -->
+<style>
+  .race-tag { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent-text); background: var(--accent-soft); }
+  .lanes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; flex: 1; min-height: 0; }
+  .lane-col { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+  .lane-col.needs { border-color: var(--accent); box-shadow: var(--accent-glow); }
+  .lane-top { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .lane-meta { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .lane-meta b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+  .lane-feed { flex: 1; min-height: 0; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+  .lf-div { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+  .lf-div::before, .lf-div::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .lf-msg { font-size: 13px; line-height: 1.5; color: var(--text-2); }
+  .lf-tool { display: flex; align-items: center; gap: 8px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: 12px; min-width: 0; }
+  .lf-tool .t { font-family: 'JetBrains Mono', monospace; color: var(--blue); }
+  .lf-tool .a { font-family: 'JetBrains Mono', monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lf-ask { padding: 11px 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent-soft); display: flex; flex-direction: column; gap: 8px; }
+  .side-lane { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; }
+  .side-lane.needs { border-color: var(--accent); background: var(--accent-soft); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage needs">Needs You</span>
+    <span class="race-tag">Race</span>
+    <div class="grow"></div>
+    <span class="small muted">Time <span class="mono" style="color:var(--text)">06m 58s</span></span>
+    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.39</span></span>
+    <button class="btn danger" style="background:transparent">Cancel race</button>
+    <button class="btn primary" disabled>Run agent</button>
+  </div>
+  <div class="room">
+    <aside class="room-side">
+      <section class="col" style="gap:10px">
+        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · same for both lanes</span></div>
+        <div class="pretty" style="font-size:13px">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends a single-use link</span></div>
+        <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+      </section>
+      <section class="col" style="gap:8px">
+        <div class="row between"><h3>Race</h3><span class="mono xs faint">01JC5A0Z</span></div>
+        <div class="side-lane"><span class="agent sm cl">CL</span><div style="min-width:0"><div class="mono">claude · 01JC5A1B2C</div><div class="xs faint mono">ports 41010-41019</div></div><span class="xs accent strong">running</span></div>
+        <div class="side-lane needs"><span class="agent sm cx">CX</span><div style="min-width:0"><div class="mono">codex · 01JC5A1B3D</div><div class="xs faint mono">ports 41020-41029</div></div><span class="xs accent strong">needs you</span></div>
+        <div class="xs faint">Both from <span class="mono">main @ a41c9e2</span> · started 10:41</div>
+      </section>
+      <section class="col" style="gap:6px">
+        <h3>Runs</h3>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">10:22 · 4m 51s · $0.09</div></div><span class="xs green strong">done</span></div>
+      </section>
+      <section class="col" style="gap:6px">
+        <h3>Off during the race</h3>
+        <div class="small muted pretty">Run, Fix with agent, Second Opinion, review comments, Update from main and Ship. Pick a winner first.</div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab on">Stream</button>
+        <button class="tab">Compare <span class="n">0 of 2 ready</span></button>
+        <button class="tab">Terminal</button><button class="tab">Proof</button><button class="tab">Review</button>
+        <button class="tab">Research <span class="n">3</span></button><button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="row">
+          <span class="small muted">Lanes</span>
+          <div class="seg"><button class="on">Both</button><button>claude</button><button>codex</button></div>
+          <span class="grow"></span>
+          <span class="xs faint">Live · updates once a second</span>
+        </div>
+        <div class="lanes">
+          <div class="lane-col">
+            <div class="lane-top">
+              <div class="row"><span class="agent cl">CL</span><span class="strong">claude</span><span class="stage running" style="padding:1px 8px;font-size:11px">Running</span><span class="grow"></span><span class="dot amber pulse"></span></div>
+              <div class="mono xs accent ellipsis">saarthi/T-0012-add-password-reset-api-claude</div>
+              <div class="lane-meta"><span>Time <b>06m 58s</b></span><span>Cost <b>$0.21</b></span><span>Port <b>41010</b></span></div>
+            </div>
+            <div class="lane-feed">
+              <div class="lf-div">10:41 · build · plan-then-build</div>
+              <div class="lf-msg pretty">Plan: 1) token model and migration, 2) two endpoints, 3) email through <span class="mono">app.mail</span>, 4) tests for expiry, reuse and unknown email.</div>
+              <div class="lf-tool"><span class="t">Read</span><span class="a">app/auth/routes.py</span><span class="faint">84 lines</span></div>
+              <div class="lf-tool"><span class="t">Read</span><span class="a">app/mail.py</span><span class="faint">52 lines</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">app/models/password_reset.py</span><span class="mono green">+12</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">migrations/versions/0042_password_reset_tokens.py</span><span class="mono green">+19</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">app/auth/reset.py</span><span class="mono green">+42</span></div>
+              <div class="lf-tool"><span class="t">Bash</span><span class="a">uv run pytest tests/auth -q</span><span class="green">4 passed</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">tests/auth/test_password_reset.py</span><span class="mono green">+38</span></div>
+              <div class="row small muted"><span class="dot amber pulse"></span>Agent is working…</div>
+            </div>
+          </div>
+          <div class="lane-col needs">
+            <div class="lane-top">
+              <div class="row"><span class="agent cx">CX</span><span class="strong">codex</span><span class="stage needs" style="padding:1px 8px;font-size:11px">Needs you</span><span class="grow"></span><span class="dot amber pulse"></span></div>
+              <div class="mono xs accent ellipsis">saarthi/T-0012-add-password-reset-api-codex</div>
+              <div class="lane-meta"><span>Time <b>06m 40s</b></span><span>Cost <b>$0.18</b></span><span>Port <b>41020</b></span></div>
+            </div>
+            <div class="lane-feed">
+              <div class="lf-div">10:41 · build · plan-then-build</div>
+              <div class="lf-msg pretty">Reading the auth module and the mailer first.</div>
+              <div class="lf-tool"><span class="t">Bash</span><span class="a">rg -n "reset|token" app/</span><span class="faint">7 hits</span></div>
+              <div class="lf-tool"><span class="t">Read</span><span class="a">app/mail.py</span><span class="faint">52 lines</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">app/auth/tokens.py</span><span class="mono green">+28</span></div>
+              <div class="lf-tool"><span class="t">Edit</span><span class="a">app/auth/routes.py</span><span class="mono"><span class="green">+31</span> <span class="red">−6</span></span></div>
+              <div class="lf-msg pretty">Starting the dev server on this lane's port to try the endpoint.</div>
+              <div class="lf-tool"><span class="t">Bash</span><span class="a">uv run uvicorn app.main:app --port $SAARTHI_PORT</span><span class="faint">:41020</span></div>
+              <div class="lf-ask">
+                <div class="flag amber"><span class="dot amber pulse"></span>Question · 10:47</div>
+                <div class="pretty" style="font-size:13.5px">Should I add a new <span class="mono">password_reset_tokens</span> table, or store the token on the <span class="mono">users</span> table?</div>
+                <div class="row wrap"><button class="btn sm primary">New table</button><button class="btn sm">On users table</button><span class="xs faint">or type an answer below</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="composer">
+        <span class="chip on" style="flex-shrink:0"><span class="agent sm cx">CX</span>to codex</span>
+        <div class="box">No, use a new table with an Alembic migration…</div>
+        <button class="btn primary">Send</button>
+      </div>
+    </section>
+  </div>
+</div>

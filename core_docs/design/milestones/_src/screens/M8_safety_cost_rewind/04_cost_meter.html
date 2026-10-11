@@ -1,0 +1,98 @@
+<!-- {"title": "Cost meter", "note": "Cost at three levels: per run (with ~ for estimates from tokens), per task (meter in the Task Room header, amber at 80% of $3.00), per day (top bar popover: today by task and the last 7 days vs the $10.00 day budget). F16.2", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.80", "slots": "1 of 4"} -->
+<style>
+  .meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .meter .progress { width: 72px; }
+  .cpop { position: absolute; top: 6px; right: 14px; width: 410px; z-index: 20; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .cpop::before { content: ''; position: absolute; top: -6px; right: 22px; width: 10px; height: 10px; background: var(--surface); border-left: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); transform: rotate(45deg); }
+  .cp-sec { padding: 12px 16px; border-top: 1px solid var(--line); }
+  .trow { display: grid; grid-template-columns: 54px minmax(0, 1fr) 56px 54px; gap: 8px; align-items: center; font-size: 12.5px; padding: 4px 0; }
+  .trow .progress { height: 4px; }
+  .chart { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; height: 140px; align-items: end; position: relative; padding-top: 18px; }
+  .chart .bud { position: absolute; left: 0; right: 0; bottom: calc(18px + 75px); border-top: 1px dashed var(--line-hover); }
+  .chart .bud span { position: absolute; right: 0; top: -15px; font-size: 10.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+  .bar { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .bar i { display: block; width: 100%; max-width: 26px; border-radius: 3px 3px 0 0; background: var(--line-strong); }
+  .bar i.today { background: var(--accent); }
+  .bar i.over { background: var(--red); }
+  .bar b { font-weight: 400; font-size: 10.5px; color: var(--faint); }
+  .bar em { font-style: normal; font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+  .runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage review">Review</span>
+    <span class="meter" style="margin-left:6px">Cost <span class="progress"><span style="width:80%"></span></span><span class="mono accent">$2.40</span><span class="faint">/ $3.00</span></span>
+    <div class="grow"></div>
+    <span class="small muted">Time <span class="mono" style="color:var(--text)">41m 05s</span></span>
+    <button class="btn ok">Ship</button>
+  </div>
+
+  <div class="cpop">
+    <div style="padding:14px 16px 12px">
+      <div class="row between"><span class="strong">Today · Sunday 11 October</span><span class="xs faint">all projects</span></div>
+      <div class="row base" style="margin-top:6px;gap:10px"><span class="mono" style="font-size:26px;font-weight:500">$4.80</span><span class="small muted">of $10.00 day budget · 9 runs</span></div>
+      <div class="progress green mt-8"><span style="width:48%"></span></div>
+    </div>
+    <div class="cp-sec">
+      <div class="row between" style="margin-bottom:4px"><span class="upper">Today by task</span><span class="xs faint">task budget $3.00</span></div>
+      <div class="trow"><span class="mono accent">T-0012</span><span class="ellipsis">Add password reset API</span><span class="progress"><span style="width:80%"></span></span><span class="mono" style="text-align:right">$2.40</span></div>
+      <div class="trow"><span class="mono faint">T-0018</span><span class="ellipsis">Invoice PDF export with line-item totals</span><span class="progress green"><span style="width:43%"></span></span><span class="mono" style="text-align:right">$1.30</span></div>
+      <div class="trow"><span class="mono faint">T-0027</span><span class="ellipsis">Event replay after WebSocket reconnect</span><span class="progress green"><span style="width:21%"></span></span><span class="mono" style="text-align:right">~$0.62</span></div>
+      <div class="trow"><span class="mono faint">T-0031</span><span class="ellipsis">Upgrade Alembic to 1.14</span><span class="progress green"><span style="width:16%"></span></span><span class="mono" style="text-align:right">~$0.48</span></div>
+    </div>
+    <div class="cp-sec">
+      <div class="row between"><span class="upper">Last 7 days</span><span class="xs red">1 day over budget</span></div>
+      <div class="chart">
+        <div class="bud"><span>$10</span></div>
+        <div class="bar"><em>3.10</em><i style="height:23px"></i><b>Mon</b></div>
+        <div class="bar"><em>6.40</em><i style="height:48px"></i><b>Tue</b></div>
+        <div class="bar"><em>2.20</em><i style="height:17px"></i><b>Wed</b></div>
+        <div class="bar"><em>7.90</em><i style="height:59px"></i><b>Thu</b></div>
+        <div class="bar"><em>~2.10</em><i style="height:16px"></i><b>Fri</b></div>
+        <div class="bar"><em class="red">11.20</em><i class="over" style="height:84px"></i><b>Sat</b></div>
+        <div class="bar"><em style="color:var(--text)">4.80</em><i class="today" style="height:36px"></i><b class="strong" style="color:var(--text)">Today</b></div>
+      </div>
+    </div>
+    <div class="cp-sec" style="background:var(--panel)">
+      <div class="xs muted pretty"><span class="mono">~</span> = estimated from tokens (Codex often reports tokens only). A cost the agent reports always wins.</div>
+      <div class="mono xs faint mt-4">$ saarthi cost --days 7</div>
+    </div>
+  </div>
+
+  <div class="room">
+    <aside class="room-side">
+      <section class="col" style="gap:8px">
+        <div class="row between"><h3>Cost</h3><span class="xs faint">task budget $3.00</span></div>
+        <div class="row base" style="gap:8px"><span class="mono" style="font-size:22px">$2.40</span><span class="small accent">80% · amber from 80%</span></div>
+        <div class="progress"><span style="width:80%"></span></div>
+        <div class="xs faint">One warning when it goes over. Runs are never stopped.</div>
+      </section>
+      <section class="col" style="gap:6px">
+        <div class="row between"><h3>Runs</h3><span class="xs faint">5 runs</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAX3</span> · fix</div><div class="xs faint">11:20 · 4m 10s · reported</div></div><span class="mono">$0.86</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 2m 02s · 41k tokens</div></div><span class="mono accent">~$0.42</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JC5A1B2C</span> · build</div><div class="xs faint">race lane claude · winner</div></div><span class="mono">$0.62</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JC5A1B3D</span> · build</div><div class="xs faint">race lane codex · 38k tokens</div></div><span class="mono accent">~$0.41</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">10:22 · 4m 51s · reported</div></div><span class="mono">$0.09</span></div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot green"></span></button>
+        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="stream" style="max-width:520px">
+          <div class="ev"><span class="time">10:59</span><div class="ev-card"><div class="ev-head"><span class="agent sm cl">CL</span>Build run ended · race lane claude<span class="runc">$0.62</span></div></div></div>
+          <div class="ev"><span class="time">11:00</span><div class="ev-card"><div class="ev-head"><span class="agent sm cx">CX</span>Build run ended · race lane codex<span class="runc accent">~$0.41</span></div><div class="xs faint mt-4">Codex reported tokens only: 31k in, 7k out. Estimated from the price table.</div></div></div>
+          <div class="ev"><span class="time">11:14</span><div class="ev-card"><div class="ev-head"><span class="agent sm cx">CX</span>Second opinion ended · 3 findings<span class="runc accent">~$0.42</span></div></div></div>
+          <div class="ev"><span class="time">11:24</span><div class="ev-card"><div class="ev-head"><span class="agent sm cl">CL</span>Fix run ended · checks green<span class="runc">$0.86</span></div></div></div>
+          <div class="ev"><span class="time">11:25</span><div class="ev-card ok"><div class="ev-head"><span class="dot green"></span>All checks green. Task moved to Review.</div></div></div>
+          <div class="ev"><span class="time">11:25</span><div class="ev-card needs"><div class="ev-head"><span class="dot amber"></span>Task cost at 80% of its budget: $2.40 of $3.00</div><div class="xs muted mt-4">Meter is amber. No alert yet; you get one when it goes over.</div></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

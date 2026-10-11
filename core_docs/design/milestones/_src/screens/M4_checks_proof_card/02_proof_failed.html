@@ -1,0 +1,241 @@
+<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.12", "slots": "2 of 4", "title": "Proof Card - failed", "note": "Required check tests failed, so T-0012 moved to Failed by itself. The failing check is open with its output tail and a link to the full log. Fix with agent shows the round (1 of 3) and the agent. Coverage is skipped; override needs a reason. F7.3, F7.4, F7.6, F2.5"} -->
+<style>
+  .side-sec { display: flex; flex-direction: column; gap: 9px; }
+  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
+  .room-side { gap: 18px; }
+  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
+  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
+  .kv3 .k { color: var(--faint); font-size: 10.5px; }
+  .kv3 > .hl { border-color: var(--accent); background: var(--accent-soft); }
+  .room-side .crit { font-size: 12.5px; }
+  .tab .tdot { width: 6px; height: 6px; }
+  .side-run .tag { font-size: 10.5px; padding: 0 4px; }
+  /* proof tab */
+  .pf { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
+  .pf-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
+  .pf-head.ok { border-color: var(--green); }
+  .pf-head.bad { border-color: var(--red); }
+  .pf-head.info { border-color: var(--blue); }
+  .pf-head .bdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--line-strong); }
+  .pf-head .bdot.green { background: var(--green); } .pf-head .bdot.red { background: var(--red); } .pf-head .bdot.blue { background: var(--blue); }
+  .pf-head h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+  .pf-head .sub { font-size: 13px; color: var(--muted); }
+  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .pf-stat { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .pf-stat .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .pf-stat .v { font-family: 'JetBrains Mono', monospace; font-size: 18px; white-space: nowrap; }
+  .pf-stat .skeleton { width: 54px; height: 14px; margin: 6px 0 4px; }
+  .panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .panel.open { overflow: visible; }
+  .panel-h { border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg-side); border-bottom: 1px solid var(--line); }
+  .panel-h .upper { color: var(--muted); }
+  .ck { border-bottom: 1px solid var(--line); }
+  .ck:last-child { border-bottom: none; }
+  .ck-row { display: grid; grid-template-columns: 12px 14px 64px minmax(0, 1fr) 70px 118px; gap: 10px; align-items: center; padding: 9px 14px; font-size: 13px; }
+  .ck-row .tw { color: var(--faint); font-size: 11px; }
+  .ck-row .cmd { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ck-row .req { font-size: 12px; color: var(--muted); }
+  .ck-row .res { font-size: 12px; text-align: right; font-weight: 600; white-space: nowrap; }
+  .ck-row .dot { width: 9px; height: 9px; }
+  .tail { margin: 0 14px 12px 50px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .tail-bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); background: var(--bg-side); border-bottom: 1px solid var(--line); }
+  .tail pre { margin: 0; padding: 9px 12px; background: var(--term-bg); color: var(--term-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; font-variant-ligatures: none; }
+  .tail .r { color: var(--red); } .tail .g { color: var(--green); } .tail .d { color: var(--faint); } .tail .b { font-weight: 600; }
+  .cov { display: grid; grid-template-columns: 22px minmax(0, 1fr) 128px; gap: 10px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .cov:last-child { border-bottom: none; }
+  .cov .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--faint); padding-top: 1px; }
+  .cov .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .pick { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
+  .pick .car { color: var(--faint); font-weight: 400; }
+  .pick.met { color: var(--green); } .pick.notsure { color: var(--accent-text); } .pick.notmet { color: var(--red); }
+  .pick.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .pick-wrap { position: relative; }
+  .menu { position: absolute; right: 0; top: calc(100% + 4px); width: 150px; z-index: 5; padding: 4px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-sm); }
+  .menu div { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; }
+  .menu div.on { background: var(--chip-on); }
+  .hist { display: grid; grid-template-columns: 12px 62px 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .hist:last-child { border-bottom: none; }
+  .hist.on { background: var(--surface-2); }
+  .ovr { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 8px; }
+  /* review tab */
+  .rv { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
+  .rv-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rv-top h2 { font-size: 17px; font-weight: 600; }
+  .riskbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .rflag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--red); color: var(--red); white-space: nowrap; }
+  .rflag.sm { font-size: 11px; padding: 1px 7px; }
+  .grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+  .grp-h { display: flex; flex-direction: column; gap: 5px; padding: 12px 16px; }
+  .grp-h .t { font-weight: 600; font-size: 14.5px; }
+  .grp-h .tw { color: var(--faint); font-size: 12px; width: 12px; }
+  .grp-why { font-size: 13.5px; color: var(--text-2); padding-left: 22px; text-wrap: pretty; }
+  .grp-files { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); padding-left: 22px; }
+  .hunks { border-top: 1px solid var(--line); padding: 6px 0 8px; background: var(--panel); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
+  .hunks .hh { padding: 2px 16px; color: var(--blue); }
+  .hunks .dl { padding: 0 16px; white-space: pre; color: var(--muted); }
+  .hunks .dl.add { background: var(--green-soft); color: var(--diff-add); }
+  .hunks .dl.del { background: var(--red-soft); color: var(--diff-del); }
+  .cmt-badge { font-size: 11.5px; color: var(--accent-text); white-space: nowrap; }
+  .so { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .so h3 { font-size: 14.5px; font-weight: 600; }
+  .decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage failed">Failed</span>
+    <div class="grow"></div>
+    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">26m</span></span>
+    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.92</span></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <aside class="room-side">
+      <section class="side-sec">
+        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
+        <div class="lbl">Goal</div>
+        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="lbl mt-4">Acceptance criteria</div>
+        <div class="crit"><span class="box "></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box "></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box "></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box "></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box "></span><span>Tests cover all of the above</span></div>
+        <div class="lbl mt-4">Notes</div>
+        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
+      </section>
+
+      <section class="side-sec" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
+        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+        <div class="kv3">
+          <div><div class="k">vs main</div>3 ahead</div>
+          <div><div class="k">Changed</div>6 files</div>
+          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0027</span></div>
+        </div>
+        <div class="row wrap" style="gap:5px">
+          <button class="btn xs">Open folder</button>
+          <button class="btn xs">Terminal here</button>
+          <button class="btn xs">Open in my editor</button>
+        </div>
+      </section>
+
+      <section class="side-sec" style="gap:6px">
+        <h3 style="margin-bottom:4px">Runs</h3>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab on">Proof <span class="dot tdot red"></span></button>
+        <button class="tab">Code <span class="n">6</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="pf">
+        <div class="pf-head bad">
+          <span class="bdot red"></span>
+          <div class="grow" style="min-width:240px">
+            <h2>1 of 2 required checks failed</h2>
+            <div class="sub">tests failed after run R-0027 (build). Fix with agent sends the failing output to the agent as a new fix run.</div>
+          </div>
+          <div class="col" style="gap:6px;align-items:flex-end">
+            <div class="row" style="gap:6px">
+              <button class="btn">Run checks</button>
+              <button class="btn primary">Fix with agent · round 1 of 3</button>
+            </div>
+            <span class="xs muted">Agent: <span class="agent sm cl">CL</span> Claude (built it) · <a href="#">change</a></span>
+          </div>
+        </div>
+        <div class="pf-stats">
+          <div class="pf-stat"><div class="k">Files changed</div><div class="v">6</div></div>
+          <div class="pf-stat"><div class="k">Lines vs main</div><div class="v">+170 −4</div></div>
+          <div class="pf-stat"><div class="k">Tests added</div><div class="v green">7</div></div>
+          <div class="pf-stat"><div class="k">Run cost</div><div class="v">$0.84</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="upper">Checks</span><span class="mono xs faint">.saarthi/project.toml</span><span class="grow"></span><span class="xs faint">Card #1 · 11:02</span></div>
+          <div class="ck">
+            <div class="ck-row">
+              <span class="tw">▸</span><span class="dot green"></span>
+              <span class="strong">lint</span>
+              <span class="cmd">uv run ruff check .</span>
+              <span class="req">required</span>
+              <span class="res green">Pass · 0.3s</span>
+            </div>
+          </div>
+          <div class="ck">
+            <div class="ck-row">
+              <span class="tw">▾</span><span class="dot red"></span>
+              <span class="strong">tests</span>
+              <span class="cmd">uv run pytest -q</span>
+              <span class="req">required</span>
+              <span class="res red">Fail · 6.4s</span>
+            </div>
+            <div class="tail">
+              <div class="tail-bar"><span>Output tail · last 200 lines · exit 1</span><span class="grow"></span><span class="mono xs faint ellipsis">~/.local/share/saarthi/checks/T-0012/01JA9KQ4/tests.log</span><button class="btn xs">Open full log</button></div>
+<pre><span class="d">........................................................................ [ 22%]
+........................................................................ [ 67%]
+...........................................F............................ [ 90%]
+...............................                                          [100%]</span>
+<span class="b">_______________________ test_token_expires_after_30_min ________________________</span>
+
+    def test_token_expires_after_30_min(client, user, freezer):
+        token = request_token(client, user.email)
+        freezer.tick(timedelta(minutes=31))
+        r = client.post("/auth/password-reset/confirm", json={...})
+<span class="r">&gt;       assert r.status_code == 410
+E       AssertionError: assert 200 == 410</span>
+
+<span class="d">tests/auth/test_password_reset.py:48: AssertionError</span>
+<span class="r">FAILED tests/auth/test_password_reset.py::test_token_expires_after_30_min</span>
+<span class="r b">1 failed</span>, <span class="g">318 passed</span> in 6.41s</pre>
+            </div>
+          </div>
+          <div class="ck">
+            <div class="ck-row">
+              <span class="tw">▸</span><span class="dot green"></span>
+              <span class="strong">types</span>
+              <span class="cmd">uv run pyright</span>
+              <span class="req">optional</span>
+              <span class="res green">Pass · 4.1s</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><span class="upper">Brief coverage</span><span class="xs faint">agent fills, you confirm</span><span class="grow"></span><button class="btn xs">Ask anyway</button></div>
+          <div class="row" style="padding:12px 14px;gap:12px">
+            <span class="dot"></span>
+            <div class="grow small muted">Skipped. Coverage is asked only when all required checks pass, so no money is spent on unfinished work.</div>
+          </div>
+        </div>
+        <div class="ovr">
+          <div class="grow">
+            <div class="small strong">Is the check wrong?</div>
+            <div class="small muted">You can move to Review with red checks. You must type a reason (10+ characters). It stays on this Proof Card.</div>
+          </div>
+          <button class="btn">Move to Review…</button>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="upper">History</span><span class="grow"></span><span class="xs faint">one card per check batch</span></div>
+          <div class="hist on"><span class="dot red"></span><span class="mono">Card #1</span><span class="mono faint">11:02</span><span class="ellipsis text2">after R-0027 build · tests failed</span><span class="xs faint nowrap">fix rounds used: 0 of 3</span></div>
+        </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,146 @@
+<!-- {"title": "Tauri spike window", "note": "Spike 4: the real desktop/ app shows live claude in xterm.js (PTY over WebSocket :7879) next to a read-only CodeMirror file, with the WebKitGTK smoothness checks for TDD Q4.", "shell": "bare"} -->
+<style>
+  .sp { height: 100vh; padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 14px; }
+  .sp .window { flex: 1; min-height: 0; }
+  .sp-head { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--bg-header); font-size: 12.5px; }
+  .sp-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr); }
+  .pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .pane + .pane { border-left: 1px solid var(--line); }
+  .pane-tabs { display: flex; align-items: stretch; gap: 0; height: 34px; border-bottom: 1px solid var(--line); background: var(--bg-side); font-size: 12px; }
+  .pane-tab { display: flex; align-items: center; gap: 8px; padding: 0 14px; color: var(--muted); border-right: 1px solid var(--line); }
+  .pane-tab.on { color: var(--text); background: var(--bg); box-shadow: inset 0 -2px 0 var(--accent); }
+  .xterm { flex: 1; min-height: 0; background: var(--term-bg); color: var(--term-text); padding: 12px 14px; overflow: hidden;
+           font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.55; white-space: pre; }
+  .xterm .p { color: var(--accent-text); } .xterm .c { color: var(--blue); } .xterm .g { color: var(--green); }
+  .xterm .r { color: var(--red); } .xterm .d { color: var(--faint); } .xterm .b { font-weight: 700; color: var(--text); }
+  .xterm .m { color: var(--muted); }
+  .tbox { display: inline-block; border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 12px; margin: 2px 0; }
+  .tbox.hot { border-color: var(--accent); }
+  .cm { flex: 1; min-height: 0; border: none; border-radius: 0; background: var(--bg); overflow: hidden; padding: 8px 0; }
+  .cm .ln > span:first-child { border-right: 1px solid var(--line); margin-right: 12px; }
+  .checks { border-top: 1px solid var(--line); padding: 12px 16px 14px; background: var(--panel); display: flex; flex-direction: column; gap: 8px; }
+  .chk { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 12.5px; }
+  .statusbar { display: flex; align-items: center; gap: 18px; height: 30px; padding: 0 14px; border-top: 1px solid var(--line); background: var(--bg-side);
+               font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+  .statusbar .mono { font-size: 11px; }
+</style>
+<div class="sp">
+  <div class="window">
+    <div class="window-bar">
+      <div class="lights"><span></span><span></span><span></span></div>
+      <div class="wtitle">Saarthi (spike) <span class="faint">— npm run tauri dev</span></div>
+      <span class="mono xs faint">1440 × 860</span>
+    </div>
+
+    <div class="sp-head">
+      <div class="logo" style="width:20px;height:20px;font-size:11px;border-radius:5px">S</div>
+      <span class="strong">Spike 4</span>
+      <span class="muted">xterm.js + CodeMirror 6 in WebKitGTK</span>
+      <span class="faint">·</span>
+      <span class="mono faint" style="font-size:11.5px">desktop/src/spike/SpikePage.tsx</span>
+      <div class="grow"></div>
+      <span class="tag amber">throwaway · M3 deletes src/spike/</span>
+    </div>
+
+    <div class="sp-grid">
+      <!-- left: live terminal -->
+      <section class="pane">
+        <div class="pane-tabs">
+          <div class="pane-tab on"><span class="dot green"></span><span class="mono">claude</span><span class="faint">TerminalSpike.tsx</span></div>
+          <div class="grow"></div>
+          <div class="pane-tab" style="border-right:none;border-left:1px solid var(--line)"><span class="mono faint">ws://127.0.0.1:7879/pty</span></div>
+        </div>
+<div class="xterm"><span class="tbox hot"><span class="p">*</span> <span class="b">Welcome to Claude Code!</span>
+
+  <span class="d">/help for help, /status for your current setup</span>
+
+  <span class="d">cwd: /tmp/saarthi-spike-k2x9/repo</span></span>
+
+<span class="m">&gt;</span> Add a function add(a, b) to calc.py with a test
+
+<span class="b">●</span> I'll add <span class="c">add()</span> to calc.py and a test in test_calc.py.
+
+<span class="g">●</span> <span class="b">Update</span>(calc.py)
+  <span class="d">⎿</span>  Updated <span class="b">calc.py</span> with <span class="g">4 additions</span>
+      <span class="d">17</span> <span class="g">+</span>
+      <span class="d">18</span> <span class="g">+def add(a: float, b: float) -&gt; float:</span>
+      <span class="d">19</span> <span class="g">+    """Return a + b."""</span>
+      <span class="d">20</span> <span class="g">+    return a + b</span>
+
+<span class="g">●</span> <span class="b">Update</span>(test_calc.py)
+  <span class="d">⎿</span>  Updated <span class="b">test_calc.py</span> with <span class="g">3 additions</span>
+
+<span class="g">●</span> <span class="b">Bash</span>(python -m pytest -q)
+  <span class="d">⎿</span>  ...  <span class="g">3 passed</span> in 0.02s
+
+<span class="b">●</span> Done. <span class="c">add()</span> is in calc.py, with a test in test_calc.py.
+
+<span class="tbox">&gt; now make it raise on strings<span class="cursor"></span>                          </span>
+  <span class="d">? for shortcuts</span>                         <span class="d">⏵⏵ accept edits on</span></div>
+      </section>
+
+      <!-- right: CodeMirror + checks -->
+      <section class="pane">
+        <div class="pane-tabs">
+          <div class="pane-tab on"><span class="mono">calc.py</span><span class="faint">read-only</span></div>
+          <div class="pane-tab"><span class="mono">big_5000.py</span></div>
+          <div class="grow"></div>
+          <div class="pane-tab" style="border-right:none;border-left:1px solid var(--line)"><span class="faint">CodeSpike.tsx</span></div>
+        </div>
+        <div class="code cm">
+          <div class="ln"><span>1</span><span><span class="tk-s">"""Tiny calculator for the Saarthi spikes."""</span></span></div>
+          <div class="ln"><span>2</span><span></span></div>
+          <div class="ln"><span>3</span><span></span></div>
+          <div class="ln"><span>4</span><span><span class="tk-k">def</span> <span class="tk-f">sub</span>(a: <span class="tk-k">int</span>, b: <span class="tk-k">int</span>) -&gt; <span class="tk-k">int</span>:</span></div>
+          <div class="ln"><span>5</span><span>    <span class="tk-k">return</span> a - b</span></div>
+          <div class="ln"><span>6</span><span></span></div>
+          <div class="ln"><span>7</span><span></span></div>
+          <div class="ln"><span>8</span><span><span class="tk-k">def</span> <span class="tk-f">mul</span>(a: <span class="tk-k">int</span>, b: <span class="tk-k">int</span>) -&gt; <span class="tk-k">int</span>:</span></div>
+          <div class="ln"><span>9</span><span>    <span class="tk-k">return</span> a * b</span></div>
+          <div class="ln"><span>10</span><span></span></div>
+          <div class="ln"><span>11</span><span></span></div>
+          <div class="ln"><span>12</span><span><span class="tk-k">def</span> <span class="tk-f">div</span>(a: <span class="tk-k">int</span>, b: <span class="tk-k">int</span>) -&gt; <span class="tk-k">float</span>:</span></div>
+          <div class="ln"><span>13</span><span>    <span class="tk-k">if</span> b == <span class="tk-n">0</span>:</span></div>
+          <div class="ln"><span>14</span><span>        <span class="tk-k">raise</span> <span class="tk-f">ZeroDivisionError</span>(<span class="tk-s">"b must not be 0"</span>)</span></div>
+          <div class="ln"><span>15</span><span>    <span class="tk-k">return</span> a / b</span></div>
+          <div class="ln"><span>16</span><span></span></div>
+          <div class="ln"><span>17</span><span></span></div>
+          <div class="ln hl"><span>18</span><span><span class="tk-k">def</span> <span class="tk-f">add</span>(a: <span class="tk-k">float</span>, b: <span class="tk-k">float</span>) -&gt; <span class="tk-k">float</span>:</span></div>
+          <div class="ln"><span>19</span><span>    <span class="tk-s">"""Return a + b."""</span></span></div>
+          <div class="ln"><span>20</span><span>    <span class="tk-k">return</span> a + b</span></div>
+        </div>
+        <div class="checks">
+          <div class="row between"><span class="upper">Smoothness checks · TDD Q4</span><span class="xs faint">run by hand</span></div>
+          <div class="chk"><span class="dot green"></span><span><span class="mono small">cat app-10mb.log</span> <span class="muted">in the terminal</span></span><span class="mono small green">3.4 s · no freeze</span></div>
+          <div class="chk"><span class="dot green"></span><span class="muted">Type into Claude for 1 minute</span><span class="mono small green">no visible lag</span></div>
+          <div class="chk"><span class="dot green"></span><span class="muted">Scroll <span class="mono small">big_5000.py</span> top to bottom</span><span class="mono small green">fluid · 60 fps</span></div>
+          <div class="chk"><span class="dot amber"></span><span class="muted">Resize window, Claude layout follows</span><span class="mono small accent">needs fit addon</span></div>
+          <div class="row gap-12 mt-4">
+            <div class="seg"><button class="on">WebGL</button><button>Canvas</button><button>DOM</button></div>
+            <span class="xs faint">xterm.js renderer</span>
+            <div class="grow"></div>
+            <button class="btn sm">Flood 10 MB</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="statusbar">
+      <span class="row" style="gap:6px"><span class="dot green"></span>PTY WebSocket connected</span>
+      <span class="mono">127.0.0.1:7879</span>
+      <span class="mono">120 × 40</span>
+      <span>WebKitGTK <span class="mono">2.46.5</span></span>
+      <span>Ubuntu <span class="mono">24.04</span></span>
+      <div class="grow"></div>
+      <span class="mono">60 fps</span>
+      <span>renderer <span class="mono">WebGL</span></span>
+      <span class="mono faint">WEBKIT_DISABLE_DMABUF_RENDERER=1</span>
+    </div>
+  </div>
+
+  <div class="grid-3" style="gap:22px">
+    <div class="annot">The terminal is a real PTY: <span class="mono">spike_pty_ws.py --cmd claude --port 7879</span>. Binary frames carry bytes; one JSON text frame carries resize (TDD Decision 6).</div>
+    <div class="annot">Port 7879, not 7878, so the spike never clashes with the daemon. Bound to <span class="mono">127.0.0.1</span> only. Closing the socket stops <span class="mono">claude</span>.</div>
+    <div class="annot">If any check fails, plan B is the same React page in a normal browser at <span class="mono">http://127.0.0.1:7878</span>. The result goes into ADR-001.</div>
+  </div>
+</div>

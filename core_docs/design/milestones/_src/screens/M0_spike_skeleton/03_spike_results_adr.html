@@ -1,0 +1,106 @@
+<!-- {"title": "Spike results + ADR-001", "note": "M0 done check: the FSD QA checklist in a terminal (fixtures, clean-up greps, worktree + checkpoint spike ends OK) and ADR-001 answering TDD section 16 Q1-Q5 for M2 and M3.", "shell": "bare"} -->
+<style>
+  .sp { height: 100vh; padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 14px; }
+  .sp-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .sp .term { box-shadow: var(--shadow-sm); }
+  .sp .term-bar .wtitle { flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .sp .term-body { white-space: pre; overflow: hidden; font-size: 12px; line-height: 1.6; }
+  .sp .term .m { color: var(--muted); }
+  .sp .term .rule { display: block; height: 1px; background: var(--line); margin: 6px 0 5px; }
+  .glow { white-space: normal !important; padding: 18px 22px !important; }
+  .glow h1 { font-size: 13px; font-weight: 700; display: inline-block; padding: 1px 8px; border-radius: 3px; background: var(--accent); color: var(--on-accent); }
+  .glow h2 { font-size: 12.5px; font-weight: 700; color: var(--accent-text); margin: 16px 0 8px; }
+  .glow h2::before { content: '## '; color: var(--faint); font-weight: 400; }
+  .glow p { margin: 6px 0; color: var(--term-text); }
+  .glow table { width: 100%; border-collapse: collapse; font-size: 11.5px; line-height: 1.5; }
+  .glow th { text-align: left; color: var(--faint); font-weight: 500; padding: 4px 8px 6px; border-bottom: 1px solid var(--line-strong); }
+  .glow td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--term-text); }
+  .glow td:first-child { color: var(--accent-text); font-weight: 600; width: 30px; }
+  .glow code { color: var(--blue); }
+  .glow ul { list-style: none; margin: 4px 0; }
+  .glow li { margin: 2px 0; }
+  .glow li::before { content: '• '; color: var(--faint); }
+</style>
+<div class="sp">
+  <div class="sp-grid">
+    <div class="term">
+      <div class="term-bar"><div class="lights"><span></span><span></span><span></span></div><span class="wtitle">~/OFFICE/saarthi — M0 QA checklist</span><span class="mono xs faint">bash</span></div>
+<div class="term-body"><span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> ls daemon/tests/fixtures/agents/*.jsonl | wc -l
+<span class="g">9</span>
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> for f in daemon/tests/fixtures/agents/*.jsonl; do
+    test -f "${f%.jsonl}.meta.json" || echo "no meta: $f"; done
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> grep -rn "$HOME" daemon/tests/fixtures/agents/
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> grep -rniE "api[_-]?key|token|secret" \
+    daemon/tests/fixtures/agents/ | cut -c1-74
+codex_build_ok.jsonl:14:{"type":"turn.completed","usage":{"input_tokens":91
+codex_needs_input.jsonl:8:{"type":"turn.completed","usage":{"input_tokens":8
+<span class="d"># checked by hand: only token counts, harmless</span>
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> for f in daemon/tests/fixtures/agents/*.jsonl; do python3 -c \
+    "import json,sys;[json.loads(l) for l in open(sys.argv[1])]" "$f"; done
+<span class="r">json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</span>
+<span class="d"># codex_needs_input.jsonl line 6 is the kept RAW warning. Allowed:</span>
+<span class="d"># the fixture is a byte-for-byte replay. Noted in ADR-001 section 9.</span>
+
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> uv run scripts/spikes/spike_worktree.py
+<span class="d">$</span> git worktree add /tmp/sw-3n1c/wt/T-0001 -b saarthi/T-0001-demo main
+<span class="d">  edit calc.py · add notes.txt (untracked)</span>
+<span class="d">$</span> GIT_INDEX_FILE=/tmp/sw-3n1c/idx git read-tree HEAD
+<span class="d">$</span> GIT_INDEX_FILE=/tmp/sw-3n1c/idx git add -A
+<span class="d">$</span> GIT_INDEX_FILE=/tmp/sw-3n1c/idx git write-tree       <span class="d">-&gt;</span> c71e0b4
+<span class="d">$</span> git commit-tree c71e0b4 -p HEAD -m "checkpoint 1"  <span class="d">-&gt;</span> 9e1f7a2
+<span class="d">$</span> git update-ref refs/saarthi/checkpoints/T-0001/1 9e1f7a2
+<span class="g">pass</span>  branch head unchanged           a3c0d91 == a3c0d91
+<span class="g">pass</span>  git status --porcelain          same as before step 3
+<span class="g">pass</span>  git archive 9e1f7a2 | tar -x    calc.py test_calc.py notes.txt
+<span class="d">$</span> git worktree remove --force /tmp/sw-3n1c/wt/T-0001   <span class="d">(branch kept)</span>
+<span class="m">time</span>  checkpoint on a copy of acme-billing (41,208 files): 0.84 s
+<span class="g b">OK: branch unchanged, checkpoint has 3 files (1 untracked)</span>
+
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> git status --short
+<span class="g">??</span> core_docs/decisions/ADR-001-agent-integration.md
+<span class="g">??</span> daemon/tests/fixtures/agents/
+<span class="g">??</span> desktop/
+<span class="g">??</span> scripts/spikes/
+<span class="c">~/OFFICE/saarthi</span> <span class="d">main</span> <span class="p">$</span> <span class="cursor"></span></div>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><div class="lights"><span></span><span></span><span></span></div><span class="wtitle">glow core_docs/decisions/ADR-001-agent-integration.md</span><span class="mono xs faint">bash</span></div>
+      <div class="term-body glow">
+        <h1>ADR-001 · Agent integration</h1>
+        <p class="d" style="margin-top:8px">Status: accepted · M0 · 2026-10-18 · links: core TDD 4.4, 16</p>
+        <h2>Decision summary</h2>
+        <table>
+          <tr><th>#</th><th>Question</th><th>Answer</th><th>For</th></tr>
+          <tr><td>Q1</td><td>How does Claude show a question or a permission request?</td><td>Questions: <code>AskUserQuestion</code> tool_use, run stays alive (path A). Permissions: <code>permission_denials</code> in the <code>result</code> line, run ends (path B).</td><td>M2</td></tr>
+          <tr><td>Q2</td><td>Can <code>codex exec</code> ask mid-run?</td><td>No. The run ends and the last <code>agent_message</code> is a question. Answer with <code>codex exec resume &lt;thread_id&gt;</code>.</td><td>M2</td></tr>
+          <tr><td>Q3</td><td>Is <code>codex app-server</code> usable?</td><td>Starts, but no clean approval signal in the 1 h time-box. Use <code>exec</code> for v1. app-server is Later.</td><td>Later</td></tr>
+          <tr><td>Q4</td><td>Is WebKitGTK smooth enough?</td><td>Yes, with the WebGL renderer. Set <code>WEBKIT_DISABLE_DMABUF_RENDERER=1</code> on NVIDIA. Plan B not needed.</td><td>M3</td></tr>
+          <tr><td>Q5</td><td>Can agents survive a daemon restart?</td><td>Only with stdout to a file. v1 accepts <code>interrupted</code> + resume.</td><td>M2, M8</td></tr>
+        </table>
+        <h2>PTY + WebSocket</h2>
+        <ul>
+          <li>Binary frames = terminal bytes. Text frame <code>{"type":"resize","cols":120,"rows":40}</code>.</li>
+          <li>Socket close sends SIGTERM to the process group.</li>
+        </ul>
+        <h2>Setup</h2>
+        <ul>
+          <li><code>sudo apt install libwebkit2gtk-4.1-dev librsvg2-dev build-essential</code></li>
+        </ul>
+        <h2>Consequences</h2>
+        <ul>
+          <li>M2 handles Needs You in two paths (live and ended) for both agents.</li>
+          <li>M2 queues Codex follow-ups until the turn ends (no live input).</li>
+          <li>M3 keeps xterm.js + CodeMirror in Tauri; no browser fallback.</li>
+        </ul>
+        <p class="d" style="margin-top:14px">sections 3-11 below · 9 fixtures indexed in section 9</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="gap:22px">
+    <div class="annot">The left side is the FSD section 9 QA checklist, run as is. Empty output from the meta check and the <span class="mono">$HOME</span> grep means pass.</div>
+    <div class="annot">The JSON check fails on purpose for the one kept <span class="mono">RAW</span> line. The ADR says so, so M2 knows its mapper must accept non-JSON lines.</div>
+    <div class="annot">Each ADR answer names the milestone that uses it. M2 builds Needs You from Q1 + Q2, M3 trusts Q4, and Q5 sets the "interrupted + resume" default.</div>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+<!-- {"title": "TEST MODE bar (e2e daemon)", "note": "Playwright runs the app against a test daemon (port 7879, temp data dir, FakeAdapter scenarios). /health.fake_agents = true, so a red TEST MODE bar is always on top. Refused with the default data dir. FSD M9 5.6; TDD Decision 11, 12, 5.3 Global row", "shell": "app", "nav": "board", "crumb": "Task Board", "needs": 1, "cost": "$0.00", "projects": [["acme-billing", 9, "amber"], ["saarthi", 4, "green"], ["clinic-portal", 2, ""]], "daemon": {"dot": "red", "label": "saarthid · test mode", "sub": "127.0.0.1:7879 · v1.0.0", "note": "Agents: 2 of 4 fake slots"}, "after_topbar": "<div class=\"testbar\"><span class=\"strong\">TEST MODE</span><span class=\"sep\">·</span><span>All agents are fake (SAARTHI_FAKE_AGENTS). Nothing here is real work.</span><span class=\"grow\"></span><span class=\"mono xs\">data /tmp/saarthi-e2e-k3x9/ · port 7879</span></div>"} -->
+<style>
+  .testbar { display: flex; align-items: center; gap: 10px; padding: 5px 20px; background: var(--red); color: var(--bg); font-size: 12.5px; flex-shrink: 0; letter-spacing: .01em; }
+  .testbar .strong { letter-spacing: .08em; }
+  .testbar .sep { opacity: .6; }
+</style>
+<div class="fill">
+  <div class="toolbar">
+    <h1>Task Board</h1>
+    <div class="input" style="width:240px;color:var(--faint)">Filter by title, ID or label</div>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <div class="grow"></div>
+    <span class="row small muted"><span class="tag red">FakeAdapter</span>scenario <span class="mono">daily-flow.toml</span> · step 3 of 9</span>
+  </div>
+  <div style="flex:1;min-height:0;overflow:hidden;padding:16px 20px">
+    <div class="board">
+      <div class="lane"><div class="lane-head"><span class="sq"></span><span class="strong" style="font-size:13px">Inbox</span><span class="faint small">2</span></div>
+        <div class="tcard"><div class="title">Add audit log for admin actions</div><div class="meta"><span class="mono faint">T-0016</span><span class="tag">P2</span><span>security</span></div></div>
+        <div class="tcard"><div class="title">Dark mode for the settings page</div><div class="meta"><span class="mono faint">T-0014</span><span class="tag">P3</span><span>ui</span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Research</span><span class="faint small">1</span></div>
+        <div class="tcard"><div class="title">Investigate slow dashboard query</div><div class="meta"><span class="mono faint">T-0015</span><span class="tag">P2</span><span>perf</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">5m</span><span class="mono">$0.09</span><span class="grow"></span><span class="dot"></span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--muted)"></span><span class="strong" style="font-size:13px">Ready</span><span class="faint small">1</span></div>
+        <div class="tcard"><div class="title">Export invoices as CSV</div><div class="meta"><span class="mono faint">T-0013</span><span class="tag">P2</span><span>billing</span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--accent)"></span><span class="strong" style="font-size:13px">Running</span><span class="faint small">2</span></div>
+        <div class="tcard needs"><div class="flag amber"><span class="dot amber pulse" style="width:6px;height:6px"></span>Needs you</div><div class="title">Add password reset API</div><div class="meta"><span class="mono faint">T-0012</span><span class="tag">P1</span><span>auth · api</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">18m 14s</span><span class="mono">$0.62</span><span class="grow"></span><span class="dot"></span></div></div>
+        <div class="tcard"><div class="title">Invoice PDF export with line-item totals</div><div class="meta"><span class="mono faint">T-0018</span><span class="tag">P2</span><span>billing</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">12m 04s</span><span class="mono">$0.48</span><span class="grow"></span><span class="dot"></span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Verifying</span><span class="faint small">1</span></div>
+        <div class="tcard"><div class="title">Refactor Stripe webhook handlers</div><div class="meta"><span class="mono faint">T-0010</span><span class="tag">P2</span><span>billing</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">38m 30s</span><span class="mono">$1.08</span><span class="grow"></span><span class="dot blue"></span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Review</span><span class="faint small">1</span></div>
+        <div class="tcard"><div class="title">Rate-limit the login endpoint</div><div class="meta"><span class="mono faint">T-0009</span><span class="tag">P1</span><span>auth · security</span></div><div class="foot"><span class="agent cx sm">CX</span><span class="mono">30m 20s</span><span class="mono">$0.77</span><span class="grow"></span><span class="dot green"></span></div></div>
+      </div>
+      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Shipped</span><span class="faint small">1</span></div>
+        <div class="tcard"><div class="title">Upgrade FastAPI to 0.115</div><div class="meta"><span class="mono faint">T-0008</span><span class="tag">P2</span><span>deps</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">33m 00s</span><span class="mono">$0.71</span><span class="grow"></span><span class="dot green"></span></div></div>
+      </div>
+    </div>
+  </div>
+</div>

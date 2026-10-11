@@ -1,0 +1,137 @@
+<!-- {"title": "Research this - finding saved", "note": "A read-only research run ended. The agent finding is saved as a research item with four fixed headings. Stage and worktree are unchanged. F4.4, F4.6", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.20", "slots": "2 of 4"} -->
+<style>
+  .ri-kind { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .send { display: flex; align-items: center; gap: 8px; border: none; background: none; color: var(--muted); font-size: 12px; padding: 0; }
+  .finding { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; }
+  .finding h4 { font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--blue); margin-bottom: 6px; }
+  .finding .li { display: grid; grid-template-columns: 14px minmax(0, 1fr); font-size: 13px; line-height: 1.5; color: var(--text-2); }
+  .finding .li > span:first-child { color: var(--faint); }
+  .finding p { font-size: 13px; line-height: 1.55; color: var(--text-2); text-wrap: pretty; }
+  .mini { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 2px; border-top: 1px solid var(--line); font-size: 13px; }
+  .mini.off .t { color: var(--muted); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage research">Research</span>
+    <div class="grow"></div>
+    <span class="small muted">Time <span class="mono" style="color:var(--text)">4m</span></span>
+    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.08</span></span>
+    <button class="btn primary" style="padding:7px 14px">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <section class="col" style="gap:10px">
+        <div class="row between"><h3>Brief</h3><span class="xs faint">v2 · saved</span></div>
+        <div class="xs faint">Goal</div>
+        <div style="font-size:13.5px;line-height:1.5">Add password reset API</div>
+        <div class="xs faint mt-4">Acceptance criteria</div>
+        <div class="small muted" style="padding:10px;border:1px dashed var(--line-strong);border-radius:6px">None yet. Collect research, then click <b class="text2">Draft brief</b>.</div>
+        <div class="xs faint mt-4">Notes</div>
+        <div class="small muted pretty">Client asked in ticket #4821.</div>
+      </section>
+      <section class="col">
+        <h3>Workspace</h3>
+        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
+        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+        <div class="kv">
+          <div><div class="k">vs main</div>0 ahead · 0 behind</div>
+          <div><div class="k">Changed files</div><span class="green">0 · clean</span></div>
+        </div>
+      </section>
+      <section class="col" style="gap:6px">
+        <h3 style="margin-bottom:4px">Runs</h3>
+        <div class="run-row">
+          <span class="agent cl sm">CL</span>
+          <div style="min-width:0">
+            <div><span class="mono">R-0026</span> · Research</div>
+            <div class="faint" style="font-size:11.5px">10:22 · 3m 52s · $0.08</div>
+          </div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab">Brief</button>
+        <button class="tab on">Research <span class="n">7</span></button>
+        <button class="tab">Proof</button>
+        <button class="tab">Review</button>
+        <button class="tab">Code</button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="col gap-12">
+
+          <div class="banner ok">
+            <span class="dot green"></span>
+            <div class="grow">Research run <span class="mono">R-0026</span> ended. The finding is saved as a research item. Stage is still <b>Research</b>. Worktree is clean.</div>
+            <button class="btn sm ghost">Open stream</button>
+          </div>
+
+          <div class="row between">
+            <div class="row"><span class="strong" style="font-size:14px">Research items</span><span class="small muted">5 of 7 go to the agent</span></div>
+            <div class="row"><button class="btn sm">Research this again</button><button class="btn sm primary">Draft brief</button></div>
+          </div>
+
+          <section class="card info" style="padding:14px 16px">
+            <div class="row gap-12">
+              <span class="ri-kind blue">Agent finding</span>
+              <span class="strong grow ellipsis" style="font-size:13.5px">Agent finding (claude) - 2026-10-11 10:26</span>
+              <span class="tag blue">new</span>
+              <button class="send">Send to agent <span class="toggle on"></span></button>
+            </div>
+            <div class="row small muted mt-4" style="gap:10px">
+              <span class="agent cl sm">CL</span><span>From run <span class="mono text2">R-0026</span> · read-only · focus: "How are login tokens made today?"</span>
+              <span class="grow"></span>
+              <button class="btn xs ghost">Edit</button><button class="btn xs ghost">Delete</button>
+            </div>
+            <div class="divider" style="margin:12px 0"></div>
+            <div class="finding">
+              <div>
+                <h4>Related files</h4>
+                <div class="li"><span>–</span><span><span class="mono">app/auth/routes.py</span> login and logout. No reset route.</span></div>
+                <div class="li"><span>–</span><span><span class="mono">app/auth/security.py</span> bcrypt hash and verify (passlib).</span></div>
+                <div class="li"><span>–</span><span><span class="mono">app/mail.py</span> <span class="mono">send_mail(to, template, ctx)</span>, templates in <span class="mono">app/templates/email/</span>.</span></div>
+                <div class="li"><span>–</span><span><span class="mono">app/models/user.py</span> no token fields.</span></div>
+                <div class="li"><span>–</span><span><span class="mono">tests/auth/conftest.py</span> <span class="mono">client</span> and <span class="mono">user</span> fixtures to reuse.</span></div>
+              </div>
+              <div>
+                <h4>How the current code works</h4>
+                <p>Login checks the bcrypt hash, then makes a 60-minute JWT with <span class="mono">make_access_token()</span>. There is no reset flow, so <span class="mono">POST /auth/forgot</span> is a 404 (matches the staging log). Email is sent sync from the request.</p>
+              </div>
+              <div>
+                <h4>Risks</h4>
+                <div class="li"><span>–</span><span>User enumeration if known and unknown emails answer differently.</span></div>
+                <div class="li"><span>–</span><span>Timing leak if tokens are compared with <span class="mono">==</span>.</span></div>
+                <div class="li"><span>–</span><span><span class="mono">app/auth/limit.py</span> uses naive <span class="mono">datetime.utcnow()</span>. Mixing it with aware times breaks expiry checks.</span></div>
+                <div class="li"><span>–</span><span>No Redis in <span class="mono">docker-compose.yml</span>. Do not plan on it.</span></div>
+              </div>
+              <div>
+                <h4>Suggested approach</h4>
+                <div class="li"><span>1</span><span>Table <span class="mono">password_reset_tokens</span> + Alembic migration.</span></div>
+                <div class="li"><span>2</span><span><span class="mono">POST /auth/password-reset</span> always 202; email via <span class="mono">send_mail</span>.</span></div>
+                <div class="li"><span>3</span><span><span class="mono">/confirm</span>: <span class="mono">hmac.compare_digest</span>, expiry, single use.</span></div>
+                <div class="li"><span>4</span><span><span class="mono">RESET_TOKEN_TTL_MINUTES = 30</span> in settings. Tests for expiry, reuse, unknown email.</span></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="col" style="gap:0">
+            <div class="mini"><span class="ri-kind muted">Note</span><span class="t ellipsis">Client request (ticket #4821)</span><span class="xs faint mono">410 chars</span><span class="toggle on"></span></div>
+            <div class="mini off"><span class="ri-kind muted">Note</span><span class="t ellipsis">Ask client about SMS</span><span class="xs faint">for me only</span><span class="toggle"></span></div>
+            <div class="mini"><span class="ri-kind accent">Link</span><span class="t ellipsis">Forgot Password - OWASP Cheat Sheet Series</span><span class="xs faint mono">230 chars</span><span class="toggle on"></span></div>
+            <div class="mini"><span class="ri-kind accent">Link</span><span class="t ellipsis">secrets — Generate secure random numbers for managing secrets — Python 3.12 docs</span><span class="xs faint mono">190 chars</span><span class="toggle on"></span></div>
+            <div class="mini"><span class="ri-kind green">Snippet</span><span class="t ellipsis">Staging log: users try /auth/forgot</span><span class="xs faint mono">520 chars</span><span class="toggle on"></span></div>
+            <div class="mini off"><span class="ri-kind green">Snippet</span><span class="t ellipsis">Full staging log, 10 Oct</span><span class="xs faint mono">50,412 chars</span><span class="toggle"></span></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

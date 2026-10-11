@@ -1,0 +1,79 @@
+<!-- {"title": "Empty Command Deck - no projects", "note": "Fresh install when the project step was skipped: Deck says Add your first project (opens wizard step 3), and Needs You / Running / cost show their empty lines. FSD M9 5.3 (Skip), 5.5 (Empty); TDD 5.3 Command Deck row", "shell": "app", "nav": "deck", "crumb": "Command Deck", "project": "", "needs": 0, "cost": "$0.00", "slots": "0 of 4", "projects": [], "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"}} -->
+<style>
+  .flow { display: grid; grid-template-columns: repeat(6, minmax(0,1fr) 18px) minmax(0,1fr); gap: 8px; align-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
+  .flow .arr { color: var(--faint); padding-top: 3px; text-align: center; }
+  .keys3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+  .kitem { display: flex; align-items: center; gap: 12px; }
+  .kitem .kbd { font-size: 11.5px; padding: 3px 8px; }
+</style>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="muted" style="font-size:13px">Sunday, 11 October</div>
+      <h1 class="title">Command Deck</h1>
+    </div>
+    <div class="row">
+      <button class="btn" disabled>Open board</button>
+      <button class="btn" disabled>New task</button>
+    </div>
+  </div>
+
+  <section class="card hot" style="padding:36px 28px">
+    <div class="row gap-22 top">
+      <div class="logo lg">S</div>
+      <div class="col gap-12 grow">
+        <div>
+          <h2 style="font-size:20px;font-weight:600">Add your first project</h2>
+          <div class="text2 pretty mt-4" style="font-size:14px">Saarthi works on git repos. Add one, and its board opens. Tasks, agents and checks all live inside a project.</div>
+        </div>
+        <div class="row gap-12">
+          <button class="btn primary">Add project</button>
+          <button class="btn ghost">Run setup again</button>
+          <span class="small muted">or in a terminal: <span class="mono text2">saarthi project add ~/OFFICE/acme-billing</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid-3">
+    <section class="card">
+      <div class="card-head"><h2>Needs You</h2><span class="small muted">0</span></div>
+      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">Nothing is waiting for you. Agents ask here when they need an answer.</div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Running now</h2><span class="small muted">0 of 4 slots</span></div>
+      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">No agent is running. Runs start from a task's room.</div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Today's cost</h2><span class="mono" style="font-size:15px">$0.00</span></div>
+      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">Cost per run and per project shows here.</div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2>How a task moves</h2><span class="small muted">one board per project · the daemon checks every move</span></div>
+    <div class="flow">
+      <div><span class="stage inbox">Inbox</span><div class="xs muted mt-8">An idea, a bug, a pasted error log.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage research">Research</span><div class="xs muted mt-8">An agent reads the code, read only.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage ready">Ready</span><div class="xs muted mt-8">The brief has a goal and criteria.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage running">Running</span><div class="xs muted mt-8">Claude or Codex works in a worktree.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage verifying">Verifying</span><div class="xs muted mt-8">Checks run. The Proof Card fills in.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage review">Review</span><div class="xs muted mt-8">You read the diff and the proof.</div></div>
+      <span class="arr">→</span>
+      <div><span class="stage shipped">Shipped</span><div class="xs muted mt-8">Branch pushed, PR opened. Never main.</div></div>
+    </div>
+  </section>
+
+  <section class="card dashed" style="padding:16px 20px">
+    <div class="keys3">
+      <div class="kitem"><span class="kbd">?</span><div class="small"><span class="strong">Every shortcut</span> <span class="muted">· on any screen</span></div></div>
+      <div class="kitem"><span class="kbd">Ctrl K</span><div class="small"><span class="strong">Command Bar</span> <span class="muted">· search or run any action</span></div></div>
+      <div class="kitem"><span class="kbd">Ctrl Alt N</span><div class="small"><span class="strong">Quick capture</span> <span class="muted">· from any app</span></div></div>
+    </div>
+  </section>
+</div>

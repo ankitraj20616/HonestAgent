@@ -1,0 +1,102 @@
+<!-- {"title": "First run 3/3 - First project", "note": "Wizard step 3: pick a git repo folder; Saarthi shows the repo top folder, default branch, remote, core_docs and default agent, and previews .saarthi/project.toml. Skip is allowed. Sets first_run_done. FSD M9 5.3 step 3; F1.1, F1.2", "shell": "bare"} -->
+<style>
+  .wiz { width: min(900px, 100%); border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+  .wiz-head { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+  .steps { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .step { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .step .n { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--faint); }
+  .step.on { color: var(--text); font-weight: 600; }
+  .step.on .n { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+  .step.done .n { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+  .step-line { width: 28px; height: 1px; background: var(--line-strong); }
+  .wiz-body { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .wiz-foot { display: flex; align-items: center; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--line); background: var(--panel); border-radius: 0 0 14px 14px; }
+  .cmd { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--term-text); }
+  .cmd .pr { color: var(--faint); }
+  .try { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .x { color: var(--red); font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .num { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+</style>
+<div class="bare center">
+  <div class="wiz">
+    <div class="wiz-head">
+      <div class="logo">S</div>
+      <div>
+        <div class="strong" style="font-size:15px">Set up Saarthi</div>
+        <div class="xs faint">First run · takes about 2 minutes</div>
+      </div>
+      <div class="steps">
+        <div class="step done"><span class="n">✓</span>Daemon</div>
+        <span class="step-line"></span>
+        <div class="step done"><span class="n">✓</span>Tools</div>
+        <span class="step-line"></span>
+        <div class="step on"><span class="n">3</span>First project</div>
+      </div>
+    </div>
+
+    <div class="wiz-body">
+      <div>
+        <h1 style="font-size:22px;font-weight:600;letter-spacing:-.01em">Add your first project</h1>
+        <div class="muted mt-4">Pick a folder that is a git repo. Saarthi adds <span class="mono text2">.saarthi/project.toml</span> to it. It never commits that file.</div>
+      </div>
+
+      <div class="row top gap-12">
+        <div class="field grow">
+          <label>Project folder</label>
+          <div class="row">
+            <div class="input focus mono row" style="font-size:12.5px"><span class="grow">~/OFFICE/acme-billing</span><span class="green small" style="font-family:'IBM Plex Sans',sans-serif">✓ git repo</span></div>
+            <button class="btn">Choose folder…</button>
+          </div>
+        </div>
+        <div class="field" style="width:230px">
+          <label>Name in Saarthi</label>
+          <div class="input mono" style="font-size:12.5px">acme-billing</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:16px;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)">
+        <section class="card ok" style="padding:12px 16px 6px">
+          <div class="card-head" style="margin-bottom:2px"><h2>What Saarthi found</h2><span class="small muted">from git and the folder</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0;border-top:none">
+            <span class="muted">Repo top folder</span><span class="mono ellipsis" style="font-size:12.5px">~/OFFICE/acme-billing</span><span class="green">✓</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0">
+            <span class="muted">Default branch</span><span><span class="mono" style="font-size:12.5px">main</span> <span class="faint small">from git</span></span><span class="green">✓</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0">
+            <span class="muted">Remote origin</span><span class="mono ellipsis" style="font-size:12.5px">github.com:ankit/acme-billing</span><span class="green">✓</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0">
+            <span class="muted">Memory folder</span><span><span class="mono" style="font-size:12.5px">core_docs/</span> <span class="faint small">found · 14 files</span></span><span class="green">✓</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0">
+            <span class="muted">Default agent</span><span class="row"><span class="agent cl sm">CL</span><span>Claude <span class="faint small">· logged in</span></span></span><span class="green">✓</span></div>
+          <div class="list-row" style="grid-template-columns:112px minmax(0,1fr) 12px;font-size:13px;padding:8px 0">
+            <span class="muted">Checks</span><span class="text2">None yet · add later in <span class="mono" style="font-size:12.5px">project.toml</span></span><span class="dot amber"></span></div>
+        </section>
+
+        <section class="col" style="gap:6px;min-width:0">
+          <div class="row between"><span class="small muted">Will be written</span><span class="mono xs faint">acme-billing/.saarthi/project.toml</span></div>
+          <div class="code" style="padding:8px 0;flex:1">
+            <div class="ln"><span>1</span><span>[project]</span></div>
+            <div class="ln"><span>2</span><span>default_branch = <span class="tk-s">"main"</span></span></div>
+            <div class="ln"><span>3</span><span>default_agent = <span class="tk-s">"claude"</span></span></div>
+            <div class="ln"><span>4</span><span>memory_path = <span class="tk-s">"core_docs"</span></span></div>
+            <div class="ln"><span>5</span><span>sync_strategy = <span class="tk-s">"rebase"</span></span></div>
+            <div class="ln"><span>6</span><span>create_pr = <span class="tk-k">true</span></span></div>
+            <div class="ln"><span>7</span><span></span></div>
+            <div class="ln"><span>8</span><span class="tk-c"># Checks run after each build run. Example:</span></div>
+            <div class="ln"><span>9</span><span class="tk-c"># [[checks]]</span></div>
+            <div class="ln"><span>10</span><span class="tk-c"># name = "tests"</span></div>
+            <div class="ln"><span>11</span><span class="tk-c"># cmd = "uv run pytest -q"</span></div>
+            <div class="ln"><span>12</span><span class="tk-c"># required = true</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="wiz-foot">
+      <span class="small muted">Same as <span class="mono text2">saarthi project add ~/OFFICE/acme-billing</span></span>
+      <div class="grow"></div>
+      <button class="btn ghost">Back</button>
+      <button class="btn">Skip for now</button>
+      <button class="btn primary">Add project and open board</button>
+    </div>
+  </div>
+</div>

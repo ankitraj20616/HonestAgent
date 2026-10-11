@@ -1,0 +1,88 @@
+<!-- {"title": "Settings: Safety", "note": "Settings > Safety: sandbox mode (always / full_only), bwrap probe, bind list summary, blocked and always-ask list editors with enforcement level, secret masking with saarthi safety scrub, and budgets ($3 task, $10 day). F15.2, F15.3, F15.4, F16.3", "shell": "app", "nav": "settings", "crumb": "Settings · Safety", "needs": 1, "cost": "$4.80", "slots": "1 of 4"} -->
+<style>
+  .set-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .probe { display: grid; grid-template-columns: 100px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .bind { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 12px; align-items: baseline; }
+  .bind > span:first-child { color: var(--muted); }
+  .paths { display: flex; flex-wrap: wrap; gap: 4px; }
+  .paths span { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--text-2); }
+  .paths.red span { border-color: var(--red); color: var(--red); }
+  .rule { display: grid; grid-template-columns: minmax(0, 1fr) 62px 86px 18px; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 12px; }
+  .rule .p { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rule .x { color: var(--faint); text-align: center; }
+  .add { display: flex; gap: 6px; margin-top: 8px; }
+  .bud { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; }
+</style>
+<div class="page" style="gap:16px">
+  <div class="page-head">
+    <div>
+      <div class="muted" style="font-size:13px">Settings</div>
+      <h1 class="title">Safety</h1>
+    </div>
+    <div class="seg"><button>General</button><button>Agents</button><button class="on">Safety</button><button>Health</button></div>
+  </div>
+
+  <div class="set-grid">
+    <div class="col" style="gap:18px">
+      <section class="card">
+        <div class="card-head"><h2>Sandbox (bwrap)</h2><button class="btn xs">Check again</button></div>
+        <div class="row between" style="padding:4px 0 10px">
+          <div><div style="font-size:13.5px">Sandbox mode</div><div class="xs faint">Full always uses the sandbox, whatever this says.</div></div>
+          <div class="seg"><button class="on">Always</button><button>Full only</button></div>
+        </div>
+        <div class="probe"><span class="muted">bwrap</span><span class="mono">/usr/bin/bwrap 0.9.0</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
+        <div class="probe"><span class="muted">user ns</span><span class="mono">allowed</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
+        <div class="probe"><span class="muted">probe</span><span class="mono ellipsis">cat ~/.ssh/* → No such file or directory</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
+        <div class="mono xs faint" style="padding-top:6px">$ saarthi safety check</div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>What the agent sees</h2><span class="small muted">hide all of $HOME, add back a short list</span></div>
+        <div class="bind"><span>Hidden</span><div class="paths"><span>$HOME</span><span>/run/user/1000</span><span class="faint" style="border:none;font-family:inherit">ssh-agent, keyring</span></div></div>
+        <div class="bind"><span>Read-only</span><div class="paths"><span>.local/bin</span><span>.local/share/uv</span><span>.nvm</span><span>.cargo/bin</span><span>.rustup</span><span>.pyenv</span><span>.gitconfig</span><span>.config/git</span><span style="border-color:var(--accent)">.config/pnpm · project</span></div></div>
+        <div class="bind"><span>Read-write</span><div class="paths"><span>worktree</span><span>&lt;repo&gt;/.git</span><span>.claude</span><span>.claude.json</span><span>.codex</span><span>sandbox-cache → .cache</span></div></div>
+        <div class="bind"><span>Never visible</span><div class="paths red"><span>.ssh</span><span>.aws</span><span>.gnupg</span><span>.config/gh</span><span>.git-credentials</span><span>.netrc</span><span>.docker</span><span>.kube</span><span>+ 6 more</span></div></div>
+        <div class="bind"><span>Also</span><span class="text2">Network stays on (agents need their provider). <span class="mono">.git/hooks</span> and <span class="mono">.git/config</span> are read-only.</span></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Budgets</h2><span class="small muted">warn only, never stops a run</span></div>
+        <div class="grid-2" style="gap:12px">
+          <div class="field"><label>Per task</label><div class="input mono" style="padding:5px 8px">$3.00</div></div>
+          <div class="field"><label>Per day</label><div class="input mono" style="padding:5px 8px">$10.00</div></div>
+        </div>
+        <div class="xs faint mt-8">Amber at 80%. One alert per task and per day. Project override: <span class="mono">[budget] task_usd</span>.</div>
+      </section>
+    </div>
+
+    <div class="col" style="gap:18px">
+      <section class="card">
+        <div class="card-head"><h2>Blocked list <span class="faint" style="font-weight:400">8</span></h2><span class="small muted">project adds, never removes</span></div>
+        <div class="rule"><span class="p">Bash(git push:*)</span><span class="tag">global</span><span class="tag green">kernel + rule</span><span class="x">×</span></div>
+        <div class="rule"><span class="p">Bash(rm -rf /*)</span><span class="tag">global</span><span class="tag green">kernel + rule</span><span class="x">×</span></div>
+        <div class="rule"><span class="p">Bash(rm -rf ~*)</span><span class="tag">global</span><span class="tag green">kernel + rule</span><span class="x">×</span></div>
+        <div class="rule"><span class="p">Read(~/.ssh/**) · .aws · .gnupg · .config/gh</span><span class="tag">global</span><span class="tag green">kernel</span><span class="x">×</span></div>
+        <div class="rule"><span class="p">Bash(psql *prod*)</span><span class="tag amber">project</span><span class="tag blue">claude rule</span><span class="x">×</span></div>
+        <div class="add"><div class="input mono" style="font-size:12px;color:var(--faint)">Add a pattern, e.g. Bash(terraform apply:*)</div><button class="btn sm">Add</button></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Always ask <span class="faint" style="font-weight:400">2</span></h2><span class="small muted">Codex: soft only</span></div>
+        <div class="rule"><span class="p">Bash(alembic downgrade:*)</span><span class="tag amber">project</span><span class="tag blue">claude rule</span><span class="x">×</span></div>
+        <div class="rule"><span class="p">Bash(docker compose down -v*)</span><span class="tag">global</span><span class="tag blue">claude rule</span><span class="x">×</span></div>
+        <div class="xs faint pretty mt-4">Claude stops and the task goes to Needs You. Codex cannot pause, so the rule goes in the Context Pack and a match makes a red alert.</div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Secret masking</h2><span class="tag green">on · always</span></div>
+        <div class="small text2 pretty"><span class="mono">.env</span> values, known key shapes and secret-looking env vars become <span class="mono accent">****</span> before anything is saved or sent. Values under 8 characters are skipped.</div>
+        <div class="row mt-12">
+          <div class="grow"><div class="small">Scrub data saved before M8</div><div class="xs faint">Last run: 18,204 events, 61 run logs, 210 check logs. Masked 37 values.</div></div>
+          <button class="btn sm">Scrub now</button>
+        </div>
+        <div class="mono xs faint mt-4">$ saarthi safety scrub</div>
+      </section>
+
+    </div>
+  </div>
+</div>

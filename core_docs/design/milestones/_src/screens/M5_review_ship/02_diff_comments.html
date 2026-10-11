@@ -1,0 +1,143 @@
+<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.12", "slots": "2 of 4", "title": "Review tab - diff and comments", "note": "Files view of the Change Story with a read-only CodeMirror merge view (unified mode) of app/auth/routes.py. A line comment sits on new line 55; a group comment on Database change. Both are ticked and go to Claude as one fix run with Send comments to agent (2). F10.3, F10.4, F10.6"} -->
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage review">Review</span>
+    <div class="grow"></div>
+    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">28m</span></span>
+    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$1.08</span></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <aside class="room-side">
+      <section class="side-sec">
+        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
+        <div class="lbl">Goal</div>
+        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="lbl mt-4">Acceptance criteria</div>
+        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
+        <div class="lbl mt-4">Notes</div>
+        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
+      </section>
+
+      <section class="side-sec" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
+        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+        <div class="kv3">
+          <div><div class="k">vs main</div>5 ahead</div>
+          <div><div class="k">Changed</div>6 files</div>
+          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0028</span></div>
+        </div>
+        <div class="row wrap" style="gap:5px">
+          <button class="btn xs">Open folder</button>
+          <button class="btn xs">Terminal here</button>
+          <button class="btn xs">Open in my editor</button>
+        </div>
+      </section>
+
+      <section class="side-sec" style="gap:6px">
+        <h3 style="margin-bottom:4px">Runs</h3>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0030</span> · Story <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:07 · 41s · $0.03</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0029</span> · Coverage <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:06 · 24s · $0.02</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0028</span> · Fix</div><div class="faint" style="font-size:11.5px">11:04 · 2m · $0.11</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+        <div class="run-row side-run">
+          <span class="agent sm cl">CL</span>
+          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
+          <span class="green strong" style="font-size:11.5px">Done</span>
+        </div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab">Proof <span class="dot tdot green"></span></button>
+        <button class="tab on">Review</button>
+        <button class="tab">Code <span class="n">6</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="rv" style="max-width:none">
+        <div class="dv">
+          <div class="col gap-12">
+            <div class="row" style="gap:6px"><button class="btn sm ghost">← Story</button><span class="small muted ellipsis">New API endpoints</span></div>
+            <div class="panel">
+            <div class="panel-h"><span class="upper">Files</span><span class="grow"></span><span class="xs faint">6</span></div>
+            <div class="frow"><span class="st green">A</span><div style="min-width:0"><div class="fn ellipsis">reset.py</div><div class="row" style="gap:6px"><span class="dir">app/auth/</span><span class="rflag sm">auth</span></div></div><span class="num"><span class="green">+42</span></span></div>
+            <div class="frow on"><span class="st accent">M</span><div style="min-width:0"><div class="fn ellipsis">routes.py</div><div class="row" style="gap:6px"><span class="dir">app/auth/</span><span class="rflag sm">auth</span></div></div><span class="num"><span class="green">+16</span> <span class="red">−4</span></span></div>
+            <div class="frow"><span class="st green">A</span><div style="min-width:0"><div class="fn ellipsis">password_reset.py</div><div class="row" style="gap:6px"><span class="dir">app/models/</span></div></div><span class="num"><span class="green">+12</span></span></div>
+            <div class="frow"><span class="st green">A</span><div style="min-width:0"><div class="fn ellipsis">0042_password_reset_tokens.py</div><div class="row" style="gap:6px"><span class="dir">migrations/versions/</span><span class="rflag sm">migration</span></div></div><span class="num"><span class="green">+19</span></span></div>
+            <div class="frow"><span class="st green">A</span><div style="min-width:0"><div class="fn ellipsis">test_password_reset.py</div><div class="row" style="gap:6px"><span class="dir">tests/auth/</span><span class="rflag sm">auth</span></div></div><span class="num"><span class="green">+80</span></span></div>
+            <div class="frow"><span class="st accent">M</span><div style="min-width:0"><div class="fn ellipsis">settings.py</div><div class="row" style="gap:6px"><span class="dir">app/</span><span class="rflag sm">config</span></div></div><span class="num"><span class="green">+2</span></span></div>
+            </div>
+            <div class="panel">
+            <div class="panel-h"><span class="upper">Comments</span><span class="grow"></span><span class="xs faint">2 open</span></div>
+            <div class="crow"><span class="check on">✓</span><div><div class="where">routes.py:55</div><div class="text2">Move this message to app/messages.py with the other auth texts.</div></div></div>
+            <div class="crow"><span class="check on">✓</span><div><div class="where">group · Database change</div><div class="text2">Add ON DELETE CASCADE to user_id, so deleting a user also deletes their tokens.</div></div></div>
+            <div class="col" style="padding:10px 12px;gap:6px;background:var(--bg-side)">
+              <button class="btn primary" style="width:100%">Send comments to agent (2)</button>
+              <span class="xs muted" style="text-align:center">to <span class="agent sm cl">CL</span> Claude · starts a fix run</span>
+            </div>
+            </div>
+          </div>
+          <div class="panel">
+          <div class="panel-h"><span class="mono small" style="color:var(--text)">app/auth/routes.py</span><span class="tag">modified</span><span class="mono xs"><span class="green">+16</span> <span class="red">−4</span></span><span class="rflag sm">auth</span><span class="grow"></span><span class="xs faint">read-only</span><div class="seg"><button>Side by side</button><button class="on">Unified</button></div></div>
+          <div class="ud">
+          <div class="hh">@@ -2,2 +2,3 @@</div>
+            <div class="l "><span class="n">2</span><span class="n">2</span><span class="s"></span><span class="t"></span></div>
+            <div class="l add"><span class="n"></span><span class="n">3</span><span class="s">+</span><span class="t"><span class="tk-k">from</span> app.auth <span class="tk-k">import</span> reset</span></div>
+            <div class="l "><span class="n">3</span><span class="n">4</span><span class="s"></span><span class="t"><span class="tk-k">from</span> app.auth.schemas <span class="tk-k">import</span> LoginRequest, TokenResponse</span></div>
+          <div class="gap">⋯ 34 unchanged lines · show</div>
+          <div class="hh">@@ -38,7 +39,18 @@</div>
+            <div class="l "><span class="n">38</span><span class="n">39</span><span class="s"></span><span class="t">    <span class="tk-k">return</span> login_user(body.email, body.password, db)</span></div>
+            <div class="l "><span class="n">39</span><span class="n">40</span><span class="s"></span><span class="t"></span></div>
+            <div class="l "><span class="n">40</span><span class="n">41</span><span class="s"></span><span class="t"></span></div>
+            <div class="l del"><span class="n">41</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-c"># TODO: real password reset (ticket #4821)</span></span></div>
+            <div class="l del"><span class="n">42</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/forgot-password"</span>)</span></div>
+            <div class="l del"><span class="n">43</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-k">def</span> forgot_password():</span></div>
+            <div class="l del"><span class="n">44</span><span class="n"></span><span class="s">-</span><span class="t">    <span class="tk-k">raise</span> HTTPException(<span class="tk-n">501</span>, <span class="tk-s">"Email support to reset your password"</span>)</span></div>
+            <div class="l add"><span class="n"></span><span class="n">42</span><span class="s">+</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/password-reset"</span>, status_code=<span class="tk-n">202</span>)</span></div>
+            <div class="l add"><span class="n"></span><span class="n">43</span><span class="s">+</span><span class="t"><span class="tk-k">def</span> password_reset(body: reset.ResetRequest, db: DbSession):</span></div>
+            <div class="l add"><span class="n"></span><span class="n">44</span><span class="s">+</span><span class="t">    <span class="tk-s">""</span><span class="tk-s">"Send a reset link. Same answer for unknown emails."</span><span class="tk-s">""</span></span></div>
+            <div class="l add"><span class="n"></span><span class="n">45</span><span class="s">+</span><span class="t">    reset.request_reset(body.email, db)</span></div>
+            <div class="l add"><span class="n"></span><span class="n">46</span><span class="s">+</span><span class="t">    <span class="tk-k">return</span> {<span class="tk-s">"status"</span>: <span class="tk-s">"ok"</span>}</span></div>
+            <div class="l add"><span class="n"></span><span class="n">47</span><span class="s">+</span><span class="t"></span></div>
+            <div class="l add"><span class="n"></span><span class="n">48</span><span class="s">+</span><span class="t"></span></div>
+            <div class="l add"><span class="n"></span><span class="n">49</span><span class="s">+</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/password-reset/confirm"</span>)</span></div>
+            <div class="l add"><span class="n"></span><span class="n">50</span><span class="s">+</span><span class="t"><span class="tk-k">def</span> password_reset_confirm(body: reset.ResetConfirm, db: DbSession):</span></div>
+            <div class="l add"><span class="n"></span><span class="n">51</span><span class="s">+</span><span class="t">    <span class="tk-s">""</span><span class="tk-s">"Set a new password with a single-use token."</span><span class="tk-s">""</span></span></div>
+            <div class="l add"><span class="n"></span><span class="n">52</span><span class="s">+</span><span class="t">    <span class="tk-k">try</span>:</span></div>
+            <div class="l add"><span class="n"></span><span class="n">53</span><span class="s">+</span><span class="t">        reset.confirm_reset(body.token, body.new_password, db)</span></div>
+            <div class="l add"><span class="n"></span><span class="n">54</span><span class="s">+</span><span class="t">    <span class="tk-k">except</span> reset.TokenInvalid:</span></div>
+            <div class="l add cm"><span class="n"></span><span class="n">55</span><span class="s">+</span><span class="t">        <span class="tk-k">raise</span> HTTPException(<span class="tk-n">410</span>, <span class="tk-s">"This reset link is used or expired"</span>)</span></div>
+          <div class="lc">
+            <div class="row"><span class="who"><b style="color:var(--text)">You</b> · line 55 · open</span><span class="grow"></span><button class="btn xs ghost">Edit</button><button class="btn xs ghost">Delete</button></div>
+            <div style="margin-top:3px">Move this message to <span class="mono">app/messages.py</span> with the other auth texts.</div>
+          </div>
+            <div class="l add"><span class="n"></span><span class="n">56</span><span class="s">+</span><span class="t">    <span class="tk-k">return</span> {<span class="tk-s">"status"</span>: <span class="tk-s">"ok"</span>}</span></div>
+          </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

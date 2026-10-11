@@ -1,0 +1,93 @@
+<!-- {"title": "Safety alert in the Stream", "note": "Stream of a sandboxed safe_build run: .env values masked as ****, ~/.ssh hidden by the sandbox, a blocked git push (red Safety alert, no Allow button), and an always-ask command waiting for Allow once / Deny. F15.2, F15.3, F15.4", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 2, "cost": "$4.12", "slots": "2 of 4"} -->
+<style>
+  .ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); font-size: 12px; white-space: nowrap; }
+  .lock { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-size: 11px; }
+  .lock svg { display: block; }
+  .divl { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+  .divl::before, .divl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .ev-card.err .ev-head .tool { color: var(--red); }
+  .mask { color: var(--accent-text); }
+  .safety-k { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 4px 10px; font-size: 12px; margin-top: 8px; }
+  .safety-k > span:nth-child(odd) { color: var(--faint); }
+  .notify .act { display: flex; gap: 6px; margin-top: 8px; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="mono faint" style="font-size:13px">T-0012</span>
+    <h1>Add password reset API</h1>
+    <span class="stage needs">Needs You</span>
+    <span class="ppill"><span class="lock"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>safe build · sandboxed<span class="faint">▾</span></span>
+    <div class="grow"></div>
+    <span class="small muted">Time <span class="mono" style="color:var(--text)">09m 12s</span></span>
+    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$1.21</span></span>
+    <button class="btn">Stop run</button>
+  </div>
+  <div class="room">
+    <aside class="room-side">
+      <section class="col" style="gap:10px">
+        <div class="row between"><h3>Brief</h3><span class="xs faint">v3</span></div>
+        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends a single-use link</span></div>
+        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
+      </section>
+      <section class="col" style="gap:8px">
+        <h3>Safety</h3>
+        <div class="banner err" style="font-size:12.5px;padding:8px 10px"><span class="dot red"></span><span>1 blocked action this run</span></div>
+        <div class="banner warn" style="font-size:12.5px;padding:8px 10px"><span class="dot amber pulse"></span><span>1 always-ask waiting for you</span></div>
+        <div class="small muted pretty">Secrets from <span class="mono">.env</span> are masked before they are saved or shown. There is no reveal button.</div>
+      </section>
+      <section class="col" style="gap:6px">
+        <h3>Runs</h3>
+        <div class="run-row on"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAX3</span> · build</div><div class="xs faint">safe_build · 9m 12s · $1.21</div></div><span class="lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">read_only · 4m 51s · $0.09</div></div><span class="lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span></div>
+      </section>
+    </aside>
+    <section class="room-main">
+      <div class="tabs">
+        <button class="tab on">Stream <span class="dot red"></span></button><button class="tab">Terminal</button><button class="tab">Proof</button>
+        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="stream">
+          <div class="divl">11:02 · run 01JAX3 · Claude · build · safe_build · sandboxed</div>
+          <div class="ev"><span class="time">11:03</span><div class="ev-card">
+            <div class="ev-head"><span class="tool blue">Bash</span><span class="mono">cat .env</span><span class="grow"></span><span class="xs accent">3 values masked</span></div>
+            <div class="ev-out">DATABASE_URL=<span class="mask">****</span>
+STRIPE_KEY=<span class="mask">****</span>
+MAIL_FROM=<span class="mask">****</span>
+DEBUG=true</div>
+          </div></div>
+          <div class="ev"><span class="time">11:05</span><div class="ev-card">
+            <div class="ev-head"><span class="tool blue">Bash</span><span class="mono">cat ~/.ssh/id_ed25519</span><span class="grow"></span><span class="tag green">hidden by sandbox · kernel</span></div>
+            <div class="ev-out">cat: /home/ankit/.ssh/id_ed25519: No such file or directory</div>
+          </div></div>
+          <div class="ev"><span class="time">11:08</span><div class="ev-card err">
+            <div class="ev-head"><span class="flag red"><span class="dot red"></span>Safety alert · blocked</span><span class="grow"></span><span class="tag red">denied</span></div>
+            <div class="mono" style="font-size:13px;margin-top:6px">git push origin main</div>
+            <div class="safety-k">
+              <span>Rule</span><span class="mono">Bash(git push:*) · blocked list</span>
+              <span>Stopped by</span><span>Claude deny rule. Also: no git credentials inside the sandbox.</span>
+              <span>Next</span><span>Nothing to do. Agents never push; Ship does it, never to <span class="mono">main</span>.</span>
+            </div>
+          </div></div>
+          <div class="ev"><span class="time">11:09</span><div class="ev-card msg">Push was denied. I will leave pushing to Saarthi. I need to roll back the last migration to change the token column.</div></div>
+          <div class="ev"><span class="time">11:10</span><div class="ev-card needs">
+            <div class="ev-head"><span class="flag amber"><span class="dot amber pulse"></span>Always ask · needs you</span><span class="grow"></span><span class="mono xs muted">Bash(alembic downgrade:*)</span></div>
+            <div style="margin-top:6px">Agent wants to run: <span class="mono">alembic downgrade -1</span></div>
+            <div class="row mt-8"><button class="btn sm primary">Allow once</button><button class="btn sm">Deny</button><span class="xs faint">Deny tells the agent no; the run goes on another way.</span></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="notify">
+  <div class="logo">S</div>
+  <div style="min-width:0">
+    <div class="row between"><span class="app-name">Saarthi · now</span><span class="tag red">Safety alert</span></div>
+    <div class="strong" style="margin-top:2px">T-0012 · blocked: git push origin main</div>
+    <div class="small muted">Denied by Claude rule <span class="mono">Bash(git push:*)</span>. The run goes on.</div>
+  </div>
+</div>
