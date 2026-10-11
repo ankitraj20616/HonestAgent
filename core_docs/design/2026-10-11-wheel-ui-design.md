@@ -4,6 +4,7 @@
 **Status:** Approved in brainstorming, waiting for written-spec review
 **Replaces:** the look of `core_docs/design/milestones/` (a port of `Saarthi Prototype.html`)
 **Approved mockups:** `core_docs/design/wheel_mockups/` (`wheel-home.html`, `wheel-board-room.html`, `wheel-proof-review.html`). They are fragments made for the brainstorm viewer, so a few frame styles are missing when opened alone.
+**Clickable prototype:** `core_docs/design/Saarthi Prototype.html`, built from the milestone screens by `milestones/_src/proto.py`. The old-look prototype is in `core_docs/design/archive/`.
 
 ---
 
