@@ -37,7 +37,8 @@ Rules are in `_src/SCREEN_GUIDE.md`.
 `../Saarthi Prototype.html` is one file you can click through, made from these screens. Open it in a browser.
 - It starts at Home. Click the main flow: Home → Board → Task Room → Proof → Review → Ship → Shipped.
 - Keys: `Esc` back, `Ctrl K` Command Bar, `G` then `H`/`B`/`M`/`P` for Home/Board/Memory/Playbooks, `?` shortcuts.
-- The small **Prototype** chip (bottom-left) shows the view name, a Back button and every view.
+- The slim **Prototype** tab on the right edge opens a panel with the view name, a Back button, every view and the size toggle.
+- Size: **Fit** (default) scales the 1440×900 screen down so all of it fits the window; **100%** shows real size with scrolling. The browser remembers the choice.
 - A link like `Saarthi Prototype.html#review` opens one view. `?selftest` clicks through the flow and writes PASS or FAIL in the tab title.
 - Which click goes where is one table in `_src/proto.py`. After you change screens or that table, build it again:
 ```bash

@@ -10,6 +10,8 @@ How it works
   so the screens' own styles never clash.
 - A small script is added to every view page. On a click it finds the first click rule that matches
   (CSS selector + optional text) and asks the outer page to go to that view.
+- Fit (default): the iframe is max(1440, window) x max(900, window) and is scaled down so the whole screen
+  fits the window. "100%" in the chip shows real size with scrolling. The choice is kept in localStorage.
 - Keys: Esc = back, Ctrl+K = command bar, G then H/B/M/P = Home/Board/Memory/Playbooks, ? = shortcut sheet.
 - URL: "#review" opens a view. "?selftest" walks the main flow with real clicks and writes PASS/FAIL in the
   page title; "?selftest&steps=3" stops after 3 steps (for screenshots).
@@ -31,6 +33,7 @@ if str(SRC) not in sys.path:
 import build  # noqa: E402
 
 OUT = SRC.parent.parent / "Saarthi Prototype.html"
+DESIGN_SIZE = (1440, 900)  # the screens are drawn at this size; "Fit" scales it into the window
 
 M3, M4, M5 = "M3_desktop_ui_v1", "M4_checks_proof_card", "M5_review_ship"
 M6, M7, M8, M9 = "M6_research_memory_playbooks", "M7_race_mode", "M8_safety_cost_rewind", "M9_polish_package"
@@ -300,7 +303,7 @@ def rules_for(view: str, meta: dict) -> list[dict]:
 
 VIEW_SCRIPT = """<style id="pz-click">
 .pz-click { cursor: pointer; }
-.pz-click:hover { outline: 1px solid var(--road); outline-offset: 2px; }
+.pz-click:not(svg):not(svg *):hover { filter: brightness(1.12); }
 </style>
 <script>
 (function () {
@@ -376,17 +379,21 @@ def script_json(data: object) -> str:
 OUTER_CSS = """
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
   font-family: 'Inter', system-ui, sans-serif; }
-#stage iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg); }
+#stage { position: fixed; inset: 0; overflow: hidden; }
+#stage.real { overflow: auto; }
+#stage iframe { position: absolute; left: var(--x, 0px); top: var(--y, 0px); width: var(--w, 100%); height: var(--h, 100%);
+  transform: scale(var(--s, 1)); transform-origin: 0 0; border: 0; background: var(--bg); }
 #stage iframe.loading { visibility: hidden; }
-#chip { position: fixed; left: 4px; bottom: 4px; z-index: 10; font-size: 11.5px; }
+#chip { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 10; font-size: 11.5px; }
 #chip button { font: inherit; color: inherit; cursor: pointer; }
-#chip-handle { display: flex; align-items: center; gap: 6px; padding: 2px 7px; border-radius: 6px;
-  background: var(--surface); border: 1px solid var(--line2); box-shadow: var(--shadow-sm);
-  color: var(--faint); font-size: 10.5px; opacity: .55; }
+#chip-handle { display: flex; align-items: center; gap: 6px; padding: 8px 2px; writing-mode: vertical-rl;
+  transform: rotate(180deg); border-radius: 0 6px 6px 0; background: var(--surface);
+  border: 1px solid var(--line2); border-left: 0; box-shadow: var(--shadow-sm);
+  color: var(--faint); font-size: 10px; line-height: 1; opacity: .4; }
 #chip-handle:hover, #chip.open #chip-handle { opacity: 1; color: var(--text2); }
 #chip-handle b { color: var(--road-text); font-weight: 600; }
-#chip-panel { display: none; position: absolute; left: 0; bottom: calc(100% + 6px); width: 340px;
-  max-height: calc(100vh - 60px); flex-direction: column; background: var(--surface);
+#chip-panel { display: none; position: absolute; right: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+  width: 340px; max-height: calc(100vh - 140px); flex-direction: column; background: var(--surface);
   border: 1px solid var(--line2); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
 #chip.open #chip-panel { display: flex; }
 .ph { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
@@ -398,6 +405,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); c
 .pr button:hover { background: var(--surface3); }
 .pr button:disabled { opacity: .45; cursor: default; }
 .pr .hint { margin-left: auto; color: var(--faint); font-size: 10.5px; }
+.pr .lbl { color: var(--muted); font-size: 10.5px; }
+#chip-fit { display: flex; gap: 2px; }
+#chip-fit button.on { background: var(--surface3); border-color: var(--road); color: var(--text); }
 #chip-list { overflow-y: auto; padding: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 #chip-list button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 8px;
   border: 0; border-radius: 7px; background: transparent; text-align: left; color: var(--text2); min-width: 0; }
@@ -416,6 +426,34 @@ OUTER_JS = r"""
   var cur = null, frame = null, stack = [], seq = 0, gWait = 0, navWaiters = [];
   var titles = {};
   CFG.views.forEach(function (v) { titles[v.id] = v; });
+
+  // ---------- Fit (scale the design size into the window) or 100% (real size, scroll) ----------
+  var FIT_KEY = "saarthi-proto-fit";
+  var mode = "fit";
+  try { if (localStorage.getItem(FIT_KEY) === "real") mode = "real"; } catch (e) {}
+  function layout() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var w = Math.max(CFG.design.w, vw), h = Math.max(CFG.design.h, vh);
+    var s = mode === "fit" ? Math.min(vw / w, vh / h) : 1;
+    var x = mode === "fit" ? Math.round((vw - w * s) / 2) : 0, y = mode === "fit" ? Math.round((vh - h * s) / 2) : 0;
+    stage.classList.toggle("real", mode === "real");
+    stage.style.setProperty("--w", w + "px");
+    stage.style.setProperty("--h", h + "px");
+    stage.style.setProperty("--s", String(s));
+    stage.style.setProperty("--x", x + "px");
+    stage.style.setProperty("--y", y + "px");
+    chip.style.right = (stage.offsetWidth - stage.clientWidth) + "px";  // keep the tab off the scrollbar
+    Array.prototype.forEach.call(document.querySelectorAll("#chip-fit button"), function (b) {
+      b.classList.toggle("on", b.dataset.fit === mode);
+    });
+  }
+  function setMode(m) {
+    mode = m === "real" ? "real" : "fit";
+    try { localStorage.setItem(FIT_KEY, mode); } catch (e) {}
+    layout();
+  }
+  window.addEventListener("resize", layout);
+  layout();
 
   function setHash(view) {
     try { history.replaceState(null, "", "#" + view); } catch (e) { location.replace("#" + view); }
@@ -493,6 +531,9 @@ OUTER_JS = r"""
   });
   document.getElementById("chip-handle").addEventListener("click", function () { chip.classList.toggle("open"); });
   document.getElementById("chip-back").addEventListener("click", back);
+  Array.prototype.forEach.call(document.querySelectorAll("#chip-fit button"), function (b) {
+    b.addEventListener("click", function () { setMode(b.dataset.fit); });
+  });
   Array.prototype.forEach.call(document.querySelectorAll("#chip-list button"), function (b) {
     b.addEventListener("click", function () { go(b.dataset.view); });
   });
@@ -580,7 +621,8 @@ def render() -> str:
         _folder, meta, _body = source(view)
         pages[view] = view_page(view)
         views_cfg.append({"id": view, "title": meta["title"], "code": f"{build.MILESTONES[folder][0]} {stem[:2]}"})
-    cfg = {"first": next(iter(VIEWS)), "views": views_cfg, "keys": KEYS, "selftest": SELFTEST}
+    cfg = {"first": next(iter(VIEWS)), "design": {"w": DESIGN_SIZE[0], "h": DESIGN_SIZE[1]},
+           "views": views_cfg, "keys": KEYS, "selftest": SELFTEST}
     items = "".join(
         f'<button type="button" data-view="{v["id"]}"><span>{build._e(v["id"])}</span>'
         f'<small>{build._e(v["code"])} · {build._e(v["title"])}</small></button>'
@@ -607,9 +649,12 @@ def render() -> str:
     <div class="ph"><div class="k">PROTOTYPE · {len(VIEWS)} VIEWS</div><div class="now" id="chip-now"></div></div>
     <div class="pr"><button type="button" id="chip-back">&larr; Back</button>
       <span class="hint">Esc back · Ctrl K · G H/B/M/P · ?</span></div>
+    <div class="pr"><span class="lbl">Size</span><span id="chip-fit">
+      <button type="button" data-fit="fit" title="Scale the {DESIGN_SIZE[0]}×{DESIGN_SIZE[1]} screen to fit the window">Fit</button>
+      <button type="button" data-fit="real" title="Real size, scroll to see the rest">100%</button></span></div>
     <div id="chip-list">{items}</div>
   </div>
-  <button type="button" id="chip-handle" title="Prototype: views and Back"><b>Prototype</b><span id="chip-cur"></span></button>
+  <button type="button" id="chip-handle" title="Prototype: views, Back, Fit / 100%"><b>Prototype</b><span id="chip-cur"></span></button>
 </div>
 <pre id="selftest-out" hidden></pre>
 <script type="application/json" id="views">{script_json(pages)}</script>

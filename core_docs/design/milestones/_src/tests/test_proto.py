@@ -120,3 +120,19 @@ def test_view_page_matches_the_built_screen(view):
     page = proto.view_page(view)
     page = page.replace(page[page.index('<style id="pz-click">'):page.index("</body>")], "")
     assert page == built
+
+
+def test_hover_style_draws_no_box():
+    css = proto.VIEW_SCRIPT[:proto.VIEW_SCRIPT.index("</style>")]
+    assert "outline" not in css and "border" not in css and "box-shadow" not in css
+    assert "cursor: pointer" in css
+    assert ":not(svg):not(svg *):hover" in css  # the Wheel (SVG) gets the cursor only
+
+
+def test_chip_sits_on_the_right_edge_and_has_fit_toggle(out):
+    rest = outer_only(out)
+    chip_css = re.search(r"#chip \{[^}]*\}", rest)
+    assert chip_css and "right: 0" in chip_css.group(0) and "top: 50%" in chip_css.group(0)
+    assert 'id="chip-fit"' in rest
+    assert 'data-fit="fit"' in rest and 'data-fit="real"' in rest
+    assert "localStorage" in rest and "resize" in rest
