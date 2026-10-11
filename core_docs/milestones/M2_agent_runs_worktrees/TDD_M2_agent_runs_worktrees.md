@@ -6,10 +6,10 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 20 hours
+**Estimated effort:** 21.5 hours
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
-**Related documents:** `FSD_M2_agent_runs_worktrees.md`, `../../TDD-tech-design-doc.md` (sections 4.3-4.5, 4.8, 4.11, 5.5, 6, 7, 8.1, 8.2, 8.6, 12), `../M1_daemon_core_cli/TDD_M1_daemon_core_cli.md`, `../M3_desktop_ui_v1/TDD_M3_desktop_ui_v1.md`, `../../decisions/ADR-001-agent-integration.md`
+**Related documents:** `FSD_M2_agent_runs_worktrees.md`, `../../TDD-tech-design-doc.md` (sections 4.3-4.5, 4.8, 4.11, 4.12, 5.5, 6, 7, 8.1, 8.2, 8.6, 12), `../M1_daemon_core_cli/TDD_M1_daemon_core_cli.md`, `../M3_desktop_ui_v1/TDD_M3_desktop_ui_v1.md`, `../../decisions/ADR-001-agent-integration.md`
 
 ---
 
@@ -164,6 +164,9 @@ Each raw agent stdout line is written to `logs/runs/<run_id>.jsonl` as `{"kind":
 ### Decision 18 — Response additions for M3
 `GET /tasks/{id}` and task list items gain `active_run: {id, agent, mode, status} | null`. Run responses gain a computed `needs_input: {kind, question, options, live} | null` (from the latest `agent.needs_input` event). **Why:** the board card and the "Needs You" list in M3 need them without extra calls. No new columns.
 
+### Decision 19 — Plan docs live in the data folder **(new)**
+A finished `plan` run writes its final message to `<DATA_DIR>/tasks/<task_id>/docs/plan-<run_id>.md` (F22.2), not to the worktree. **Why:** a plan run never touches the worktree (F5.2 rule, tested with the read-only flags), and the file must survive worktree cleanup. The `docs/` module is Saarthi's own code, not the repo's docs folder. Docs are files found at read time: no new table. `changed` docs come from git (`git diff --name-status <base>...HEAD -- '*.md'` and `git status --porcelain -- '*.md'`, list args, in the worktree). `pinned` docs come from `[docs] pinned` in `project.toml` (default `DEFAULT_PINNED_DOCS`), read from the worktree, or from the main checkout if the worktree does not exist yet. A file in both sets shows once, as `changed`, with `pinned: true`. Every path is resolved and must stay inside the worktree / data folder (`..` and symlinks out are refused). Doc IDs: `plan:<run_id>`, `wt:<path>`, `pin:<path>`; `research:<item_id>` comes in M6.
+
 ---
 
 ## 5. Modules and files
@@ -186,8 +189,8 @@ All under `daemon/src/saarthi/`.
 | `core/notify.py` | `Notifier`: bus listener -> `notify-send` (args list) |
 | `schemas/runs.py` | `RunCreate`, `RunOut`, `RunInput`, `RunResume`, `WorkspaceOut`, `ContextPackOut` |
 | `schemas/events.py` (extend M1's) | One Pydantic payload model per event in section 7. **Why:** one source of truth; M3 generates TypeScript types from it. |
-| `api/routes/runs.py`, `api/routes/workspace.py` | Endpoints in section 8 |
-| `cli/run.py`, `cli/workspace.py`, `cli/render.py` | Typer commands; Rich renderer for events |
+| `api/routes/runs.py`, `api/routes/workspace.py`, `api/routes/docs.py` | Endpoints in section 8 |
+| `cli/run.py`, `cli/workspace.py`, `cli/docs.py`, `cli/render.py` | Typer commands; Rich renderer for events |
 
 `remove_worktree` is built and tested in M2 (MILESTONES.md lists it) but has no API, CLI or event yet. M5 wires it with `workspace.removed` and the cleanup prompt.
 
@@ -195,7 +198,7 @@ All under `daemon/src/saarthi/`.
 
 ## 6. Data model changes
 
-**No new tables, no new columns** (ownership map: "Uses `runs` fully"). If M1 did not index `runs.status` and `runs.task_id`, add migration `0002_m2_runs_indexes` with `ix_runs_status` and `ix_runs_task_id`; nothing else.
+**No new tables, no new columns** (docs are files, Decision 19; ownership map: "Uses `runs` fully"). If M1 did not index `runs.status` and `runs.task_id`, add migration `0002_m2_runs_indexes` with `ix_runs_status` and `ix_runs_task_id`; nothing else.
 
 How M2 fills `runs` (core 5.5):
 
@@ -237,6 +240,7 @@ All use the core 6.1 shape. `task_id` and `run_id` are always set.
 | `terminal.output` | `{data_b64}` (PTY runs; `id: null`, log only) |
 | `workspace.created` | `{branch, path, base, reused_branch: bool, setup: {ran, exit_code, seconds} }` |
 | `workspace.checkpoint` | `{n, ref, tree, run_id, reused: bool}` |
+| `doc.saved` **(new)** | `{doc_id, kind: "plan", path, run_id, chars}` |
 
 Unknown lines: `agent.message {role: "agent", text: <line>, raw: true}`.
 
@@ -270,6 +274,8 @@ All under `/api/v1`, bearer token, as in M1.
 | POST | `/runs/{id}/stop` | - | `RunOut`; on path-B `needs_input` closes as `done` |
 | POST | `/runs/{id}/resume` | `{message?}` | `202 RunOut`; `409 not_resumable` (no session, wrong status, or task stage blocks `Running`) |
 | GET | `/tasks/{id}/context-pack` | `?mode=build&message=` | `{path, content, brief_version}` (preview; writes nothing) |
+| GET | `/tasks/{id}/docs` | - | `[{doc_id, kind, title, path, source: "data"\|"worktree"\|"main", size, updated_at, change: "added"\|"modified"\|null, pinned}]`; order and rules in Decision 19; `title` = first `# ` heading, else file name |
+| GET | `/tasks/{id}/docs/content` | `?doc=<doc_id>` | `{doc_id, markdown, size, updated_at, too_big}`; `400 bad_path`, `404 doc_not_found` |
 | GET | `/tasks/{id}/workspace` | - | `{exists, branch, path, base, ahead, behind, changed_files, last_checkpoint}` |
 
 CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
@@ -283,6 +289,9 @@ CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
 | `saarthi run stop <run\|task>` | | `Stopped run … Checkpoint n saved. Task -> Ready.` |
 | `saarthi run resume <run\|task>` | `--message TEXT`, `--detach` | resumes and attaches |
 | `saarthi workspace <task>` | | FSD F6.3 block |
+| `saarthi docs list <task>` | `--json` | Rich table (FSD F22.2-F22.4) |
+| `saarthi docs show <task> <doc>` | `--json` | Markdown printed with Rich. `<doc>` = number from the list, path, or doc ID |
+| `saarthi docs open <task> <doc>` | | Opens the file in `$EDITOR` |
 
 `run watch` render (`cli/render.py`): one line per event, `HH:MM:SS  kind  text`. Kinds: `msg`, `think` (dim, first line), `tool`, `out` (first `WATCH_OUTPUT_LINES` lines), `file` (`path (+a -r)`), `ASK` (yellow panel + the exact `run say` command), `raw` (dim grey), `END`. PTY runs: write decoded bytes straight to stdout.
 
@@ -343,6 +352,10 @@ CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
 | `FILE_DIFF_MAX_LINES` | `80` |
 | `PTY_COLS`, `PTY_ROWS`, `TERMINAL_SCROLLBACK_BYTES` | `120`, `40`, `262144` |
 | `WATCH_OUTPUT_LINES` | `5` |
+| `DOCS_MAX_LIST` | `200` |
+| `DOCS_MAX_BYTES` | `1_000_000` |
+| `DEFAULT_PINNED_DOCS` | `["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]` |
+| `DOCS_DIR_NAME` | `"docs"` (under `DATA_DIR / "tasks" / <task_id>`) |
 | `NOTIFY_ENABLED`, `NOTIFY_SEND_BIN`, `NOTIFY_APP_NAME` | `True`, `"notify-send"`, `"Saarthi"` |
 
 `project.toml`:
@@ -350,6 +363,9 @@ CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
 [workspace]
 setup_script = ".saarthi/setup.sh"   # default; missing file = no setup
 setup_timeout_sec = 900
+
+[docs]
+pinned = ["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]   # default = DEFAULT_PINNED_DOCS
 ```
 
 ---
@@ -370,6 +386,9 @@ setup_timeout_sec = 900
 | `input` to a finished run | `409`. |
 | Resume without session id | `409 not_resumable`, message "start a new run". |
 | Orphan PID check fails (not ours) | Do not kill. Mark `interrupted`. Log a warning. |
+| Doc path escapes the worktree / data folder | `400 bad_path`. Nothing is read. |
+| Doc over `DOCS_MAX_BYTES` | `too_big: true`, no text. |
+| Plan file cannot be written | Log it; the run still ends `done`; no `doc.saved`. |
 | Worktree deleted by hand | `GET /workspace` -> `exists: false`; next run recreates it (reusing the branch). |
 
 ---
@@ -394,6 +413,9 @@ Fixtures: M0 files in `tests/fixtures/agents/` (`claude_build_ok.jsonl`, `claude
 | `integration/test_run_manager.py` | Full lifecycle with FakeAdapter: stage moves of Decision 6, one active run, queue with limit 1, dequeue stage re-check, totals updated |
 | `integration/test_run_needs_you.py` | Both paths for both fake capability sets; `stop` closes path B as done; Codex queued input delivered on resume, in order |
 | `integration/test_run_restart.py` | Restart rules of Decision 9; orphan kill only when pid cwd + cmdline match |
+| `integration/test_docs_finder.py` | Kinds (plan, changed added/modified, pinned); order; pinned + changed shown once; `.saarthi/context/` excluded; `DOCS_MAX_LIST`; missing pinned file skipped; path escape (`..`, symlink out) refused; `too_big` |
+| `integration/test_plan_doc.py` | FakeAdapter plan run `done` -> file in data folder + one `doc.saved`, worktree unchanged; `failed` / `stopped` -> no file, no event |
+| `api/test_docs_api.py` | Bodies and errors of the two docs endpoints; `docs show` by number |
 | `unit/core/test_allowed_moves_m2.py` | One test per new row |
 | `unit/test_notifier.py` | Fake `notify-send` on PATH: one call per needs_input / finished / failed; missing binary -> one warning |
 | `api/test_runs_api.py`, `api/test_workspace_api.py` | Status codes and bodies of section 8; WebSocket gets `run.*`/`agent.*` |
@@ -428,7 +450,7 @@ Coverage target for `agents/`, `workspace/`, `core/runs.py`: 85%.
 
 ## 15. What this milestone does not do
 
-No UI, no keystroke/resize frames (M3). No checks, Proof Card or `Review` guard (M4). No sync with main, cleanup prompt, `workspace.removed`, commit/push/PR (M5). No research items, memory or playbooks in the Context Pack (M6). No race (M7). No permission profiles UI, blocked list, `bwrap`, secret masking, checkpoint list or rewind, cost meter (M8).
+No UI, no keystroke/resize frames (M3). No checks, Proof Card or `Review` guard (M4). No sync with main, cleanup prompt, `workspace.removed`, commit/push/PR (M5). No research items, memory or playbooks in the Context Pack, no plan in the Context Pack, no `research` docs (M6). No Docs tab (M3). No editing docs (Later). No race (M7). No permission profiles UI, blocked list, `bwrap`, secret masking, checkpoint list or rewind, cost meter (M8).
 
 ---
 
@@ -445,7 +467,8 @@ No UI, no keystroke/resize frames (M3). No checks, Proof Card or `Review` guard 
 | Needs You (both paths) + queued input | 1.5 |
 | Restart / interrupted / resume / orphans | 1 |
 | Context Pack v0 | 0.5 |
+| Task Docs: finder, reader, plan doc, `doc.saved`, API, CLI + tests | 1.5 |
 | Notifier | 0.5 |
 | API routes | 1 |
 | CLI (`run` group, Rich `watch`, `say`, `stop`, `resume`, `list`, `workspace`) | 2 |
-| **Total** | **20** |
+| **Total** | **21.5** |

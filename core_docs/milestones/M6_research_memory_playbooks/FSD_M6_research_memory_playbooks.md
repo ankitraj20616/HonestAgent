@@ -6,7 +6,7 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 20 hours (2 rough weeks at ~10 h/week)
+**Estimated effort:** 21 hours (2 rough weeks at ~10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M6_research_memory_playbooks.md`, `../../FUNCTIONAL_SPECIFICATIONS.md` (F3, F4, F5.3, F12, F13), `../../TDD-tech-design-doc.md` (4.8, 5.4, 5.9, 8.5), `../M5_review_ship/FSD_M5_review_ship.md` (before), `../M7_race_mode/FSD_M7_race_mode.md` (after)
@@ -25,6 +25,7 @@ It covers these F-numbers (from `../README.md`, ownership map):
 - **F12.1** Memory screen, **F12.2** smart context, **F12.3** memory update on ship.
 - **F13.1-F13.4** Playbooks: library, 5 built-ins, variables, global + project scope.
 - Import of existing `quick-prompts.md` files as playbooks (MILESTONES.md M6 list).
+- **F22.5** Research findings show in the Docs tab; the latest plan goes into the Context Pack of the next build / fix run.
 
 ## 2. The goal in plain words
 
@@ -51,6 +52,7 @@ At the end of M6 I can:
 |---|---|
 | **Research item** | One thing saved on a task: a note, a link, a snippet, or an agent finding. |
 | **Agent finding** | The written result of a "Research this" run, saved as a research item. |
+| **Plan doc** | The saved result of a `plan` run (M2). In M6 the latest one goes into the Context Pack of build and fix runs. |
 | **Send to agent** | A yes/no switch on each research item. "Yes" means it goes into the Context Pack. |
 | **Context Pack** | The file `.saarthi/context/TASK.md` that the agent reads first. |
 | **Memory match** | A `core_docs/` file picked for the Context Pack because it shares words with the brief. |
@@ -71,7 +73,7 @@ At the end of M6 I can:
   $ saarthi research add T-0042 --note "Reset tokens must expire in 30 minutes. Ask client about SMS."
   Added note 01JC4M7Q2X to T-0042 (send to agent: yes)
   ```
-- **Rules:** Body is markdown. Title is optional (first line is used if empty). Edit and delete are allowed.
+- **Rules:** Body is markdown. Title is optional (first line is used if empty). Edit and delete are allowed. Notes and agent findings also show in the Docs tab (F22.5, see 5.4).
 - **Acceptance criteria:**
   - A note added from the CLI shows in the Research tab of the Task Room without a refresh.
   - Editing a note keeps its id. A `research.updated` event is saved.
@@ -125,10 +127,12 @@ At the end of M6 I can:
   - It uses the current Context Pack (brief if any, research items set to "send to agent").
   - If the agent gives no usable text, nothing is saved and the run shows "No finding text found".
   - The finding is a normal research item: I can edit it, delete it, or switch "send to agent" off.
+  - Items of kind `agent_finding` and `note` also show in the Docs tab (and in `saarthi docs list`) in a "Research" group, as docs of kind `research`. They are read-only there; I edit them in the Research tab.
 - **Acceptance criteria:**
   - After a research run ends, one new `agent_finding` item exists, linked to that run.
   - `git status` in the task worktree is clean after the run.
   - The task stage is the same before and after the run.
+  - The finding shows in `saarthi docs list T-0042` as kind `research`, and in the Docs tab under "Research".
 
 ### 5.5 F4.6 "Send to agent" toggle
 
@@ -182,16 +186,18 @@ At the end of M6 I can:
   1. Task header (id, title, mode, agent).
   2. Playbook text, with variables filled in (if a playbook was picked).
   3. The latest brief.
-  4. Research items set to "send to agent".
-  5. Project rules and the always-include list, **by path only** (the agent reads them itself).
-  6. Up to 5 matched memory files, inlined, at most ~20,000 characters in total.
+  4. **Plan** (F22.5): for `build` and `fix` runs only, the latest plan doc of the task (the saved result of a `plan` run), at most 15,000 characters.
+  5. Research items set to "send to agent".
+  6. Project rules and the always-include list, **by path only** (the agent reads them itself).
+  7. Up to 5 matched memory files, inlined, at most ~20,000 characters in total.
 - **Why:** The agent should start with the same picture I have. One file means I can see exactly what it got.
 - **Example:**
   ```
   $ saarthi context T-0042 --mode build --playbook plan-then-build
-  Context Pack for T-0042 (build, claude) - 27,410 chars
+  Context Pack for T-0042 (build, claude) - 33,530 chars
     playbook   plan-then-build (builtin)                 1,120
     brief      version 3                                 1,480
+    plan       plan-01JC5...md                      full   6,120
     research   3 of 4 items (1 switched off)             4,210
     listed     CLAUDE.md, AGENTS.md, core_docs/FUNCTIONAL_SPECIFICATIONS.md, core_docs/TDD-tech-design-doc.md
     memory     core_docs/memory/project_memory.md   score 14   full   9,880
@@ -200,6 +206,11 @@ At the end of M6 I can:
   Use --show to print the full TASK.md.
   ```
   In the UI: the run dialog has a **Preview** button that shows the same file and the same table.
+- **Rules (plan, F22.5):**
+  - Only `build` and `fix` runs get the Plan section. `research` and `plan` runs do not.
+  - The plan is the newest plan doc of the task. With no plan doc, the section is left out.
+  - It is put in whole, with the header comment removed. Over 15,000 characters it is cut, with a line telling the agent where to read the rest (the path of the plan file).
+  - The plan is my own saved plan, so it is trusted like the brief.
 - **Rules (F12.2, simple keyword match):**
   - Keywords come from the task title, the brief goal and the acceptance criteria. Short words (under 3 letters) and common words ("the", "and", "should", ...) are dropped. At most 20 keywords.
   - Each `.md` file in the memory folder gets a score: for each keyword, the number of lines that contain it, counted at most 5 times. Add up all keywords.
@@ -212,6 +223,8 @@ At the end of M6 I can:
   - No more than 5 memory files and no more than 20,000 memory characters are inlined.
   - The preview and the file the agent gets are exactly the same text.
   - A project with no memory folder still gets a pack (brief + research), with a note "no memory folder".
+  - A build run on a task with a saved plan has a Plan section with the plan text. A research run on the same task has none.
+  - A plan over 15,000 characters is cut, and the preview shows `cut` for the plan line.
 
 ### 5.9 F12.1 Memory screen
 
@@ -360,6 +373,7 @@ At the end of M6 I can:
 - [ ] On a real task, "Research this" + "Draft brief" + my edits give a saved brief in under 5 minutes (timed once, written in `timeline.md`).
 - [ ] After shipping a real task, `core_docs/memory/project_memory.md` and `core_docs/timeline/timeline.md` are updated **only** after my approval, and the change is in the PR.
 - [ ] `saarthi context T-xxxx --show` prints the same text the agent read.
+- [ ] A task with a saved plan: the build run's pack has the Plan section; a research run's pack does not. A "Research this" finding shows in `saarthi docs list` and in the Docs tab.
 - [ ] All 5 built-in playbooks are listed; my 3 `quick-prompts.md` files are imported.
 - [ ] `uv run pytest`, `uv run ruff check .`, `uv run pyright` pass.
 
@@ -368,7 +382,7 @@ At the end of M6 I can:
 | Item | Owner |
 |---|---|
 | Files and images in research (F4.5) | Later |
-| Brief from a ticket URL (F3.3) | Later |
+| Brief from a Jira ticket (F3.3) | M10 |
 | Search memory by meaning / embeddings | Later |
 | ADR suggestions (F12.4) | Later |
 | Sharing playbooks with a team | Later (team mode) |
@@ -392,6 +406,8 @@ At the end of M6 I can:
 12. `saarthi playbook list` -> 5 built-ins. Copy `fix-bug-tdd` to the project, edit it -> the project copy is used.
 13. `saarthi playbook render fix-bug-tdd --task T-1` with a typo variable -> warning shown.
 14. Import the 3 `quick-prompts.md` files with `--dry-run` -> counts 7, 5, 7, nothing written.
+15. Run a plan on T-1, then `saarthi context T-1 --mode build`: the `plan` line shows `full`. With `--mode research`: no `plan` line. Make the plan file over 15,000 characters: `cut`.
+16. After a research run, `saarthi docs list T-1` shows the finding as kind `research`.
 
 ## 10. Open questions
 
@@ -400,8 +416,8 @@ At the end of M6 I can:
 3. **Memory screen edits the main checkout** without a commit. Is that right, or should edits go to a "memory" branch?
 4. **Research runs do not move the stage.** Core TDD section 7 has "Running -> Ready: plan / research run ends". M6 treats a research run as a side run. OK?
 5. **Secrets (known gap 2 in `../README.md`).** Snippets often hold logs with tokens. Until M8 they go to the agent unmasked. Accept for now?
-6. Effort is tight for 20 hours. If it runs over, cut first: brief compare view (keep list + restore), then the import `--only` option.
+6. Effort is tight for 21 hours. If it runs over, cut first: brief compare view (keep list + restore), then the import `--only` option.
 
 ## 11. Effort
 
-About **20 hours**. See TDD section 16 for the breakdown.
+About **21 hours**. See TDD section 16 for the breakdown.

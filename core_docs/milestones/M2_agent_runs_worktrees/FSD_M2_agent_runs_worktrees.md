@@ -6,7 +6,7 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 20 hours (2 weeks at ~10 h/week)
+**Estimated effort:** 21.5 hours (2 weeks at ~10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M2_agent_runs_worktrees.md`, `../../FUNCTIONAL_SPECIFICATIONS.md`, `../../TDD-tech-design-doc.md`, `../M1_daemon_core_cli/FSD_M1_daemon_core_cli.md` (before), `../M3_desktop_ui_v1/FSD_M3_desktop_ui_v1.md` (next), `../../decisions/ADR-001-agent-integration.md` (M0 output)
@@ -18,7 +18,7 @@
 This document covers **M2 only**: running real agents (Claude Code and Codex) on a task, each task in its own git worktree, driven from the `saarthi` CLI.
 
 It covers the features M2 owns in the ownership map (`../README.md`):
-F5.1, F5.2, F5.3 (v0, brief only), F5.6, F5.7, F5.8, F5.9, F5.10, F6.1, F6.2, F6.3 (CLI), F14.2, F16.1, F19.1 (`notify-send`), NF3.
+F5.1, F5.2, F5.3 (v0, brief only), F5.6, F5.7, F5.8, F5.9, F5.10, F6.1, F6.2, F6.3 (CLI), F14.2, F16.1, F19.1 (`notify-send`), NF3, F22.2, F22.3, F22.4 (CLI + API; the Docs tab is M3).
 
 There is no desktop window in M2. Everything here is used from the terminal. The window comes in M3.
 
@@ -57,6 +57,7 @@ After M2:
 | **Adapter** | A small piece of code that knows how to talk to one agent CLI. Saarthi has one per agent. |
 | **Worktree** | A second working folder of the same git repo, on its own branch. Changes there do not touch your main folder. |
 | **Setup script** | An optional script (`.saarthi/setup.sh`) that runs once in a new worktree. Example: copy `.env`, run `uv sync`. |
+| **Doc** | One markdown text I may want to read for a task: a saved plan, a changed `*.md` file, or a pinned project doc. |
 | **Context Pack** | A file the agent reads first. In M2 it only holds the brief: `.saarthi/context/TASK.md`. |
 | **Checkpoint** | A hidden git snapshot of the worktree, saved at the end of every run. It does not change your branch history. |
 | **Session ID** | The agent's own ID for a conversation. Saarthi saves it so a run can be resumed. |
@@ -247,6 +248,56 @@ After M2:
   ```
 - **Acceptance criteria:** Counts match `git` output in the worktree. Works with `--json`.
 
+### F22.2-F22.4 Plan saved as a doc + docs list
+
+- **What:** When a `plan` run ends well, Saarthi saves the agent's full final answer as a markdown file (F22.2). `saarthi docs list` shows the task's docs: saved plans, `*.md` files changed on the task branch (F22.3), and pinned project docs such as `CLAUDE.md` and the FSD / TDD (F22.4). `saarthi docs show` prints one of them.
+- **Why:** A plan run is read-only, so its plan used to live only in the run summary. Now I can read it, and any spec the agent wrote, without opening an editor.
+- **Example:**
+  ```
+  $ saarthi run T-0012 --agent claude --mode plan
+  ...
+  10:41:07  msg   Plan ready: 6 steps, 3 files to touch, 2 risks.
+  10:41:07  END   done · 2m03s · $0.21 · checkpoint 1
+  Plan saved: plan-01JC5...md
+  Task T-0012 -> Ready.
+
+  $ saarthi docs list T-0012
+  #  Kind     Title                                  Path                                          Size    Updated
+  1  plan     Plan - Add password reset API          plan-01JC5...md                               6.1 KB  10:41
+  2  changed  Password reset API (added)             core_docs/plans/T-0012-reset-api.md           2.3 KB  10:52
+  3  pinned   CLAUDE.md                              CLAUDE.md                                     3.0 KB  09:10
+  4  pinned   AGENTS.md                              AGENTS.md                                     1.4 KB  09:10
+  5  pinned   Functional Specifications              core_docs/FUNCTIONAL_SPECIFICATIONS.md        88 KB   Oct 11
+  6  pinned   Tech Design Document                   core_docs/TDD-tech-design-doc.md              120 KB  Oct 11
+  1 plan · 1 changed file · 4 pinned
+
+  $ saarthi docs show T-0012 1
+  # Plan - Add password reset API
+  1. Add a `reset_tokens` table ...
+  ```
+- **Rules:**
+  - Four kinds of doc exist; M2 owns three: `plan`, `changed`, `pinned`. The fourth, `research`, comes in M6.
+  - The plan file goes in the **data folder** (`~/.local/share/saarthi/tasks/<task_id>/docs/plan-<run_id>.md`), not in the worktree. A plan run still changes no worktree file.
+  - The file starts with a small comment header (task, run, agent, mode, time), then the agent's text.
+  - Only a `plan` run that ends with status `done` saves a doc. A failed or stopped plan run saves nothing.
+  - A "changed" doc is a `*.md` file added or changed against the base branch, committed or not.
+  - A "pinned" doc comes from `[docs] pinned` in `project.toml` (default: `CLAUDE.md`, `AGENTS.md`, the FSD, the TDD). It is read from the task worktree, or from the main checkout if the worktree does not exist yet. A missing file is skipped quietly.
+  - A file that is both pinned and changed shows once, as `changed`, with a "pinned" mark.
+  - Files under `.saarthi/context/` are never listed.
+  - Order: plans (newest first), then changed (by path), then pinned (in config order). Max 200 docs per task.
+  - A doc bigger than 1 MB is not shown: "Too big to show here", with the path so I can open it in an editor.
+  - Paths are checked. A path with `..`, or a symlink that leaves the worktree or data folder, is refused.
+  - `docs show` takes the number from the list, the path, or the doc ID. `docs open` opens the file in `$EDITOR`. `docs list` and `docs show` work with `--json`.
+  - Docs are read-only in Saarthi.
+- **Acceptance criteria:**
+  - A finished `plan` run (FakeAdapter) writes `plan-<run_id>.md` in the data folder, emits one `doc.saved` event, and `docs list` shows it first.
+  - A failed or stopped plan run writes no file and emits no `doc.saved`.
+  - After a plan run, `git status` in the worktree shows no new file.
+  - A `*.md` file added in the worktree (uncommitted) is listed as `added`; an edited one as `modified`.
+  - A file that is pinned and changed appears once.
+  - `.saarthi/context/TASK.md` is never listed.
+  - `docs show T-0012 ../../etc/passwd` is refused. A doc over 1 MB returns `too_big` and no text.
+
 ### F14.2 Checkpoints
 
 - **What:** At the end of every run (done, failed, stopped, interrupted), Saarthi saves a hidden snapshot of the worktree.
@@ -292,6 +343,11 @@ After M2:
 8. I check the work: `cd` into the worktree path, run tests, read `git diff`.
 9. `saarthi task move T-0002 review`. (M4 will put checks here.)
 
+### 6.1a Plan first, then read it
+1. `saarthi run T-0012 --agent claude --mode plan`. Ends with `Plan saved: plan-01JC5...md`.
+2. `saarthi docs list T-0012`, then `saarthi docs show T-0012 1`.
+3. Happy with it: `saarthi run T-0012 --mode build`.
+
 ### 6.2 Answer a question
 1. Notification: "Needs You · T-0002". Task is in `Needs You`.
 2. `saarthi run watch T-0002` shows the question.
@@ -317,7 +373,8 @@ After M2:
 3. Kill the daemon with `kill -9` mid-run, start it again: `saarthi run list` shows `interrupted`; `saarthi run resume` continues the same session and the run reaches `done`.
 4. Needs You works for both agents: one live-question case and one ended-with-question case, each answered with `run say`.
 5. At least **3 real Saarthi tasks** were built with this CLI. They are listed in `core_docs/timeline/timeline.md`.
-6. `uv run pytest`, `uv run ruff check .`, `uv run pyright` all pass.
+6. A finished `plan` run leaves a plan doc: `saarthi docs list T-0012` shows it, `saarthi docs show T-0012 1` prints it, and the worktree has no new file.
+7. `uv run pytest`, `uv run ruff check .`, `uv run pyright` all pass.
 
 ---
 
@@ -330,7 +387,9 @@ After M2:
 | Native (Tauri) notifications | M3 |
 | Check Runner, Proof Card, auto checks after build, `Verifying -> Review` rule | M4 |
 | Sync with main, worktree cleanup prompt, `workspace.removed` event, commit, push, PR | M5 |
-| Context Pack v1 (research, memory, playbooks), playbooks, "Research this" saving findings | M6 |
+| Context Pack v1 (research, memory, playbooks), playbooks, "Research this" saving findings, research items in the docs list, plan in the Context Pack | M6 |
+| Docs tab (list, markdown view, outline) | M3 |
+| Editing docs in Saarthi, Mermaid rendering | Later (F22.6) |
 | Race Mode, per-workspace ports | M7 |
 | Permission profiles UI, blocked-commands list, `bwrap`, secret masking, checkpoint list + Rewind, cost meter | M8 |
 
@@ -349,6 +408,7 @@ Use a scratch repo with a tiny Python project and a brief.
 - [ ] Start a second run on T-1 while one is active -> refused.
 - [ ] Set `max_parallel_runs = 1` in `~/.config/saarthi/config.toml`, restart the daemon, start runs on T-2 and T-3 -> T-3 shows `queued`, then starts alone.
 - [ ] `saarthi run T-4 --agent codex --mode plan`: no file changes in its worktree. Task -> `Ready` at the end.
+- [ ] After the plan run: output ends with `Plan saved: plan-...md`; `saarthi docs list T-4` shows 1 plan; `docs show T-4 1` prints it; `docs show T-4 ../x` is refused; a failed plan run saves nothing.
 - [ ] Ask the agent in the brief to "ask me which name to use before coding". Notification appears. Task is `Needs You`. `run say` continues it.
 - [ ] Same with Codex.
 - [ ] Press `Ctrl+C` in `run watch` -> the run keeps going (`run list` shows `running`).
@@ -373,4 +433,4 @@ Use a scratch repo with a tiny Python project and a brief.
 
 ## 11. Effort
 
-About **20 hours** (2 weeks at ~10 h/week). Dogfooding time (the 3 real tasks) is real work and is not counted. Breakdown in the TDD, section 16.
+About **21.5 hours** (2 weeks at ~10 h/week). Dogfooding time (the 3 real tasks) is real work and is not counted. Breakdown in the TDD, section 16.

@@ -6,7 +6,7 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 30 hours
+**Estimated effort:** 32.5 hours
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
 **Related documents:** `FSD_M3_desktop_ui_v1.md`, `../../TDD-tech-design-doc.md` (sections 4.1, 4.11, 9, 11, 14, 16 Q4), `../../TECH_STACK.md` (sections 1, 4), `../M2_agent_runs_worktrees/TDD_M2_agent_runs_worktrees.md`, `../M4_checks_proof_card/TDD_M4_checks_proof_card.md`
@@ -65,7 +65,7 @@ On launch: read `~/.config/saarthi/token`; `GET /health` (timeout `HEALTH_TIMEOU
 Generated files are committed. A daemon test regenerates into a temp dir and fails if they differ. **Why:** core 4.1 asks for an OpenAPI client, but WebSocket events are not in OpenAPI; without the second step the event cards would be untyped.
 
 ### Decision 5 — State: TanStack Query for server data, Zustand for UI and live buffers
-- Query keys: `["projects"]`, `["tasks", projectId, filters]`, `["task", id]`, `["runs", taskId]`, `["run", id]`, `["workspace", taskId]`, `["brief", taskId]`, `["settings"]`, `["health"]`.
+- Query keys: `["projects"]`, `["tasks", projectId, filters]`, `["task", id]`, `["runs", taskId]`, `["run", id]`, `["workspace", taskId]`, `["brief", taskId]`, `["settings"]`, `["health"]`, `["docs", taskId]`, `["doc", taskId, docId]`.
 - Zustand: `ui` (project, theme, command bar, scroll pause), `connection` (ws status, last_event_id), `stream` (per-run event arrays, capped at `STREAM_MAX_EVENTS`), `latency` (last 200 samples).
 - `eventRouter.ts` maps each event type to "patch this query" or "invalidate this query" or "append to stream". It contains no rules. **Why:** one place shows how every event reaches the screen; easy to test with fixtures.
 
@@ -119,13 +119,16 @@ For each event with an `id`, `latency = render_commit_time − Date.parse(event.
 `GET /projects` items gain `open_tasks`, `running_runs`, `today_cost_usd` (runs started since local midnight, computed in the daemon). The Deck total is the sum of what is shown. **Why:** "today" is a rule; it lives in the daemon. M8's cost meter replaces this view.
 
 ### Decision 17 — Routing and windows **(new)**
-`react-router` (not in TECH_STACK; small and well known). Routes: `/` Deck, `/p/:projectId/board`, `/p/:projectId/code`, `/t/:taskId/:tab?` (`stream|terminal|code|timeline`), `/settings`, `/health`, `/capture`. Two Tauri windows: `main` and `capture` (small, undecorated, always on top, hidden until the shortcut). `tauri-plugin-single-instance` forwards `--quick-capture` to the running app. Quick capture's last project is kept in `localStorage` (a per-machine convenience, not state).
+`react-router` (not in TECH_STACK; small and well known). Routes: `/` Deck, `/p/:projectId/board`, `/p/:projectId/code`, `/t/:taskId/:tab?` (`stream|terminal|code|docs|timeline`), `/settings`, `/health`, `/capture`. Two Tauri windows: `main` and `capture` (small, undecorated, always on top, hidden until the shortcut). `tauri-plugin-single-instance` forwards `--quick-capture` to the running app. Quick capture's last project is kept in `localStorage` (a per-machine convenience, not state).
 
 ### Decision 18 — Brief editor uses CodeMirror 6 markdown
 Goal and Notes: CodeMirror with `@codemirror/lang-markdown` (already a dependency; Milkdown is "later" in TECH_STACK). Acceptance criteria: a list of inputs with add/remove/reorder. Focus paths: chips. Save -> `PUT /tasks/{id}/brief`.
 
 ### Decision 19 — Timeline data
 Use M1's task-events read (the one behind `saarthi task show --json`). If M1 has no paged endpoint, M3 adds `GET /tasks/{id}/events?after=&limit=&group=` **(new)**. Timeline filter chips map to event groups (`task`, `run`, `agent`, `workspace`) sent as `group=`.
+
+### Decision 20 — Docs tab only renders what M2 serves **(new)**
+The Docs tab uses `GET /tasks/{id}/docs` and `GET /tasks/{id}/docs/content?doc=` (M2 Decision 19). M3 adds no endpoint, table or event. `eventRouter.ts` invalidates `["docs", taskId]` on `doc.saved` and on `agent.file_changed` when `path` ends with `.md`; the open doc `["doc", taskId, docId]` is invalidated on the same events. Both events already reach `task:<id>` (it gets all events of that task). Markdown is rendered with `react-markdown` + `remark-gfm`. Raw HTML in markdown is not rendered (no `rehype-raw`), so a doc cannot inject markup. Mermaid is a plain code block (Later, F22.6). The outline is built from the rendered headings (`DocOutline`), with ids from `github-slugger` style slugs made in `lib/slug.ts` (no new library). "Open in editor" calls the existing `POST /projects/{id}/open` (Decision 13) with `task_id`, `target: "editor"` and the doc path; plan docs (data folder) use `source: "data"`, so the call passes the absolute path from the doc list. **Why:** the daemon already decides what a doc is; the UI must not copy that logic (rule 1). A plain code block for Mermaid keeps the bundle small.
 
 ---
 
@@ -164,6 +167,7 @@ Use M1's task-events read (the one behind `saarthi task show --json`). If M1 has
 | `api/client.ts`, `api/queries.ts` | `openapi-fetch` client with token; Query hooks |
 | `api/ws.ts`, `api/eventRouter.ts` | `WsClient` (Decision 6); event -> cache/stream |
 | `stores/ui.ts`, `stores/connection.ts`, `stores/stream.ts`, `stores/latency.ts` | Zustand |
+| `lib/slug.ts` | Heading text -> anchor id for the outline |
 | `lib/tauri.ts`, `lib/theme.ts` | Tauri wrappers (mockable); theme tokens for app, xterm, CodeMirror |
 | `components/layout/` | `NavRail`, `TopBar` (project switcher, running count, today's cost), `OfflineBanner` |
 | `components/CommandBar.tsx` | shadcn `Command` (cmdk) |
@@ -171,6 +175,7 @@ Use M1's task-events read (the one behind `saarthi task show --json`). If M1 has
 | `screens/Deck.tsx` | Projects, Running now, Needs You, Today's cost |
 | `screens/Board.tsx` | `@dnd-kit/core` columns + filter bar |
 | `screens/TaskRoom/` | `index`, `LeftPanel`, `BriefEditor`, `RunsList`, `StartRunDialog`, `WorkspacePanel`, `StreamTab`, `TerminalTab`, `CodeTab`, `TimelineTab`, `MessageBox` |
+| `screens/TaskRoom/DocsTab/` | `index` (3 columns, tab count), `DocsList` (groups Plans / Changed / Pinned, badges), `DocView` (react-markdown + remark-gfm, header with Open in editor / Copy path, too-big placeholder), `DocOutline` (heading list, click to jump) |
 | `screens/CodePeek/` | `FileTree`, `CodeViewer` (CodeMirror read-only + edit mode), `SearchPanel` |
 | `screens/Settings.tsx`, `screens/Health.tsx`, `screens/QuickCapture.tsx` | |
 | `test/fixtures/events/*.json` | Normalized events from M0 fixtures (generated, Decision 4 script step 4: `uv run python -m saarthi.agents.dump_fixture_events`) |
@@ -179,13 +184,13 @@ Use M1's task-events read (the one behind `saarthi task show --json`). If M1 has
 
 ## 6. Data model changes
 
-None. No new tables, no new columns, no migration. New `settings` keys only (Decision 15).
+None. No new tables, no new columns, no migration. New `settings` keys only (Decision 15). The Docs tab reads files through M2's API (Decision 20).
 
 ---
 
 ## 7. Events added
 
-None (ownership map). One payload extension: `agent.file_changed` may carry `by: "user"` with `run_id: null` (Decision 12). WebSocket gains client frames `hello`, `terminal_input`, `terminal_resize` (Decisions 6, 11) — these are control messages, not events.
+None (ownership map). The Docs tab listens to M2's `doc.saved` and `agent.file_changed`; it adds none. One payload extension: `agent.file_changed` may carry `by: "user"` with `run_id: null` (Decision 12). WebSocket gains client frames `hello`, `terminal_input`, `terminal_resize` (Decisions 6, 11) — these are control messages, not events.
 
 ---
 
@@ -245,7 +250,7 @@ Daemon `config.py`:
 | `SETTINGS_DEFAULTS` | `theme="system"`, `editor_command="xdg-open {path}"`, `terminal_command="gnome-terminal --working-directory={path}"`, `folder_command="xdg-open {path}"` (plus M2's `max_parallel_runs`, `worktree_root`, `claude_path`, `codex_path`) |
 | `MAX_PARALLEL_RUNS_RANGE` | `(1, 16)` |
 
-UI `desktop/src/config.ts`: `WS_BACKOFF_START_MS = 500`, `WS_BACKOFF_MAX_MS = 10000`, `STREAM_MAX_EVENTS = 20000`, `EVENTS_PAGE_SIZE = 500`, `LATENCY_SAMPLES = 200`, `LATENCY_TARGET_MS = 300`, `QUICK_CAPTURE_SHORTCUT = "Ctrl+Alt+N"`, `TOAST_MS = 5000`.
+UI `desktop/src/config.ts`: `WS_BACKOFF_START_MS = 500`, `WS_BACKOFF_MAX_MS = 10000`, `STREAM_MAX_EVENTS = 20000`, `EVENTS_PAGE_SIZE = 500`, `LATENCY_SAMPLES = 200`, `LATENCY_TARGET_MS = 300`, `QUICK_CAPTURE_SHORTCUT = "Ctrl+Alt+N"`, `TOAST_MS = 5000`, `DOCS_TAB_REFRESH_EVENTS = ["doc.saved", "agent.file_changed"]`. New UI dependencies: `react-markdown`, `remark-gfm`.
 
 Rust `config.rs`: `HEALTH_TIMEOUT_MS = 800`, `DAEMON_POLL_MS = 200`, `DAEMON_START_TIMEOUT_MS = 8000`, `DEFAULT_CLI = "saarthi"`.
 
@@ -298,6 +303,7 @@ Rust `config.rs`: `HEALTH_TIMEOUT_MS = 800`, `DAEMON_POLL_MS = 200`, `DAEMON_STA
 | `screens/Board.test.tsx` | only `next_stages` columns accept drops; 409 reverts with message; drop on Running opens dialog |
 | `screens/TaskRoom/MessageBox.test.tsx` | send, queued (`delivered: false`) text, options as buttons, Close as done |
 | `screens/TaskRoom/StreamTab.test.tsx` | 5,000 events render < 200 DOM cards; pause on scroll up; "New events" chip |
+| `screens/TaskRoom/DocsTab.test.tsx` | Groups and badges render from a docs list; empty group shows its quiet line; click shows markdown; outline click scrolls; `doc.saved` and `agent.file_changed` for `*.md` refresh the list (not for `.py`); too-big placeholder; pinned + changed shows once (as served) |
 | `screens/CodePeek/CodeViewer.test.tsx` | Edit disabled with active run / main repo; stale dialog |
 | `stores/latency.test.ts` | p50/p95 math |
 
@@ -331,7 +337,7 @@ Playwright end-to-end tests are M9.
 
 ## 15. What this milestone does not do
 
-No new tables or event types. No Proof tab, check dots or checks action (M4). No Review tab, diff viewer, Ship, cleanup (M5). No Research Desk, Memory, Playbooks, Context Pack v1 preview (M6). No race screen or "running now" strip (M7). No permission profile picker, checkpoints list, Rewind, cost meter or budget alert (M8). No `?` sheet, first-run wizard, packaging, Playwright (M9).
+No new tables or event types. No editing docs, no Mermaid (Later). No research docs or plan-in-Context-Pack (M6). No Proof tab, check dots or checks action (M4). No Review tab, diff viewer, Ship, cleanup (M5). No Research Desk, Memory, Playbooks, Context Pack v1 preview (M6). No race screen or "running now" strip (M7). No permission profile picker, checkpoints list, Rewind, cost meter or budget alert (M8). No `?` sheet, first-run wizard, packaging, Playwright (M9).
 
 ---
 
@@ -353,4 +359,5 @@ No new tables or event types. No Proof tab, check dots or checks action (M4). No
 | Timeline tab | 1 |
 | Code Peek: files/search endpoints, tree, viewer, open in editor, tiny edits | 3.5 |
 | Settings + Health pages (+ `/settings`, CLI) | 1.5 |
-| **Total** | **30** |
+| Docs tab: list, markdown view, outline, live refresh + test | 2.5 |
+| **Total** | **32.5** |

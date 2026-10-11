@@ -6,7 +6,7 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 30 hours (3 weeks at ~10 h/week)
+**Estimated effort:** 32.5 hours (3 weeks at ~10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M3_desktop_ui_v1.md`, `../../FUNCTIONAL_SPECIFICATIONS.md` (sections 4, 5), `../../TDD-tech-design-doc.md` (sections 9, 11), `../M2_agent_runs_worktrees/FSD_M2_agent_runs_worktrees.md` (before), `../M4_checks_proof_card/FSD_M4_checks_proof_card.md` (next)
@@ -17,7 +17,7 @@
 
 M3 gives Saarthi its desktop window. It puts the M1 and M2 features on screen. It adds almost no new product logic: the daemon already does the work.
 
-Features owned (from `../README.md`): F1.3, F2.2, F2.4, F2.7, F3.1 (UI), F5.4, F5.5, F5.6 (UI), F6.3 (UI), F6.4, F14.1 (Timeline tab), F16.2 (simple totals), F17.1-F17.4, F18.1, F19.1 (native), F21.1, F21.2 (page).
+Features owned (from `../README.md`): F1.3, F2.2, F2.4, F2.7, F3.1 (UI), F5.4, F5.5, F5.6 (UI), F6.3 (UI), F6.4, F14.1 (Timeline tab), F16.2 (simple totals), F17.1-F17.4, F18.1, F19.1 (native), F21.1, F21.2 (page), F22.1 (Docs tab; F22.3 and F22.4 on screen).
 
 ---
 
@@ -28,7 +28,7 @@ After M2, I drive agents from the terminal. It works, but I juggle `run watch` w
 After M3, I open one window and:
 - see all my projects, what is running, and what needs me — on one home screen;
 - drag tasks on a board;
-- open a task and see its brief, its live agent work as clean cards, a real terminal, and its history;
+- open a task and see its brief, its live agent work as clean cards, a real terminal, its docs (plans, specs), and its history;
 - answer the agent in a message box;
 - peek at code and jump to my own editor;
 - close the window and the agents keep going.
@@ -50,9 +50,10 @@ After M3, I open one window and:
 | Word | Simple meaning |
 |---|---|
 | **Command Deck** | The home screen. Projects, running agents, "Needs You" list, today's cost. |
-| **Task Room** | The screen for one task: brief, runs, workspace, and tabs (Stream, Terminal, Code, Timeline). |
+| **Task Room** | The screen for one task: brief, runs, workspace, and tabs (Stream, Terminal, Code, Docs, Timeline). |
 | **Command Bar** | A search box that opens with `Ctrl+K` on any screen. Find a task or run an action. |
 | **Quick capture** | A small pop-up box from a global shortcut. Type one line; it becomes an Inbox task. |
+| **Doc** | One markdown text for a task: a saved plan, a changed `*.md` file, or a pinned project doc (M2 builds the list; M3 shows it). |
 | **Card** | One readable block in the Stream tab (a message, a tool call, a file change). |
 | **Code Peek** | A read-mostly code viewer. Not an editor. |
 | **Replay** | When the window reconnects, the daemon sends the events it missed, so nothing is skipped. |
@@ -162,6 +163,28 @@ After M3, I open one window and:
   - On an "ended with a question" run, a **Close as done** button is shown (M2 `stop` behaviour).
 - **Acceptance criteria:** Answering in the box moves the task back to Running (board and header update live).
 
+### F22.1 Docs tab
+
+- **What:** A **Docs** tab in the Task Room. It shows the task's docs from M2 (`saarthi docs list`): saved plans, `*.md` files changed on the task branch, and pinned project docs. I pick one and read it as formatted markdown.
+- **Why:** Plans and specs are text I need to read before I say "go". Reading them in an editor or in the run summary is slow.
+- **Example:** I run a plan on T-0012. The Docs tab count goes from 4 to 5. I click the tab. Left: groups "Plans", "Changed in this task", "Pinned". I click "Plan - Add password reset API". The center shows the plan as formatted markdown. On the right, an outline lists its headings; I click "Risks" and the view jumps there. I click **Open in editor** and the file opens in my editor.
+- **Rules:**
+  - Tab order: Stream, Terminal, Code, Docs, Timeline. The tab shows the number of docs. (Proof and Review join in M4 and M5; Docs stays before Timeline.)
+  - Left (260 px): groups "Plans", "Changed in this task", "Pinned". Each row has the title, the small path, the size, and a badge `added` or `modified` for changed files. An empty group shows one quiet line, for example "No plan yet. Start a plan run."
+  - Center: markdown view (tables, task lists, code blocks in the mono font). Mermaid shows as a code block. The header shows path, size, updated time, badge, **Open in editor** and **Copy path**.
+  - Right (220 px): outline of headings. A click jumps to the heading.
+  - A doc over 1 MB shows "Too big to show here" and **Open in editor**.
+  - Docs are read-only. Editing in Saarthi is Later.
+  - The list refreshes live when a plan is saved (`doc.saved`) and when an agent changes a `*.md` file (`agent.file_changed`).
+  - The window only renders. The daemon finds the docs and decides what is listed.
+  - The "Research" group comes in M6.
+- **Acceptance criteria:**
+  - After a FakeAdapter plan run ends, the new plan shows in the "Plans" group without a refresh, and the tab count goes up by one.
+  - A `*.md` file the agent adds in the worktree shows in "Changed in this task" with the `added` badge.
+  - Clicking an outline entry scrolls to that heading.
+  - **Open in editor** uses the editor command from Settings.
+  - A pinned file that was also changed shows once.
+
 ### F14.1 Timeline tab
 
 - **What:** All events of the task, newest at the top, as one list: time, type, short text. Filter chips: Task, Runs, Agent, Workspace.
@@ -248,7 +271,9 @@ After M3, I open one window and:
 | Proof tab, check status dot, "Run checks" action | M4 |
 | Review tab, Change Story, diff viewer, Ship, worktree cleanup | M5 |
 | Research Desk, Memory screen, Playbooks, Context Pack preview with research | M6 |
+| Research docs in the Docs tab, plan in the Context Pack | M6 |
 | Race compare, "running now" strip on the board | M7 |
+| Editing docs, Mermaid diagrams | Later (F22.6) |
 | Permission profile picker, checkpoints list + Rewind, cost meter, budget alert | M8 |
 | `?` shortcut sheet, first-run wizard, AppImage/.deb, Playwright tests | M9 |
 | Max auto-fix rounds setting | M4 |
@@ -269,6 +294,7 @@ After M3, I open one window and:
 - [ ] Health page p95 delay is under 300 ms after a 200-event run.
 - [ ] Terminal: start an interactive run, type, resize.
 - [ ] Needs You: options show as buttons; answering continues the run. Codex mid-step message shows "Queued".
+- [ ] Docs tab: run a plan; the plan appears under "Plans" and the tab count goes up. Click it: formatted markdown. Click an outline entry: the view jumps. Add a `*.md` file in the worktree: it shows under "Changed" with `added`. **Open in editor** works.
 - [ ] Timeline lists brief save, stage moves, run start/end, checkpoint.
 - [ ] Code tab: tree, search by name, search by text, open in editor at a line.
 - [ ] Tiny edit in a worktree: saved; `git diff` shows it; Stream shows "by you". In the main repo view: no Edit button. During an active run: Edit disabled.
@@ -291,4 +317,4 @@ After M3, I open one window and:
 
 ## 11. Effort
 
-About **30 hours** (3 weeks at ~10 h/week). Breakdown in the TDD, section 16.
+About **32.5 hours** (3 weeks at ~10 h/week). Breakdown in the TDD, section 16.

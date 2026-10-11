@@ -6,7 +6,7 @@
 **Status:** Draft — awaiting review
 **Version:** 0.1
 **Date:** 2026-10-11
-**Estimated effort:** 20 hours (2 rough weeks at ~10 h/week)
+**Estimated effort:** 21 hours (2 rough weeks at ~10 h/week)
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
 **Related documents:** `FSD_M6_research_memory_playbooks.md`, `../../TDD-tech-design-doc.md` (4.3, 4.8, 5.4, 5.9, 6.2, 8.5, 9.1, 10), `../../TECH_STACK.md`, `../M5_review_ship/TDD_M5_review_ship.md` (before), `../M7_race_mode/TDD_M7_race_mode.md` (after)
@@ -39,6 +39,7 @@ From `CLAUDE.md`:
 | `saarthi brief edit` (opens `$EDITOR`) | M1 | `brief draft` reuses its editor helper. |
 | Run Manager, modes incl. `research`, `POST /tasks/{id}/runs`, `run.finished` | M2 | "Research this" is a normal run with mode `research`. |
 | Context Pack v0 (brief only) -> `<worktree>/.saarthi/context/TASK.md`, `GET /tasks/{id}/context-pack` | M2 | Replaced by v1. Same file path, same endpoint, richer response. |
+| Plan docs (`docs/plans.py`), docs finder (`docs/finder.py`), `GET /tasks/{id}/docs*`, `doc.saved`, Docs tab | M2 / M3 | Plan goes into the Context Pack (Decision 6). Research items join the docs list (Decision 6a). |
 | Read-only agent flags (TDD 4.9 "Read-only" row) | M5 (Second Opinion) | Used for research runs and draft calls. |
 | Read-only side runs (brief coverage) | M4 | `config.SIDE_RUN_MODES`, `RunRequest.output_schema`, `agents/structured.py: extract_json()` (M4 TDD Decisions 7-8). M6 adds side-run modes `brief_draft` and `memory_draft` and reuses the same path. In this doc, "helper call" means one such side run. |
 | JSON answer parsing (Codex `--output-schema`, Claude fenced JSON) | M5 (findings) | Reused for brief draft and memory draft. |
@@ -94,13 +95,17 @@ If the JSON is invalid, the response has `draft = null`, `raw_text`, and a warni
 
 ### Decision 6 — Context Pack v1 has fixed sections and two budgets
 
-`memory/context_pack.py: build(task, run_request) -> ContextPack` returns the markdown and a list of `PackSection` rows (`name`, `source`, `chars`, `state` = `full | cut | listed | off`). The same function serves the preview and the run, so they cannot drift. Sections and order are in FSD 5.8.
+`memory/context_pack.py: build(task, run_request) -> ContextPack` returns the markdown and a list of `PackSection` rows (`name`, `source`, `chars`, `state` = `full | cut | listed | off`). The same function serves the preview and the run, so they cannot drift. Sections and order are in FSD 5.8 (header, playbook, brief, plan, research, listed, memory).
 
+- **Plan section** (F22.5, new): for `build` and `fix` runs only, the newest plan doc of the task (`docs.finder`, kind `plan`, M2 Decision 19) is inlined after the brief, header comment removed, at most `CONTEXT_PLAN_MAX_CHARS` (15,000), cut with the same cut marker. No plan doc, or mode `research` / `plan` -> no section. **Why:** the plan I approved should reach the build run without copy and paste; research and plan runs should explore with fresh eyes, not follow an old plan. The cap keeps one long plan from eating the pack.
 - **Memory budget** = `[memory] max_chars` (default 20,000), `max_files` (default 5). From core TDD 4.8.
 - **Research budget** (new): each item at most `CONTEXT_RESEARCH_ITEM_MAX_CHARS` (8,000); all items together at most `CONTEXT_RESEARCH_MAX_CHARS` (30,000). Items past the budget are listed by title only. **Why:** one pasted log can be 1 MB. The core docs set no limit here.
 - **Always-include files are listed, not inlined** (new). F12.2 says "always include FSD, TDD, CLAUDE.md". Core TDD 4.8 says CLAUDE.md / AGENTS.md are only listed because the agent reads them itself. The FSD and TDD are ~30k characters each, so inlining them would break the 20k budget at once. Listing them keeps both docs true.
 
 Cut text ends with `> (cut at N chars - read the full file: <path>)`.
+
+### Decision 6a — Research items are listed as docs (F22.5, new)
+`docs/finder.py` (M2) gets one more source: `research_items` of kind `agent_finding` and `note` become docs of kind `research`, `doc_id = research:<item_id>`, `title` = item title, `path` = null, `source = "data"`, `change = null`, `pinned = false`. They come last in the order (after pinned). `GET /tasks/{id}/docs/content?doc=research:<id>` returns the item body as `markdown`. No new endpoint and no new table. Links and snippets are not docs. `research.added`, `research.updated` and `research.deleted` make the Docs tab refresh (M6 adds these three types to the docs refresh list in the M3 `eventRouter`). **Why:** one place to read everything written for a task; the data stays in `research_items`, so there is still one source of truth.
 
 ### Decision 7 — Keyword scoring with ripgrep, one call per keyword
 
@@ -329,7 +334,7 @@ Project-level commands use the M1 rule for the current project (`--project`, els
 
 ### 9.2 Context Pack v1 build (`build(task, req)`)
 1. Resolve and render the playbook (if any) -> section `playbook`.
-2. Latest brief -> `brief`. Research items with `send_to_agent` in `created_at` order, research budget -> `research`.
+2. Latest brief -> `brief`. For `build` / `fix`: latest plan doc -> `plan` (cut at `CONTEXT_PLAN_MAX_CHARS`). Research items with `send_to_agent` in `created_at` order, research budget -> `research`.
 3. List `CLAUDE.md`, `AGENTS.md` (if present) + `[memory] always_include` -> `listed`.
 4. `keywords()` -> `score_files()` -> fill memory budget -> `memory`.
 5. Join with fixed headings. Preview returns it; the run writes it to `<worktree>/.saarthi/context/TASK.md` (path from M2).
@@ -366,6 +371,8 @@ Project-level commands use the M1 rule for the current project (`--project`, els
 | `CONTEXT_KEYWORD_MIN_LEN`, `CONTEXT_MAX_KEYWORDS`, `CONTEXT_KEYWORD_HIT_CAP`, `CONTEXT_MEMORY_MIN_SCORE`, `CONTEXT_MEMORY_CUT_MIN_CHARS` | `3`, `20`, `5`, `2`, `2_000` |
 | `CONTEXT_STOP_WORDS` | small frozenset (the, and, for, with, should, must, when, this, that, from, into, ...) |
 | `CONTEXT_RESEARCH_ITEM_MAX_CHARS`, `CONTEXT_RESEARCH_MAX_CHARS` | `8_000`, `30_000` |
+| `CONTEXT_PLAN_MAX_CHARS` | `15_000` |
+| `CONTEXT_PLAN_MODES` | `("build", "fix")` |
 | `MEMORY_FILE_MAX_BYTES`, `MEMORY_EDITABLE_SUFFIXES` | `1_000_000`, `(".md",)` |
 | `MEMORY_PROJECT_FILE`, `MEMORY_TIMELINE_FILE`, `MEMORY_LEARNINGS_DIR` | `"memory/project_memory.md"`, `"timeline/timeline.md"`, `"learnings"` (relative to `memory_path`) |
 | `MEMORY_MAX_LEARNINGS` | `3` |
@@ -417,6 +424,8 @@ All with `FakeAdapter` and recorded fixtures. New fixtures (recorded once with t
 | `tests/unit/memory/test_keywords.py` | Stop words, min length, dedupe, order, max 20. |
 | `tests/unit/memory/test_match.py` | Scoring and hit cap; min score; max 5; always-include and exclude skipped; `rg` and Python fallback give the same list. |
 | `tests/unit/memory/test_context_pack_v1.py` | Section order; toggle respected; research and memory budgets; cut marker; golden-file `TASK.md`; preview == written file. |
+| `tests/unit/memory/test_context_pack_plan.py` | Pack for `build` and `fix` includes the latest plan (newest of two); pack for `research` and `plan` does not; no plan doc -> no section; plan over `CONTEXT_PLAN_MAX_CHARS` is cut with the marker and state `cut`; header comment removed; preview == written file. |
+| `tests/unit/research/test_research_docs.py` | `agent_finding` and `note` items listed as kind `research` after pinned; link and snippet not listed; `docs/content` returns the body. |
 | `tests/unit/research/test_finding_extract.py` | Marker pair, newest wins, fallback to summary, empty -> none, missing headings listed. |
 | `tests/unit/research/test_link_title.py` | Title parse, size limit, timeout, non-HTML, bad scheme (local `http.server` thread, no internet). |
 | `tests/unit/playbooks/test_format.py` | `+++` parse, no front matter, bad TOML, bad slug. |
@@ -448,11 +457,11 @@ All with `FakeAdapter` and recorded fixtures. New fixtures (recorded once with t
 | Memory commit after the PR is merged never reaches main | Warning in the result; FSD open question 1. |
 | Secrets in snippets go to the agent (known gap 2) | Accepted until M8 masking. |
 | Depends on M4/M5 helper names | Section 3 lists assumed names; adjust at build time. |
-| 20 h is tight | Cut order in FSD open question 6. |
+| 21 h is tight | Cut order in FSD open question 6. |
 
 ## 15. What this milestone does not do
 
-Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3), team-shared playbooks, secret masking (M8), Race Mode (M7), memory edits committed by Saarthi from the Memory screen, a playbook template language with logic.
+Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3, M10), team-shared playbooks, secret masking (M8), Race Mode (M7), memory edits committed by Saarthi from the Memory screen, a playbook template language with logic.
 
 ## 16. Effort breakdown
 
@@ -468,4 +477,5 @@ Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3), t
 | Memory screen API + CLI | 1 |
 | Memory updates: draft, decide, apply, push | 2.5 |
 | Desktop: Research tab, versions, preview, Memory, Playbooks, updates panel | 2.5 |
-| **Total** | **20** |
+| Plan in Context Pack + research items in Docs list + tests | 1 |
+| **Total** | **21** |
