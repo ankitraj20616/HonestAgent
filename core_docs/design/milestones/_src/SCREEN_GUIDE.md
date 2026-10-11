@@ -28,6 +28,9 @@ Use open and close tags. For `<x-wheel>`, `data=` must be the first attribute. T
 <x-journey stage="run" tone="road" size="46" notches="0.2,0.6"></x-journey>
 <x-trust checks="50" criteria="28" second="8" size="250" label="TRUST SCORE"></x-trust>
 ```
+Bead keys: `n` (number shown), `stage`, `tone` (`road` `ok` `bad` `info` `idle`), `r` (size), `halo`, `dim` (opacity),
+`link` (beads on one spoke with the same `link` sit 24° apart and get a joining arc, e.g. a race), `gap` (extra degrees before this bead).
+A Wheel smaller than 300px gets bigger text by itself (`.wheel.sm`). Use `"capture_plus": false` to hide the dashed `+` bead.
 
 ## Copy a pattern from a reference screen
 | Page | Copy from | Classes in `base.css` |
