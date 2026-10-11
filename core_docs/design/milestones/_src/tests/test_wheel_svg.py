@@ -113,8 +113,10 @@ def test_small_trust_rings_use_one_arc_colored_by_score():
     assert w.trust_tone(39) == "bad"
     medium = w.trust_ring(50, 28, 8, size=52)
     assert 'class="tr-ok"' in medium and ">86<" in medium
+    assert 'class="trust-sm"' in medium and "trust-mini" not in medium
     mini = w.trust_ring(20, 10, 0, size=18)
     assert 'class="tr-bad"' in mini and ">30<" not in mini
+    assert 'class="trust-sm trust-mini"' in mini
 
 
 def test_no_drawing_contains_a_color_value():

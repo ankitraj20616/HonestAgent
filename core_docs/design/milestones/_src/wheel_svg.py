@@ -206,7 +206,7 @@ def trust_ring(checks: float, criteria: float, second: float, size: int = 250, l
         c, r, view, text = 10, 7, 20, False
     circ = 2 * math.pi * r
     out = [
-        f'<svg class="trust-sm" width="{size}" height="{size}" viewBox="0 0 {view} {view}" '
+        f'<svg class="trust-sm{"" if text else " trust-mini"}" width="{size}" height="{size}" viewBox="0 0 {view} {view}" '
         f'role="img" aria-label="Trust score {total}">',
         f'<circle class="tr-bg{"-mini" if not text else ""}" cx="{c}" cy="{c}" r="{r}"/>',
         _arc(f"tr-{tone}", c, r, -90, circ * total / 100),

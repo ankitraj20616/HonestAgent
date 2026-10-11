@@ -87,6 +87,7 @@ X_WHEEL = re.compile(r"<x-wheel\s+data='(.*?)'\s*>\s*</x-wheel>", re.S)
 X_JOURNEY = re.compile(r"<x-journey\s+([^>]*)>\s*</x-journey>")
 X_TRUST = re.compile(r"<x-trust\s+([^>]*)>\s*</x-trust>")
 ATTR = re.compile(r'([\w-]+)="([^"]*)"')
+X_LEFT = re.compile(r"<x-(wheel|journey|trust)\b")
 LOGO = (
     '<svg class="logo-w" width="30" height="30" viewBox="0 0 34 34" aria-hidden="true">'
     '<circle class="lw-rim" cx="17" cy="17" r="14"/>'
@@ -112,7 +113,10 @@ def parse(path: Path) -> tuple[dict, str]:
     m = FRONT.match(raw)
     if not m:
         sys.exit(f"{path}: missing front matter comment")
-    meta = json.loads(m.group(1))
+    try:
+        meta = json.loads(m.group(1))
+    except json.JSONDecodeError as err:
+        sys.exit(f"{path}: front matter is not valid JSON: {err}")
     body = raw[m.end():].strip()
     css_bits = re.findall(r'style="([^"]*)"', body) + re.findall(r"<style>(.*?)</style>", body, re.S)
     for bit in css_bits:
@@ -129,10 +133,10 @@ def expand(body: str, where: str) -> str:
     """Replace <x-wheel>, <x-journey> and <x-trust> with SVG."""
 
     def attrs(text: str) -> dict:
-        return dict(ATTR.findall(text))
+        return {k: html.unescape(v) for k, v in ATTR.findall(text)}
 
     def do_wheel(m: re.Match) -> str:
-        return wheel_svg.wheel(json.loads(m.group(1)))
+        return wheel_svg.wheel(json.loads(html.unescape(m.group(1))))
 
     def do_journey(m: re.Match) -> str:
         a = attrs(m.group(1))
@@ -149,8 +153,12 @@ def expand(body: str, where: str) -> str:
         body = X_WHEEL.sub(do_wheel, body)
         body = X_JOURNEY.sub(do_journey, body)
         body = X_TRUST.sub(do_trust, body)
-    except (ValueError, KeyError, json.JSONDecodeError) as err:
+    except (ValueError, KeyError, TypeError, AttributeError, json.JSONDecodeError) as err:
         sys.exit(f"{where}: bad drawing tag: {err}")
+    left = X_LEFT.search(body)
+    if left:
+        sys.exit(f"{where}: <x-{left.group(1)}> was not expanded. "
+                 f"Use <x-{left.group(1)} ...></x-{left.group(1)}> and put data= first.")
     return body
 
 

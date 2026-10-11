@@ -19,13 +19,17 @@ CHROME = "google-chrome"
 
 
 def shoot(html_file: Path, png: Path) -> None:
+    png.unlink(missing_ok=True)  # an old PNG must not count as a new screenshot
     with tempfile.TemporaryDirectory() as profile:
-        subprocess.run(
-            [CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
-             f"--user-data-dir={profile}", "--window-size=1440,900", "--virtual-time-budget=4000",
-             f"--screenshot={png}", html_file.as_uri()],
-            capture_output=True, timeout=120, check=False,
-        )
+        try:
+            subprocess.run(
+                [CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+                 f"--user-data-dir={profile}", "--window-size=1440,900", "--virtual-time-budget=4000",
+                 f"--screenshot={png}", html_file.as_uri()],
+                capture_output=True, timeout=120, check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"timeout: {html_file}", file=sys.stderr)
 
 
 def main() -> None:

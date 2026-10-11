@@ -64,3 +64,36 @@ def test_frame_rail_and_old_nav_names():
 def test_settings_nav_lights_the_gear():
     html = build.app_shell({"title": "S", "nav": "settings"}, "")
     assert 'class="gear on"' in html
+
+
+@pytest.mark.parametrize("tag", [
+    '<x-journey stage="run"/>',
+    """<x-wheel size="300" data='{"beads": []}'></x-wheel>""",
+    '<x-trust checks="50">',
+])
+def test_unexpanded_drawing_tag_stops_the_build(tag):
+    with pytest.raises(SystemExit) as err:
+        build.expand(tag, "screens/M0/01_x.html")
+    assert "screens/M0/01_x.html" in str(err.value) and "data= first" in str(err.value)
+
+
+@pytest.mark.parametrize("tag", [
+    """<x-wheel data='[1, 2]'></x-wheel>""",
+    """<x-wheel data='{"beads": [1]}'></x-wheel>""",
+])
+def test_wrong_drawing_data_shape_stops_the_build(tag):
+    with pytest.raises(SystemExit):
+        build.expand(tag, "test")
+
+
+def test_bad_front_matter_json_names_the_file(tmp_path):
+    f = tmp_path / "01_x.html"
+    f.write_text('<!-- {"title": "X", "note": "n",} -->\n<p>x</p>')
+    with pytest.raises(SystemExit) as err:
+        build.parse(f)
+    assert str(f) in str(err.value)
+
+
+def test_drawing_attribute_values_are_unescaped():
+    out = build.expand('<x-trust checks="50" label="Q&amp;A"></x-trust>', "test")
+    assert ">Q&amp;A<" in out and "&amp;amp;" not in out
