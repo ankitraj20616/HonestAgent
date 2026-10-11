@@ -5,14 +5,6 @@
   {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "muted", "line": "build · 12m", "cost": "$0.38"}]} -->
 <style>
 .home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
-.home-r { border-left: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 11px; overflow: auto; }
-.ask { border: 1px solid var(--road); border-radius: 12px; padding: 12px; background: var(--road-soft); }
-.ask .who { font-size: 11.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
-.ask .btn { padding: 6px 11px; font-size: 12px; }
-.ask .q { font-family: 'Space Grotesk', sans-serif; font-size: 15px; line-height: 1.35; margin: 6px 0 10px; }
-.mem { margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.55; }
-.mem b { color: var(--road-text); font-weight: 600; }
-.rv-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 12.5px; }
 </style>
 <div class="home">
   <div class="wheel-wrap">
@@ -33,9 +25,9 @@
         {"stage": "remember", "tone": "road", "r": 9, "dim": 0.45}]}'></x-wheel>
     <div class="wheel-cap">The Wheel is your loop. Each bead is a task at its stage. Click a spoke to open that stage.</div>
   </div>
-  <div class="home-r">
+  <div class="side-r">
     <div class="row between upper"><span>Needs you</span><span>3 min</span></div>
-    <div class="ask">
+    <div class="ask-card">
       <div class="who"><span class="agent cl">CL</span>Claude · T-0012 · Add password reset API</div>
       <div class="q">New <span class="mono" style="font-size:12.5px">password_reset_tokens</span> table with a migration, or keep tokens in Redis?</div>
       <div class="row wrap" style="gap:6px"><button class="btn primary">New table</button><button class="btn">Use Redis</button><button class="btn">Reply…</button></div>
@@ -43,6 +35,6 @@
     <div class="upper mt-8">Ready for review</div>
     <div class="rv-row"><span class="bead ok">09</span><span><b>Rate-limit the login endpoint</b><span class="small faint" style="display:block">acme-billing · checks green</span></span><span class="small faint">2h</span></div>
     <div class="rv-row"><span class="bead ok">24</span><span><b>Show task cost on cards</b><span class="small faint" style="display:block">saarthi · checks green</span></span><span class="small faint">5h</span></div>
-    <div class="mem"><b>Remembered this week</b><br>“Use UTC everywhere in expiry checks.”<br>“Hash reset tokens before saving.”<br>“Never push to main — open a PR.”</div>
+    <div class="mem-note"><b>Remembered this week</b><br>“Use UTC everywhere in expiry checks.”<br>“Hash reset tokens before saving.”<br>“Never push to main — open a PR.”</div>
   </div>
 </div>
