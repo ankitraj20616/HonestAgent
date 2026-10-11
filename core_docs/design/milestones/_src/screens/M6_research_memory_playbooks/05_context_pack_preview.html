@@ -1,4 +1,4 @@
-<!-- {"title": "Context Pack preview", "note": "Preview from the run dialog: the exact .saarthi/context/TASK.md the agent will read. Section table, keyword scores for memory files, the 20,000-char memory budget, research items in and out. F5.3, F12.2, F4.6", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.23", "slots": 4,
+<!-- {"title": "Context Pack preview", "note": "Preview from the run dialog: the exact .saarthi/context/TASK.md the agent will read. Section table, keyword scores for memory files, the 20,000-char memory budget, the latest plan doc inlined in full, research items in and out. F5.3, F12.2, F4.6, F22.5", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.23", "slots": 4,
  "agents": [
   {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
   {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
@@ -38,7 +38,7 @@
       </div>
     </div>
     <div class="room-main">
-      <div class="tabs"><button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Brief</button><button class="tab">Research <span class="n">7</span></button></div>
+      <div class="tabs"><button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Brief</button><button class="tab">Research <span class="n">7</span></button><button class="tab">Docs <span class="n">8</span></button></div>
       <div class="tab-body"></div>
     </div>
   </div>
@@ -52,7 +52,7 @@
         <div class="small muted mt-4">The exact text the agent reads first. The preview and the run use the same builder.</div>
       </div>
       <span class="tag">build</span><span class="agent cl">CL</span><span class="tag amber">plan-then-build</span>
-      <span class="mono" style="font-size:15px;margin-left:8px">27,190 <span class="small muted">chars</span></span>
+      <span class="mono" style="font-size:15px;margin-left:8px">33,310 <span class="small muted">chars</span></span>
     </div>
     <div class="cp-body">
       <div class="cp-left">
@@ -61,6 +61,7 @@
           <div class="sec"><span class="muted">Header</span><span>T-0012 · build · claude</span><span class="n">180</span></div>
           <div class="sec"><span class="muted">Playbook</span><span>plan-then-build <span class="tag">builtin</span> <span class="green xs">0 warnings</span></span><span class="n">1,120</span></div>
           <div class="sec"><span class="muted">Brief</span><span>version 3</span><span class="n">1,480</span></div>
+          <div class="sec"><span class="muted">Plan</span><span><span class="mono">plan-01JC5Q.md</span> <span class="st green">full</span> <span class="faint xs">latest plan</span></span><span class="n">6,120</span></div>
           <div class="sec"><span class="muted">Research</span><span>5 of 7 items <span class="faint">(2 switched off)</span></span><span class="n">4,210</span></div>
           <div class="sec"><span class="muted">Listed</span><span>4 files, by path only</span><span class="n">240</span></div>
           <div class="sec"><span class="muted">Memory</span><span>3 inlined, 2 listed</span><span class="n">19,960</span></div>
@@ -98,7 +99,7 @@
       <div class="cp-right">
         <div class="jump">
           <span class="xs faint">Jump to</span>
-          <span class="chip">Header</span><span class="chip">Playbook</span><span class="chip">Brief</span><span class="chip">Research</span><span class="chip">Rules</span><span class="chip on">Memory</span>
+          <span class="chip">Header</span><span class="chip">Playbook</span><span class="chip">Brief</span><span class="chip">Plan</span><span class="chip">Research</span><span class="chip">Rules</span><span class="chip on">Memory</span>
           <span class="grow"></span>
           <button class="btn xs">Copy</button>
         </div>
@@ -111,35 +112,37 @@
           <div class="fold"><span></span><span>▸ 9 lines folded</span></div>
           <div class="ln"><span>15</span><span class="h">## Brief (version 3)</span></div>
           <div class="fold"><span></span><span>▸ 17 lines folded</span></div>
-          <div class="ln"><span>33</span><span class="h">## Research (5 of 7 items)</span></div>
+          <div class="ln"><span>33</span><span class="h">## Plan (latest: plan-01JC5Q.md, 6,120 chars)</span></div>
+          <div class="fold"><span></span><span>▸ 59 lines folded</span></div>
+          <div class="ln"><span>93</span><span class="h">## Research (5 of 7 items)</span></div>
           <div class="fold"><span></span><span>▸ 41 lines folded</span></div>
-          <div class="ln"><span>75</span><span class="h">## Project rules (read these files yourself)</span></div>
-          <div class="ln"><span>76</span><span>- CLAUDE.md</span></div>
-          <div class="ln"><span>77</span><span>- AGENTS.md</span></div>
-          <div class="ln"><span>78</span><span>- core_docs/FUNCTIONAL_SPECIFICATIONS.md</span></div>
-          <div class="ln"><span>79</span><span>- core_docs/TDD-tech-design-doc.md</span></div>
-          <div class="ln"><span>80</span><span> </span></div>
-          <div class="ln hl"><span>81</span><span class="h">## Memory (matched by keywords: 3 files, 19,960 chars)</span></div>
-          <div class="ln"><span>82</span><span class="h2">### core_docs/memory/project_memory.md  (score 14)</span></div>
-          <div class="ln"><span>83</span><span># Project memory</span></div>
-          <div class="ln"><span>84</span><span>Big wins and hard bugs. Problem -&gt; Root cause -&gt; Fix -&gt; Result.</span></div>
-          <div class="ln"><span>85</span><span>## Flaky login test (T-0011)</span></div>
-          <div class="ln"><span>86</span><span>- Problem: test_login_rate_limit fails about 1 in 10 runs.</span></div>
-          <div class="ln"><span>87</span><span>- Root cause: the limiter used wall-clock time.</span></div>
+          <div class="ln"><span>135</span><span class="h">## Project rules (read these files yourself)</span></div>
+          <div class="ln"><span>136</span><span>- CLAUDE.md</span></div>
+          <div class="ln"><span>137</span><span>- AGENTS.md</span></div>
+          <div class="ln"><span>138</span><span>- core_docs/FUNCTIONAL_SPECIFICATIONS.md</span></div>
+          <div class="ln"><span>139</span><span>- core_docs/TDD-tech-design-doc.md</span></div>
+          <div class="ln"><span>140</span><span> </span></div>
+          <div class="ln hl"><span>141</span><span class="h">## Memory (matched by keywords: 3 files, 19,960 chars)</span></div>
+          <div class="ln"><span>142</span><span class="h2">### core_docs/memory/project_memory.md  (score 14)</span></div>
+          <div class="ln"><span>143</span><span># Project memory</span></div>
+          <div class="ln"><span>144</span><span>Big wins and hard bugs. Problem -&gt; Root cause -&gt; Fix -&gt; Result.</span></div>
+          <div class="ln"><span>145</span><span>## Flaky login test (T-0011)</span></div>
+          <div class="ln"><span>146</span><span>- Problem: test_login_rate_limit fails about 1 in 10 runs.</span></div>
+          <div class="ln"><span>147</span><span>- Root cause: the limiter used wall-clock time.</span></div>
           <div class="fold"><span></span><span>▸ 96 lines folded</span></div>
-          <div class="ln"><span>184</span><span class="h2">### core_docs/learnings/auth.md  (score 11)</span></div>
-          <div class="ln"><span>185</span><span>- Always return the same response for known and unknown emails.</span></div>
-          <div class="ln"><span>186</span><span>- Hash reset tokens before saving. Never log them.</span></div>
-          <div class="ln"><span>187</span><span>- Compare secrets with hmac.compare_digest, not ==.</span></div>
+          <div class="ln"><span>244</span><span class="h2">### core_docs/learnings/auth.md  (score 11)</span></div>
+          <div class="ln"><span>245</span><span>- Always return the same response for known and unknown emails.</span></div>
+          <div class="ln"><span>246</span><span>- Hash reset tokens before saving. Never log them.</span></div>
+          <div class="ln"><span>247</span><span>- Compare secrets with hmac.compare_digest, not ==.</span></div>
           <div class="fold"><span></span><span>▸ 22 lines folded</span></div>
-          <div class="ln"><span>210</span><span class="h2">### core_docs/decisions/ADR-002-session-tokens.md  (score 7, cut)</span></div>
-          <div class="ln"><span>211</span><span># ADR-002: Session tokens</span></div>
+          <div class="ln"><span>270</span><span class="h2">### core_docs/decisions/ADR-002-session-tokens.md  (score 7, cut)</span></div>
+          <div class="ln"><span>271</span><span># ADR-002: Session tokens</span></div>
           <div class="fold"><span></span><span>▸ 88 lines folded</span></div>
-          <div class="ln hl"><span>300</span><span class="accent">&gt; (cut at 7,750 chars - read the full file: core_docs/decisions/ADR-002-session-tokens.md)</span></div>
-          <div class="ln"><span>301</span><span> </span></div>
-          <div class="ln"><span>302</span><span class="h2">### Also related (read if needed)</span></div>
-          <div class="ln"><span>303</span><span>- core_docs/plans/m1_accounts.md  (score 4)</span></div>
-          <div class="ln"><span>304</span><span>- core_docs/learnings/testing.md  (score 2)</span></div>
+          <div class="ln hl"><span>360</span><span class="accent">&gt; (cut at 7,750 chars - read the full file: core_docs/decisions/ADR-002-session-tokens.md)</span></div>
+          <div class="ln"><span>361</span><span> </span></div>
+          <div class="ln"><span>362</span><span class="h2">### Also related (read if needed)</span></div>
+          <div class="ln"><span>363</span><span>- core_docs/plans/m1_accounts.md  (score 4)</span></div>
+          <div class="ln"><span>364</span><span>- core_docs/learnings/testing.md  (score 2)</span></div>
         </div>
       </div>
     </div>
