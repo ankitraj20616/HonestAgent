@@ -1,0 +1,90 @@
+<!-- {"title": "Write back to Jira", "note": "T-0033 (ACME-151) moved to Review after green checks. The Stream shows a Jira card: Move ACME-151 to In Review? Send / Skip, with the earlier sent transition below it. On the right: the same card after Ship with a PR comment and a remote link to send together, and a failed transition with the reason and Retry. These cards do not count in Needs You. F23.5", "shell": "app", "nav": "board", "tickets": true, "needs": 0, "cost": "$5.02", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "muted", "line": "build · 22m", "cost": "$0.55"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 6m", "cost": "$0.14"}]} -->
+<style>
+  .wb-grid { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 22px; align-items: start; }
+  .wb-side { display: flex; flex-direction: column; gap: 10px; padding-left: 20px; border-left: 1px solid var(--line); }
+  .wb-side .cap { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .wb-foot { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-top: 1px solid var(--line); background: var(--panel); }
+  .wb-q { font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; color: var(--text); overflow-wrap: anywhere; }
+  .from-note { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); font-size: 12px; color: var(--muted); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0033</span><h1>Export invoices as CSV</h1><span class="stage review">Review</span>
+    <span class="jt-chip" title="Open, refresh or unlink ACME-151"><span class="jm">J</span><span class="k">ACME-151</span>· In Progress<span class="car">▾</span></span>
+    <div class="journey-box"><x-journey stage="review" tone="ok"></x-journey>
+      <div class="lbl"><b>Review · 6 of 8</b>Checks green · Trust 82</div></div>
+    <span class="grow"></span>
+    <x-trust checks="50" criteria="26" second="6" size="40"></x-trust>
+    <span class="room-meta">Time <b>26m</b></span><span class="room-meta">Cost <b>$0.71</b></span>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col">
+        <div class="row between"><h3>Brief · v2</h3><span class="xs faint">3 of 3 met</span></div>
+        <div class="from-note"><span>Drafted from</span><span class="jt-chip sm"><span class="jm">J</span><span class="k">ACME-151</span></span><span class="faint">v1 · today</span></div>
+        <div class="goal pretty">Export invoices as CSV. Finance wants one CSV file per month for their accounting tool.</div>
+        <div class="crit"><span class="box met"></span><span>GET /invoices/export?month=2026-09 returns a CSV file</span></div>
+        <div class="crit"><span class="box met"></span><span>Same columns as GET /invoices, in the same order</span></div>
+        <div class="crit"><span class="box met"></span><span>Amounts have 2 decimals; dates are UTC ISO 8601</span></div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0033-ACME-151-export-invoices-as-csv</span>
+          <div class="kvs"><span><b>3</b> ahead</span><span><b>0</b> behind</span><span><b>4</b> files</span></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0041 · build · 24m</span><span class="small ok-t strong">done</span></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Jira</h3>
+        <div class="small text2"><span class="mono">auto_send = false</span></div>
+        <div class="xs faint pretty">Every write to Jira waits for your OK. Set in <span class="mono">.saarthi/project.toml</span>.</div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab on">Stream <span class="dot info"></span></span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab">Review</span><span class="tab">Research <span class="n">1</span></span><span class="tab">Code <span class="n">4</span></span><span class="tab">Docs <span class="n">5</span></span><span class="tab">Timeline</span></div>
+      <div class="tab-body">
+        <div class="wb-grid">
+          <div class="tl">
+            <div class="tl-ev"><span class="tm">10:12</span><span class="node ok"></span><div class="bx">Started build run R-0041 with <b>Claude</b>. Task moved to Running.</div></div>
+            <div class="tl-ev"><span class="tm">10:12</span><span class="node info"></span><div class="bx"><span class="muted">Jira:</span> ACME-151 moved to <b>In Progress</b> <span class="xs faint">· you sent it</span></div></div>
+            <div class="tl-ev"><span class="tm">10:14</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">READ</span><span class="mono ellipsis">app/invoices/routes.py</span><span class="r faint">148 lines</span></div></div></div>
+            <div class="tl-ev"><span class="tm">10:19</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">WRITE</span><span class="mono ellipsis">app/invoices/export.py</span><span class="r ok-t">+64 −0</span></div>
+              <div class="diff"><div class="a">+ def export_csv(month: str, db: DbSession) -> StreamingResponse:</div><div class="a">+     rows = invoices_for_month(db, month)  # same columns as GET /invoices</div></div></div></div>
+            <div class="tl-ev"><span class="tm">10:27</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">WRITE</span><span class="mono ellipsis">tests/invoices/test_export.py</span><span class="r ok-t">+71 −0</span></div></div></div>
+            <div class="tl-ev"><span class="tm">10:34</span><span class="node ok"></span><div class="bx"><div class="tool-row"><span class="k">RUN</span><span class="mono ellipsis">uv run pytest -q</span><span class="r ok-t">214 passed · 9.8s</span></div></div></div>
+            <div class="tl-ev"><span class="tm">10:36</span><span class="node ok"></span><div class="bx">Checks green. Proof Card ready, Trust <b>82</b>. Task moved to <b>Review</b>.</div></div>
+            <div class="tl-ev"><span class="tm">10:36</span><span class="node info"></span><div class="bx">
+              <div class="jt-card">
+                <div class="jt-card-h"><span class="jt-chip sm"><span class="jm">J</span><span class="k">ACME-151</span></span><b>Jira</b><span>· from stage <span class="mono">review</span></span><span class="grow"></span><span class="xs faint">asks before it writes</span></div>
+                <div class="jt-act"><span class="ic wait"></span><span><span class="q">Move ACME-151 to <b>In Review</b>?</span><span class="sub">Transition · Jira shows In Progress now</span></span>
+                  <span class="row" style="gap:6px"><button class="btn primary sm">Send</button><button class="btn sm">Skip</button></span></div>
+                <div class="jt-act done"><span class="ic sent">✓</span><span>Moved to In Progress</span><span class="mono xs faint">10:12 · sent</span></div>
+              </div>
+              <div class="xs faint mt-8">Not counted in Needs You: no agent is waiting. Same as <span class="mono">saarthi ticket send 01JC9F3K7Q</span>.</div>
+            </div></div>
+          </div>
+
+          <aside class="wb-side">
+            <div class="cap"><span class="upper">Same card after Ship</span><span class="mono xs faint">11:40</span></div>
+            <div class="jt-card">
+              <div class="jt-card-h"><span class="jt-chip sm"><span class="jm">J</span><span class="k">ACME-151</span></span><b>Jira</b><span>· from <span class="mono">ship.pr_created</span></span></div>
+              <div class="jt-act"><span class="ic wait"></span><span><span class="wb-q">Comment: <span class="nowrap">PR opened:</span> <span class="nowrap">github.com/acme/billing/pull/88</span> · <span class="nowrap">Saarthi T-0033</span></span><span class="sub">Plain text, sent as a Jira comment</span></span><span></span></div>
+              <div class="jt-act"><span class="ic wait"></span><span><span class="wb-q">Link: PR #88</span><span class="sub">Remote link on the ticket</span></span><span></span></div>
+              <div class="jt-act done"><span class="ic sent">✓</span><span>Moved to In Review</span><span class="mono xs faint">10:37 · sent</span></div>
+              <div class="wb-foot"><span class="xs faint grow">2 pending</span><button class="btn primary sm">Send all</button><button class="btn sm">Skip</button></div>
+            </div>
+
+            <div class="cap mt-8"><span class="upper">If Jira says no</span><span class="mono xs faint">ticket.action_failed</span></div>
+            <div class="jt-card" style="border-color:var(--bad);background:transparent">
+              <div class="jt-act fail"><span class="ic fail">✕</span><span><span class="small text2">No transition to In Review from Blocked. Possible: In Progress, Done</span><span class="sub">Someone set the ticket to Blocked in Jira.</span></span><button class="btn sm">Retry</button></div>
+            </div>
+            <div class="xs faint pretty">Transitions only move forward: a fix run (Review → Running) does not ask for In Progress again. A newer transition replaces an older pending one (the old one becomes skipped). With <span class="mono">auto_send = true</span> the card shows only the result.</div>
+          </aside>
+        </div>
+      </div>
+      <div class="composer"><span class="box">Add an instruction for a fix run…</span><button class="btn">Run agent</button></div>
+    </div>
+  </div>
+</div>

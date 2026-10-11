@@ -1,0 +1,91 @@
+/* M10 Jira tickets: shared pieces for the Tickets page, ticket chip and write-back card.
+   Prefix "jt-" (base.css uses "tk-" for code tokens). Theme variables only. */
+
+/* Tickets page: list on the left, ticket detail on the right */
+.jt-page { display: grid; grid-template-columns: minmax(0, 1fr) 450px; flex: 1; min-height: 0; border-top: 1px solid var(--line); }
+.jt-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.jt-tools { display: flex; align-items: center; gap: 10px; padding: 12px 18px 10px; flex-wrap: wrap; }
+.jt-tools .seg .n { margin-left: 5px; font-size: 11px; color: var(--faint); }
+.jt-search { display: flex; align-items: center; gap: 8px; width: 260px; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--faint); font-size: 12.5px; }
+.jt-jql { margin: 0 18px 8px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--term-bg); font-size: 12px; }
+.jt-jql .q { font-family: 'JetBrains Mono', monospace; font-variant-ligatures: none; font-size: 11.5px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jt-jql .q .kw { color: var(--info); }
+.jt-list { flex: 1; min-height: 0; overflow: auto; padding: 0 18px 14px; }
+.jt-head, .jt-row { display: grid; grid-template-columns: 20px 78px minmax(0, 1fr) 82px 106px 132px 34px; gap: 12px; align-items: center; }
+.jt-head { padding: 6px 12px 2px; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.jt-row { padding: 9px 12px; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 13px; }
+.jt-row.on { border-color: var(--road); background: var(--road-soft); box-shadow: 0 0 0 3px var(--road-soft); }
+.jt-row .key { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+.jt-row .sum { min-width: 0; }
+.jt-row .sum b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jt-row .sum small { display: block; font-size: 11px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jt-row .upd { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); text-align: right; }
+.jt-list.stale .jt-row { opacity: .6; }
+.jt-legend { display: flex; align-items: center; gap: 14px; padding: 12px 12px 0; font-size: 11.5px; color: var(--faint); flex-wrap: wrap; }
+.jt-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.jt-help { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 16px; border: 1px dashed var(--line2); border-radius: 12px; }
+.jt-help b { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+.jt-help p { font-size: 12.5px; color: var(--muted); line-height: 1.5; text-wrap: pretty; }
+.jt-help .mono { font-size: 11.5px; color: var(--text2); }
+
+/* type tile, status pill, priority, linked task */
+.jt-type { width: 18px; height: 18px; border-radius: 5px; display: inline-grid; place-items: center; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--on-road); }
+.jt-type.story { background: var(--ok); }
+.jt-type.bug { background: var(--bad); }
+.jt-type.task { background: var(--info); color: var(--codex-ink); }
+.jt-status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 12px; border: 1px solid currentColor; font-size: 11.5px; font-weight: 600; white-space: nowrap; justify-self: start; }
+.jt-status.todo { color: var(--info); background: var(--info-soft); }
+.jt-status.prog { color: var(--road-text); background: var(--road-soft); }
+.jt-status.done { color: var(--ok); background: var(--ok-soft); }
+.jt-prio { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.jt-prio i { font-style: normal; font-family: 'JetBrains Mono', monospace; margin-right: 4px; }
+.jt-prio.hi i { color: var(--road-text); }
+.jt-prio.top i { color: var(--bad); }
+.jt-link { display: flex; align-items: center; gap: 7px; font-size: 12px; min-width: 0; white-space: nowrap; }
+.jt-link .mono { font-size: 11.5px; }
+
+/* Jira chip: Task Room header, brief note, dialogs */
+.jt-chip { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px 3px 4px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface2); font-size: 12px; color: var(--text2); white-space: nowrap; cursor: pointer; }
+.jt-chip:hover, .jt-chip.open { border-color: var(--info); }
+.jt-chip .jm { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--info); color: var(--codex-ink); font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; }
+.jt-chip .k { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text); }
+.jt-chip .car { color: var(--faint); font-size: 10px; }
+.jt-chip.sm { font-size: 11px; padding: 1px 8px 1px 3px; }
+.jt-chip.sm .jm { width: 15px; height: 15px; font-size: 8.5px; }
+
+/* ticket detail panel (right) */
+.jt-detail { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+.jt-d-head { padding: 14px 18px 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.jt-d-head h2 { font-size: 19px; font-weight: 600; line-height: 1.25; }
+.jt-d-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 18px 14px; display: flex; flex-direction: column; gap: 12px; }
+.jt-d-foot { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.jt-kv { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 6px 12px; font-size: 12.5px; align-items: center; }
+.jt-kv > .k { color: var(--faint); font-size: 11.5px; }
+.jt-lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 0 6px; border: 1px solid var(--line2); border-radius: 5px; color: var(--text2); }
+
+/* markdown made from Jira ADF */
+.jt-md { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.jt-md p { font-size: 13px; line-height: 1.55; color: var(--text2); text-wrap: pretty; }
+.jt-md h4 { font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--road-text); margin-top: 4px; }
+.jt-md .li { display: grid; grid-template-columns: 14px minmax(0, 1fr); font-size: 13px; line-height: 1.5; color: var(--text2); }
+.jt-md .li > span:first-child { color: var(--faint); }
+.jt-md code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; padding: 0 4px; border-radius: 4px; background: var(--surface3); }
+.jt-cmt { display: flex; flex-direction: column; gap: 3px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--text2); }
+.jt-cmt .who { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.jt-cmt .who b { color: var(--text); font-weight: 500; }
+
+/* write-back card (Task Room) */
+.jt-card { border: 1px solid var(--info); border-radius: 12px; background: linear-gradient(180deg, var(--info-soft), transparent); overflow: hidden; }
+.jt-card-h { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.jt-card-h b { color: var(--text); font-weight: 600; }
+.jt-act { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; font-size: 13px; color: var(--text2); }
+.jt-act + .jt-act { border-top: 1px solid var(--line); }
+.jt-act .ic { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-weight: 700; color: var(--on-road); }
+.jt-act .ic.wait { border: 1.5px solid var(--info); }
+.jt-act .ic.sent { background: var(--ok); }
+.jt-act .ic.fail { background: var(--bad); }
+.jt-act .ic.skip { border: 1.5px solid var(--line2); }
+.jt-act .q { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text); }
+.jt-act.done { font-size: 12px; color: var(--muted); padding-top: 7px; padding-bottom: 7px; }
+.jt-act.fail { background: var(--bad-soft); }
+.jt-act .sub { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; }
