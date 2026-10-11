@@ -1,0 +1,48 @@
+<!-- {"title": "Home · The Wheel", "note": "Home: agents dock, The Wheel with every task as a bead, Needs You answer card, ready for review, remembered this week. F1.3, F5.6, F16.2", "shell": "app", "nav": "home", "dock": "full", "needs": 1, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "fixing", "tone": "bad", "line": "fix 1 of 3 · 4m", "cost": "$0.11"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "muted", "line": "build · 12m", "cost": "$0.38"}]} -->
+<style>
+.home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+.home-r { border-left: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 11px; overflow: auto; }
+.ask { border: 1px solid var(--road); border-radius: 12px; padding: 12px; background: var(--road-soft); }
+.ask .who { font-size: 11.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.ask .btn { padding: 6px 11px; font-size: 12px; }
+.ask .q { font-family: 'Space Grotesk', sans-serif; font-size: 15px; line-height: 1.35; margin: 6px 0 10px; }
+.mem { margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.55; }
+.mem b { color: var(--road-text); font-weight: 600; }
+.rv-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 12.5px; }
+</style>
+<div class="home">
+  <div class="wheel-wrap">
+    <x-wheel data='{"size": 540, "lit": ["run", "verify"],
+      "hub": {"big": "1", "sub": "NEEDS YOU"},
+      "counts": {"capture": "2", "research": "1", "brief": "1", "run": "2", "verify": "1", "review": "1", "ship": "3 this week", "remember": "3 new"},
+      "beads": [
+        {"n": "15", "stage": "capture", "tone": "idle", "r": 12},
+        {"n": "31", "stage": "research", "tone": "info", "r": 13},
+        {"n": "24", "stage": "brief", "tone": "idle", "r": 12},
+        {"n": "12", "stage": "run", "tone": "road", "r": 16, "halo": true},
+        {"n": "18", "stage": "run", "tone": "road", "r": 12, "dim": 0.75},
+        {"n": "27", "stage": "verify", "tone": "bad"},
+        {"n": "09", "stage": "review", "tone": "ok"},
+        {"stage": "ship", "tone": "ok", "r": 8, "dim": 0.3},
+        {"stage": "ship", "tone": "ok", "r": 10, "dim": 0.35},
+        {"stage": "ship", "tone": "ok", "r": 8, "dim": 0.3},
+        {"stage": "remember", "tone": "road", "r": 9, "dim": 0.45}]}'></x-wheel>
+    <div class="wheel-cap">The Wheel is your loop. Each bead is a task at its stage. Click a spoke to open that stage.</div>
+  </div>
+  <div class="home-r">
+    <div class="row between upper"><span>Needs you</span><span>3 min</span></div>
+    <div class="ask">
+      <div class="who"><span class="agent cl">CL</span>Claude · T-0012 · Add password reset API</div>
+      <div class="q">New <span class="mono" style="font-size:12.5px">password_reset_tokens</span> table with a migration, or keep tokens in Redis?</div>
+      <div class="row wrap" style="gap:6px"><button class="btn primary">New table</button><button class="btn">Use Redis</button><button class="btn">Reply…</button></div>
+    </div>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="rv-row"><span class="bead ok">09</span><span><b>Rate-limit the login endpoint</b><span class="small faint" style="display:block">acme-billing · checks green</span></span><span class="small faint">2h</span></div>
+    <div class="rv-row"><span class="bead ok">24</span><span><b>Show task cost on cards</b><span class="small faint" style="display:block">saarthi · checks green</span></span><span class="small faint">5h</span></div>
+    <div class="mem"><b>Remembered this week</b><br>“Use UTC everywhere in expiry checks.”<br>“Hash reset tokens before saving.”<br>“Never push to main — open a PR.”</div>
+  </div>
+</div>

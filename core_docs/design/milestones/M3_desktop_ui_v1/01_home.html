@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M3 · Command Deck</title>
-<meta name="description" content="Home screen: Needs You list, running agents, projects with today&#x27;s cost, tasks ready for review. F1.3, F5.6, F16.2">
+<title>Saarthi M3 · Home · The Wheel</title>
+<meta name="description" content="Home: agents dock, The Wheel with every task as a bead, Needs You answer card, ready for review, remembered this week. F1.3, F5.6, F16.2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -607,116 +607,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a class="on">Home</a><a>Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>2 need you</button>
+  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
-<div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<div class="frame full">
+<aside class="dock"><div class="dock-h"><span>Agents</span><span>3 of 4</span></div><div class="ag-card wait"><span class="agent cl">CL</span><span class="ag-t ellipsis">T-0012 · Reset API</span><span class="ag-s tone-road">needs you</span><svg class="spark spark-cl" viewBox="0 0 200 18" preserveAspectRatio="none"><polyline points="0,9 20,14 40,5 60,5 80,10 100,15 120,5 140,3 160,13 180,12 200,11"/></svg><div class="ag-m"><span>build · 18m</span><span>$0.62</span></div></div><div class="ag-card"><span class="agent cx">CX</span><span class="ag-t ellipsis">T-0027 · Event replay</span><span class="ag-s tone-bad">fixing</span><svg class="spark spark-cx" viewBox="0 0 200 18" preserveAspectRatio="none"><polyline points="0,12 20,8 40,3 60,7 80,6 100,10 120,15 140,8 160,10 180,15 200,5"/></svg><div class="ag-m"><span>fix 1 of 3 · 4m</span><span>$0.11</span></div></div><div class="ag-card"><span class="agent cl">CL</span><span class="ag-t ellipsis">T-0018 · Invoice PDF</span><span class="ag-s tone-muted">writing tests</span><svg class="spark spark-cl" viewBox="0 0 200 18" preserveAspectRatio="none"><polyline points="0,8 20,8 40,12 60,10 80,14 100,13 120,6 140,9 160,7 180,5 200,15"/></svg><div class="ag-m"><span>build · 12m</span><span>$0.38</span></div></div><div class="ag-card free">+ Free slot · start a run</div><div class="grow"></div><div class="daemon"><span class="dot green"></span><div><b>saarthid running</b><small>127.0.0.1:7878 · v0.9</small></div></div></aside>
 <div class="content">
-<div class="page">
-  <div class="page-head">
-    <div>
-      <div class="muted" style="font-size:13px">Sunday, 11 October</div>
-      <h1 class="title">Command Deck</h1>
-    </div>
-    <div class="row">
-      <button class="btn">Open board</button>
-      <button class="btn primary">New task</button>
-    </div>
+<style>
+.home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+.home-r { border-left: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 11px; overflow: auto; }
+.ask { border: 1px solid var(--road); border-radius: 12px; padding: 12px; background: var(--road-soft); }
+.ask .who { font-size: 11.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.ask .btn { padding: 6px 11px; font-size: 12px; }
+.ask .q { font-family: 'Space Grotesk', sans-serif; font-size: 15px; line-height: 1.35; margin: 6px 0 10px; }
+.mem { margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.55; }
+.mem b { color: var(--road-text); font-weight: 600; }
+.rv-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 12.5px; }
+</style>
+<div class="home">
+  <div class="wheel-wrap">
+    <svg class="wheel" width="540" height="540" viewBox="0 0 520 520" role="img" aria-label="The Wheel"><circle class="w-ring" cx="260.0" cy="260.0" r="238"/><circle class="w-rim" cx="260.0" cy="260.0" r="190.0"/><circle class="w-lit" cx="260.0" cy="260.0" r="190.0" stroke-dasharray="149.2 1044.6" transform="rotate(22.5 260.0 260.0)"/><circle class="w-lit" cx="260.0" cy="260.0" r="190.0" stroke-dasharray="149.2 1044.6" transform="rotate(67.5 260.0 260.0)"/><line class="w-spoke" x1="260.0" y1="70.0" x2="260.0" y2="450.0"/><line class="w-spoke" x1="394.4" y1="125.6" x2="125.6" y2="394.4"/><line class="w-spoke" x1="450.0" y1="260.0" x2="70.0" y2="260.0"/><line class="w-spoke" x1="394.4" y1="394.4" x2="125.6" y2="125.6"/><circle class="w-hubglow" cx="260.0" cy="260.0" r="96"/><circle class="w-hub" cx="260.0" cy="260.0" r="70"/><text class="w-big" x="260.0" y="256.0" text-anchor="middle">1</text><text class="w-sub" x="260.0" y="279.0" text-anchor="middle">NEEDS YOU</text><text class="w-lbl" x="260.0" y="32.0" text-anchor="middle">CAPTURE</text><text class="w-n" x="260.0" y="46.0" text-anchor="middle">2</text><text class="w-lbl" x="424.0" y="100.0" text-anchor="middle">RESEARCH</text><text class="w-n" x="424.0" y="114.0" text-anchor="middle">1</text><text class="w-lbl" x="492.0" y="264.0" text-anchor="middle">BRIEF</text><text class="w-n" x="492.0" y="278.0" text-anchor="middle">1</text><text class="w-lbl" x="424.0" y="428.0" text-anchor="middle">RUN</text><text class="w-n" x="424.0" y="442.0" text-anchor="middle">2</text><text class="w-lbl" x="260.0" y="496.0" text-anchor="middle">VERIFY</text><text class="w-n" x="260.0" y="510.0" text-anchor="middle">1</text><text class="w-lbl" x="96.0" y="428.0" text-anchor="middle">REVIEW</text><text class="w-n" x="96.0" y="442.0" text-anchor="middle">1</text><text class="w-lbl" x="28.0" y="264.0" text-anchor="middle">SHIP</text><text class="w-n" x="28.0" y="278.0" text-anchor="middle">3 this week</text><text class="w-lbl" x="96.0" y="100.0" text-anchor="middle">REMEMBER</text><text class="w-n" x="96.0" y="114.0" text-anchor="middle">3 new</text><circle class="b-plus" cx="296.3" cy="73.5" r="12"/><text class="b-plus-t" x="296.3" y="78.0" text-anchor="middle">+</text><circle class="b-idle" cx="260.0" cy="70.0" r="12.0"/><text class="b-txt b-txt-idle" x="260.0" y="73.5" text-anchor="middle">15</text><circle class="b-info" cx="394.4" cy="125.6" r="13.0"/><text class="b-txt b-txt-info" x="394.4" y="129.1" text-anchor="middle">31</text><circle class="b-idle" cx="450.0" cy="260.0" r="12.0"/><text class="b-txt b-txt-idle" x="450.0" y="263.5" text-anchor="middle">24</text><circle class="b-halo" cx="404.5" cy="383.4" r="25.0"/><circle class="b-road" cx="404.5" cy="383.4" r="16.0"/><text class="b-txt b-txt-road" x="404.5" y="386.9" text-anchor="middle">12</text><circle class="b-road" cx="383.4" cy="404.5" r="12.0" opacity="0.75"/><text class="b-txt b-txt-road" x="383.4" y="408.0" text-anchor="middle" opacity="0.75">18</text><circle class="b-bad" cx="260.0" cy="450.0" r="14.0"/><text class="b-txt b-txt-bad" x="260.0" y="453.5" text-anchor="middle">27</text><circle class="b-ok" cx="125.6" cy="394.4" r="14.0"/><text class="b-txt b-txt-ok" x="125.6" y="397.9" text-anchor="middle">09</text><circle class="b-ok" cx="72.3" cy="289.7" r="8.0" opacity="0.3"/><circle class="b-ok" cx="70.0" cy="260.0" r="10.0" opacity="0.35"/><circle class="b-ok" cx="72.3" cy="230.3" r="8.0" opacity="0.3"/><circle class="b-road" cx="125.6" cy="125.6" r="9.0" opacity="0.45"/></svg>
+    <div class="wheel-cap">The Wheel is your loop. Each bead is a task at its stage. Click a spoke to open that stage.</div>
   </div>
-
-  <section class="card hot" style="padding:18px 18px 8px">
-    <div class="row gap-12" style="margin-bottom:10px">
-      <span class="dot lg amber pulse"></span>
-      <h2 class="accent" style="font-size:15px;font-weight:600">Needs You</h2>
-      <span class="muted" style="font-size:12.5px">Agents are waiting for an answer or permission</span>
+  <div class="home-r">
+    <div class="row between upper"><span>Needs you</span><span>3 min</span></div>
+    <div class="ask">
+      <div class="who"><span class="agent cl">CL</span>Claude · T-0012 · Add password reset API</div>
+      <div class="q">New <span class="mono" style="font-size:12.5px">password_reset_tokens</span> table with a migration, or keep tokens in Redis?</div>
+      <div class="row wrap" style="gap:6px"><button class="btn primary">New table</button><button class="btn">Use Redis</button><button class="btn">Reply…</button></div>
     </div>
-    <div class="list-row" style="gap:14px;padding:12px 4px">
-      <span class="mono accent" style="font-size:12px">T-0012</span>
-      <div style="min-width:0">
-        <div class="strong">Add password reset API</div>
-        <div class="text2 pretty" style="font-size:13.5px;margin-top:2px">Should I add a new <span class="mono">password_reset_tokens</span> table, or store the token on the <span class="mono">users</span> table?</div>
-      </div>
-      <div class="row gap-12 small muted nowrap">
-        <span>Claude · acme-billing · 3m ago</span>
-        <button class="btn sm primary">Answer</button>
-      </div>
-    </div>
-    <div class="list-row" style="gap:14px;padding:12px 4px">
-      <span class="mono accent" style="font-size:12px">T-0031</span>
-      <div style="min-width:0">
-        <div class="strong">Upgrade Alembic to 1.14</div>
-        <div class="text2 pretty" style="font-size:13.5px;margin-top:2px">Allow running <span class="mono">uv lock --upgrade-package alembic</span>? It changes <span class="mono">uv.lock</span>.</div>
-      </div>
-      <div class="row gap-12 small muted nowrap">
-        <span>Codex · saarthi · 9m ago</span>
-        <button class="btn sm primary">Answer</button>
-      </div>
-    </div>
-  </section>
-
-  <div class="grid-2">
-    <section class="card">
-      <div class="card-head"><h2>Running now</h2><span class="small muted">2 of 4 slots</span></div>
-      <div class="list-row">
-        <span class="agent cl">CL</span>
-        <div style="min-width:0">
-          <div class="ellipsis">Invoice PDF export with line-item totals</div>
-          <div class="mono small faint">T-0018 · acme-billing · build</div>
-        </div>
-        <div class="row"><span class="dot amber pulse"></span><span class="mono" style="font-size:13px">12m 04s</span></div>
-      </div>
-      <div class="list-row">
-        <span class="agent cx">CX</span>
-        <div style="min-width:0">
-          <div class="ellipsis">Event replay after WebSocket reconnect</div>
-          <div class="mono small faint">T-0027 · saarthi · fix</div>
-        </div>
-        <div class="row"><span class="dot amber pulse"></span><span class="mono" style="font-size:13px">3m 41s</span></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><h2>Projects</h2><span class="small muted">open · running · today</span></div>
-      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
-        <span class="mono">acme-billing</span><span class="muted" style="text-align:right">9 open</span>
-        <span class="accent" style="text-align:right">1 running</span><span class="mono" style="text-align:right">$2.31</span>
-      </div>
-      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
-        <span class="mono">saarthi</span><span class="muted" style="text-align:right">4 open</span>
-        <span class="accent" style="text-align:right">1 running</span><span class="mono" style="text-align:right">$1.47</span>
-      </div>
-      <div class="list-row" style="grid-template-columns:minmax(0,1fr) 64px 76px 64px;font-size:13px">
-        <span class="mono">clinic-portal</span><span class="muted" style="text-align:right">2 open</span>
-        <span class="faint" style="text-align:right">0 running</span><span class="mono" style="text-align:right">$0.34</span>
-      </div>
-      <div class="row between base" style="padding-top:12px;border-top:1px solid var(--line)">
-        <span class="muted" style="font-size:13px">Today's cost, all projects</span>
-        <span class="mono" style="font-size:20px;font-weight:500">$4.12</span>
-      </div>
-    </section>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="rv-row"><span class="bead ok">09</span><span><b>Rate-limit the login endpoint</b><span class="small faint" style="display:block">acme-billing · checks green</span></span><span class="small faint">2h</span></div>
+    <div class="rv-row"><span class="bead ok">24</span><span><b>Show task cost on cards</b><span class="small faint" style="display:block">saarthi · checks green</span></span><span class="small faint">5h</span></div>
+    <div class="mem"><b>Remembered this week</b><br>“Use UTC everywhere in expiry checks.”<br>“Hash reset tokens before saving.”<br>“Never push to main — open a PR.”</div>
   </div>
-
-  <section class="card">
-    <div class="card-head"><h2>Ready for your review</h2><span class="small muted">In the Review stage · open the task to look at the work</span></div>
-    <div class="list-row">
-      <span class="dot green"></span>
-      <span>Rate-limit the login endpoint <span class="mono small faint">T-0009</span></span>
-      <span class="small muted">acme-billing</span>
-    </div>
-    <div class="list-row">
-      <span class="dot green"></span>
-      <span>Show task cost on board cards <span class="mono small faint">T-0024</span></span>
-      <span class="small muted">saarthi</span>
-    </div>
-  </section>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M3 1/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 1/11 · Command Deck</span><span class="sep">|</span><span class="faint">&larr; prev</span><a href="02_task_board.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M3 1/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 1/11 · Home · The Wheel</span><span class="sep">|</span><span class="faint">&larr; prev</span><a href="02_task_board.html">next &rarr;</a></span></div>
 </body>
 </html>
