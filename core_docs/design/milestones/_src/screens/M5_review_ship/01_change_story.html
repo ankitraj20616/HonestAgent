@@ -3,8 +3,6 @@
   {"tag": "cx", "task": "T-0012", "title": "Second opinion", "state": "done", "tone": "ok", "line": "review · 3m", "cost": "$0.21"},
   {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 22m", "cost": "$0.55"}]} -->
 <style>
-/* base.css .review (Review tab layout) also matches the "stage review" pill; keep the pill a pill */
-.room-head .stage.review { display: inline-flex; flex: none; }
 /* old M5 _shared.css .so / .decide rules leak into the new Review column; undo them here */
 .review-r .so { display: block; }
 .review-r .decide { align-items: stretch; flex-wrap: nowrap; }
@@ -19,7 +17,7 @@
     <span class="room-meta">Time <b>31m</b></span><span class="room-meta">Cost <b>$1.16</b></span>
   </div>
   <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
-  <div class="review">
+  <div class="review-tab">
     <div class="review-l">
       <div class="row" style="gap:10px"><h2 style="font-size:17px">Change Story</h2><span class="small faint">4 chapters · 6 files · +171 −4</span><span class="grow"></span>
         <span class="seg"><span class="on">Story</span><span>Files</span></span>

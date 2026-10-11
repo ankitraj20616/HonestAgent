@@ -515,7 +515,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .crit-row:last-child { border-bottom: none; }
 
 /* ---------- Review: chapters + second opinion ---------- */
-.review { display: grid; grid-template-columns: minmax(0, 1fr) 330px; min-height: 0; flex: 1; }
+.review-tab { display: grid; grid-template-columns: minmax(0, 1fr) 330px; min-height: 0; flex: 1; }
 .review-l { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; overflow: auto; min-width: 0; }
 .review-r { border-left: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
 .chap { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; }
@@ -766,8 +766,6 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 <aside class="rail"><div class="ra" title="T-0012 · done"><span class="agent cx">CX</span><i class="ra-dot tone-bg-ok"></i></div><small>12</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-/* base.css .review (Review tab layout) also matches the "stage review" pill; keep the pill a pill */
-.room-head .stage.review { display: inline-flex; flex: none; }
 /* old M5 _shared.css .so / .decide rules leak into the new Review column; undo them here */
 .review-r .so { display: block; }
 .review-r .decide { align-items: stretch; flex-wrap: nowrap; }
@@ -782,7 +780,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
     <span class="room-meta">Time <b>31m</b></span><span class="room-meta">Cost <b>$1.16</b></span>
   </div>
   <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
-  <div class="review">
+  <div class="review-tab">
     <div class="review-l">
       <div class="row" style="gap:10px"><h2 style="font-size:17px">Change Story</h2><span class="small faint">4 chapters · 6 files · +171 −4</span><span class="grow"></span>
         <span class="seg"><span class="on">Story</span><span>Files</span></span>

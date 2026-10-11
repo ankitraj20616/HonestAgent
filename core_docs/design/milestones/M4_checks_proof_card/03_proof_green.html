@@ -515,7 +515,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .crit-row:last-child { border-bottom: none; }
 
 /* ---------- Review: chapters + second opinion ---------- */
-.review { display: grid; grid-template-columns: minmax(0, 1fr) 330px; min-height: 0; flex: 1; }
+.review-tab { display: grid; grid-template-columns: minmax(0, 1fr) 330px; min-height: 0; flex: 1; }
 .review-l { padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; overflow: auto; min-width: 0; }
 .review-r { border-left: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
 .chap { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; }
@@ -616,10 +616,6 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 <div class="frame rail">
 <aside class="rail"><div class="ra" title="T-0027 · fixing"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
-<style>
-/* base.css .review (Review tab layout) also matches the "stage review" pill; keep the pill a pill */
-.room-head .stage.review { display: inline-flex; flex: none; }
-</style>
 <div class="fill">
   <div class="room-head">
     <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
