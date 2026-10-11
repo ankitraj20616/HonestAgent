@@ -4,6 +4,7 @@
 **Status:** Approved in brainstorming, waiting for written-spec review
 **Replaces:** the look of `core_docs/design/milestones/` (a port of `Saarthi Prototype.html`)
 **Approved mockups:** `core_docs/design/wheel_mockups/` (`wheel-home.html`, `wheel-board-room.html`, `wheel-proof-review.html`). They are fragments made for the brainstorm viewer, so a few frame styles are missing when opened alone.
+**Related:** `core_docs/design/2026-10-12-task-docs-and-jira-design.md` (Docs tab, Tickets page, Jira).
 **Clickable prototype:** `core_docs/design/Saarthi Prototype.html`, built from the milestone screens by `milestones/_src/proto.py`. The old-look prototype is in `core_docs/design/archive/`.
 
 ---
@@ -69,7 +70,7 @@ Page background: `radial-gradient(… at 50% 40–58%, var(--glow), var(--bg) 72
 
 ## 5. App frame
 
-- **Top bar (56px):** small Wheel logo + "Saarthi", page links (Home, Board, Memory, Playbooks), Needs You pill (pulses when > 0), search box ("Search or run a command…", `Ctrl K`), today's cost. Settings opens from the Command Bar and from a gear in the top bar.
+- **Top bar (56px):** small Wheel logo + "Saarthi", page links (Home, Board, Memory, Playbooks, and Tickets from M10 only for projects with Jira), Needs You pill (pulses when > 0), search box ("Search or run a command…", `Ctrl K`), today's cost. Settings opens from the Command Bar and from a gear in the top bar.
 - **Agents dock (left):**
   - On Home: full width (250px). One card per live agent: agent tag, task, state (needs you / fixing / writing tests…), a small live activity line, mode + time, cost. A dashed "+ Free slot · start a run" card for each empty slot.
   - On every other page: a thin rail (64px). Agent tag + status dot + task number. Empty slots are dashed "+".
@@ -109,7 +110,7 @@ Page background: `radial-gradient(… at 50% 40–58%, var(--glow), var(--bg) 72
 - **Header:** ID, title, stage pill, the **journey Wheel** (46px, arc filled up to the current stage, current stage dot), the label "Run · 4 of 8" with the path so far, time, cost, Run agent.
 - **Left (300px):** Brief (goal + criteria), Workspace (branch, ahead, files, checkpoint, Open folder / Editor / Terminal), Runs.
 - **Tabs:**
-  - M3: Stream, Terminal, Code, Timeline.
+  - M3: Stream, Terminal, Code, Docs, Timeline.
   - M4 adds Proof.
   - M5 adds Review.
 - **Stream** is a timeline:
@@ -154,13 +155,15 @@ Every existing screen in `core_docs/design/milestones/` is redone in the Wheel s
 | Milestone | What changes |
 |---|---|
 | M0–M2 | Spike window and CLI terminals take the new colors and fonts. No app frame (there is no app yet). |
-| M3 | Home becomes the Wheel. Board becomes rim + 8 columns. Task Room gets the journey Wheel and the timeline Stream. Overlays (Run dialog, Command Bar, quick capture) and Settings + Health use the new frame. |
+| M2 | Plan docs in the CLI (`saarthi docs`). |
+| M3 | The Docs tab in the Task Room. Home becomes the Wheel. Board becomes rim + 8 columns. Task Room gets the journey Wheel and the timeline Stream. Overlays (Run dialog, Command Bar, quick capture) and Settings + Health use the new frame. |
 | M4 | Proof gets the Trust ring (checks + criteria parts). Board cards get the mini ring. |
 | M5 | Review becomes chapters + Second opinion card. The Trust ring adds the second-opinion part. |
 | M6 | Research, Memory, Playbooks in the new frame. Memory updates show as the Remember stage. |
 | M7 | A race shows **two beads on one spoke**, joined by a short arc. Compare uses two Trust rings side by side. |
 | M8 | Cost meter and budget use the same ring style. Checkpoints show as small notches on the journey Wheel. |
 | M9 | First-run wizard: the Wheel draws itself one spoke per step. Empty Home: an empty Wheel with "Capture your first task". |
+| M10 | Tickets page, start-from-ticket dialog, ticket chip in the Task Room, write-back card, Jira settings. |
 
 A screen must only show features that exist in its milestone. For example, there is no Trust ring before M4, and no second-opinion part before M5.
 

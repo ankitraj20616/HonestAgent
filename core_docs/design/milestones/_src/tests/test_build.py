@@ -66,6 +66,20 @@ def test_settings_nav_lights_the_gear():
     assert 'class="gear on"' in html
 
 
+def test_m10_is_last_milestone():
+    assert build.MILESTONES["M10_jira_tickets"] == ("M10", "Jira tickets")
+    assert list(build.MILESTONES)[-1] == "M10_jira_tickets"
+
+
+def test_tickets_link_only_when_asked():
+    on = build.app_shell({"nav": "tickets"}, "")
+    assert '<a class="on">Tickets</a>' in on
+    flag = build.app_shell({"tickets": True, "nav": "board"}, "")
+    assert "<a>Tickets</a>" in flag
+    assert '<a class="on">Board</a>' in flag
+    assert "Tickets" not in build.app_shell({"nav": "board"}, "")
+
+
 @pytest.mark.parametrize("tag", [
     '<x-journey stage="run"/>',
     """<x-wheel size="300" data='{"beads": []}'></x-wheel>""",

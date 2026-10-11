@@ -1,6 +1,6 @@
 # UI design by milestone
 
-Screens for every milestone (M0-M9) in the **Wheel** look. Dark only.
+Screens for every milestone (M0-M10) in the **Wheel** look. Dark only.
 
 Spec: `../2026-10-11-wheel-ui-design.md`. Mockups: `../wheel_mockups/`.
 
@@ -13,6 +13,7 @@ design/milestones/
 ├── M3_desktop_ui_v1/
 │   ├── 01_home.html            # one HTML file per screen (generated)
 │   └── ...
+├── M10_jira_tickets/           # Tickets page and Jira screens (M10)
 ├── M0_ ... M9_ (same shape)
 └── _src/                       # the source; edit here, never the generated files
     ├── build.py  base.css  theme.css  wheel_svg.py  shoot.py  proto.py

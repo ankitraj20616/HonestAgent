@@ -13,7 +13,7 @@ A fragment starts with one JSON comment (front matter), then plain HTML:
     <div class="wheel-wrap"> ... </div>
 
 shell = "app"  -> top bar + agents dock/rail are added. Optional keys:
-    nav           home | board | memory | playbooks | settings   (old names: deck = home, room = board)
+    nav           home | board | memory | playbooks | tickets | settings   (old names: deck = home, room = board)
     dock          "full" (Home only) or "rail" (default)
     project       name shown in the project picker ("" shows "Add a project")
     needs         Needs You count (default 0)
@@ -23,6 +23,7 @@ shell = "app"  -> top bar + agents dock/rail are added. Optional keys:
     slots         agent slots, a number (old text like "2 of 4" also works); default 4
     daemon        {"dot": "green", "pulse": false, "label": "saarthid running", "sub": "127.0.0.1:7878 · v0.9",
                    "note": "..."}   (label/sub/note may hold HTML)
+    tickets       true adds the Tickets link to the top bar (M10 screens only)
     after_topbar  HTML placed under the top bar (status bars)
 shell = "bare" -> nothing added (spike windows, CLI terminals, first-run wizard)
 
@@ -63,9 +64,11 @@ MILESTONES = {
     "M7_race_mode": ("M7", "Race Mode + parallel polish"),
     "M8_safety_cost_rewind": ("M8", "Safety + cost + rewind"),
     "M9_polish_package": ("M9", "Polish + package (v1.0)"),
+    "M10_jira_tickets": ("M10", "Jira tickets"),
 }
 
 NAV = [("home", "Home"), ("board", "Board"), ("memory", "Memory"), ("playbooks", "Playbooks")]
+TICKETS_LINK = ("tickets", "Tickets")
 NAV_ALIASES = {"deck": "home", "room": "board"}
 DEFAULT_AGENTS = [
     {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "muted",
@@ -202,7 +205,8 @@ def app_shell(meta: dict, body: str) -> str:
     free = max(0, slot_count(meta.get("slots", 4)) - len(agents))
     d = {**DEFAULT_DAEMON, **meta.get("daemon", {})}
 
-    links = "".join(f'<a class="on">{label}</a>' if key == nav else f"<a>{label}</a>" for key, label in NAV)
+    links_list = NAV + [TICKETS_LINK] if meta.get("tickets") or nav == "tickets" else NAV
+    links = "".join(f'<a class="on">{label}</a>' if key == nav else f"<a>{label}</a>" for key, label in links_list)
     if needs:
         pill = f'<button class="needs-pill"><span class="dot road pulse"></span>{needs} need{"s" if needs == 1 else ""} you</button>'
     else:
