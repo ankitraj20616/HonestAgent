@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M4 · Override - move to Review with red checks</title>
-<meta name="description" content="T-0012 is dragged from Failed to Review while a required check is red. The daemon asks for a typed reason of at least 10 characters; it is saved on the Proof Card and in task.stage_changed, and the dot turns amber. F7.6, F2.5">
+<title>Saarthi M4 · Override · move on with red checks</title>
+<meta name="description" content="T-0012 is dragged from Verify (Failed) to Review while a required check is red. The daemon asks for a typed reason of at least 10 characters; it is saved on the Proof Card and in task.stage_changed, and the card gets an amber Override flag. The Trust score never blocks; the stage rule does. F7.6, F7.7, F2.5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -619,167 +619,93 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra" title="T-0015 · researching"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>15</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .bd-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; padding: 14px 20px 18px; }
-  .bd { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; min-height: 100%; }
-  .bd .lane { padding: 8px; min-height: 0; gap: 8px; }
-  .bd .lane.dim { opacity: .5; }
-  .bd .lane-head .name { font-weight: 600; font-size: 13px; }
-  .bd .lane-head .count { font-size: 12px; color: var(--faint); }
-  .bd .tcard { padding: 9px 10px; gap: 7px; }
-  .bd .tcard .title { font-size: 13px; }
-  .bd .tcard .meta { gap: 6px; }
-  .bd .tcard .foot { gap: 6px; }
-  .bd .tcard.amber { border-color: var(--accent); }
-  .bd .prio { padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; }
-  .bd .cstat { font-size: 11px; color: var(--muted); }
-  .sq-inbox { background: var(--faint) !important; }
-  .sq-research, .sq-verifying { background: var(--blue) !important; }
-  .sq-ready { background: var(--muted) !important; }
-  .sq-running { background: var(--accent) !important; }
-  .sq-review, .sq-shipped { background: var(--green) !important; }
-  .legend { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
-  .legend span { display: inline-flex; align-items: center; gap: 5px; }
-  .select-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px;
-    border: 1px solid var(--line); background: var(--surface); font-size: 12.5px; color: var(--muted); }
-  .select-chip b { color: var(--text); font-weight: 500; }
-  .drop-hint { margin-top: 2px; padding: 12px 8px; border: 1.5px dashed var(--accent); border-radius: 8px;
-    text-align: center; font-size: 12px; color: var(--accent-text); line-height: 1.4; }
-  .floating { position: absolute; width: 150px; transform: rotate(-2.5deg); box-shadow: var(--shadow);
-    border-color: var(--red); background: var(--surface-2); z-index: 5; }
+  .bcard .ft .tr { display: inline-flex; align-items: center; gap: 4px; }
+  .bcard .ft .tr b { font-weight: 600; }
+  .bcard.override { border-color: var(--road); }
+  .drop-hint { padding: 12px 8px; border: 1.5px dashed var(--road); border-radius: 10px; text-align: center; font-size: 11.5px; color: var(--road-text); line-height: 1.4; }
+  .reason { min-height: 76px; border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); resize: none; }
+  .cli-hint { padding: 8px 10px; border: 1px dashed var(--line2); border-radius: 8px; }
 </style>
 <div class="fill">
-  <div class="toolbar">
-    <h1>Task Board</h1>
-    <input class="input" style="width:200px" placeholder="Filter by title, ID or label">
-    <span class="select-chip">Stage <b>All</b> ▾</span>
-    <span class="chip on">All agents</span>
-    <span class="chip"><span class="agent sm cl">CL</span>Claude</span>
-    <span class="chip"><span class="agent sm cx">CX</span>Codex</span>
-    <div class="grow"></div>
-    <div class="legend"><b class="faint" style="font-weight:500">Check status</b>
-      <span><span class="dot"></span>none</span><span><span class="dot blue"></span>running</span>
-      <span><span class="dot green"></span>passed</span><span><span class="dot red"></span>failed</span>
-      <span><span class="dot amber"></span>override</span></div>
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:200px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
   </div>
-  <div class="bd-wrap">
-    <div class="bd">
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-inbox"></span><span class="name">Inbox</span><span class="count">2</span></div>
-        <div class="tcard ">
-          <div class="title">Dark mode for the settings page</div>
-          <div class="meta"><span class="mono faint nowrap">T-0014</span><span class="prio">P3</span><span class="ellipsis">ui</span></div>
-        </div>
-        <div class="tcard ">
-          <div class="title">Add audit log for admin actions</div>
-          <div class="meta"><span class="mono faint nowrap">T-0016</span><span class="prio">P2</span><span class="ellipsis">security</span></div>
-        </div>
-      </div>
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-research"></span><span class="name">Research</span><span class="count">1</span></div>
-        <div class="tcard ">
-          <div class="title">Investigate slow dashboard query</div>
-          <div class="meta"><span class="mono faint nowrap">T-0015</span><span class="prio">P2</span><span class="ellipsis">perf</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">5m</span><span class="mono">$0.09</span></div>
-        </div>
-      </div>
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-ready"></span><span class="name">Ready</span><span class="count">1</span></div>
-        <div class="tcard ">
-          <div class="title">Export invoices as CSV</div>
-          <div class="meta"><span class="mono faint nowrap">T-0013</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-        </div>
-      </div>
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-running"></span><span class="name">Running</span><span class="count">2</span></div>
-        <div class="tcard ">
-          <div class="title">Invoice PDF export with line-item totals</div>
-          <div class="meta"><span class="mono faint nowrap">T-0018</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">12m</span><span class="mono">$0.48</span><span class="grow"></span><span class="dot lg " title="Check status"></span></div>
-        </div>
-        <div class="tcard failed">
-          <div class="flag red">Failed · run crashed</div>
-          <div class="title">Move to uv workspaces</div>
-          <div class="meta"><span class="mono faint nowrap">T-0007</span><span class="prio">P3</span><span class="ellipsis">build</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">25m</span><span class="mono">$0.55</span></div>
-        </div>
-      </div>
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-verifying"></span><span class="name">Verifying</span><span class="count">2</span></div>
-        <div class="tcard ">
-          <div class="flag blue">Checks 2 of 3</div>
-          <div class="title">Refactor Stripe webhook handlers</div>
-          <div class="meta"><span class="mono faint nowrap">T-0010</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">38m</span><span class="mono">$1.08</span><span class="grow"></span><span class="dot lg blue pulse" title="Check status"></span></div>
-        </div>
-        <div class="tcard ghost">
-          <div class="flag red">Failed · tests red</div>
-          <div class="title">Add password reset API</div>
-          <div class="meta"><span class="mono faint nowrap">T-0012</span><span class="prio">P1</span><span class="ellipsis">auth · api</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">26m</span><span class="mono">$0.92</span><span class="grow"></span><span class="dot lg red" title="Check status"></span></div>
-        </div>
-      </div>
-      <div class="lane drop">
-        <div class="lane-head"><span class="sq sq-review"></span><span class="name">Review</span><span class="count">2</span></div>
-        <div class="tcard ">
-          <div class="title">Rate-limit the login endpoint</div>
-          <div class="meta"><span class="mono faint nowrap">T-0009</span><span class="prio">P1</span><span class="ellipsis">auth · security</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">30m</span><span class="mono">$0.77</span><span class="grow"></span><span class="dot lg green" title="Check status"></span></div>
-        </div>
-        <div class="tcard amber">
-          <div class="flag amber">Override</div>
-          <div class="title">Fix flaky login test</div>
-          <div class="meta"><span class="mono faint nowrap">T-0011</span><span class="prio">P2</span><span class="ellipsis">tests</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">12m</span><span class="mono">$0.41</span><span class="grow"></span><span class="dot lg amber" title="Check status"></span></div>
-        </div>
-        <div class="drop-hint"><b>T-0012 dropped here</b><br>Waiting for your reason</div>
-      </div>
-      <div class="lane dim">
-        <div class="lane-head"><span class="sq sq-shipped"></span><span class="name">Shipped</span><span class="count">2</span></div>
-        <div class="tcard ">
-          <div class="title">Upgrade FastAPI to 0.115</div>
-          <div class="meta"><span class="mono faint nowrap">T-0008</span><span class="prio">P2</span><span class="ellipsis">deps</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">33m</span><span class="mono">$0.71</span><span class="grow"></span><span class="dot lg green" title="Check status"></span></div>
-        </div>
-        <div class="tcard ">
-          <div class="title">Add pagination to /invoices</div>
-          <div class="meta"><span class="mono faint nowrap">T-0006</span><span class="prio">P3</span><span class="ellipsis">api</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">22m</span><span class="mono">$0.38</span><span class="grow"></span><span class="dot lg green" title="Check status"></span></div>
-        </div>
-      </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>1</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8 bad"><b>VERIFY</b><span>2</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>2</span></div>
+    <div class="seg8"><b>SHIP</b><span>2</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>0</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">14</span><span class="ti">Dark mode for the settings page</span></div><div class="ft"><span>P3</span><span class="r">ui</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">16</span><span class="ti">Add audit log for admin actions</span></div><div class="ft"><span>P2</span><span class="r">security</span></div></div>
     </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead info">15</span><span class="ti">Investigate slow dashboard query</span></div><div class="ft"><span class="agent cl sm">CL</span><span>9m</span><span class="r">$0.14</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead road">18</span><span class="ti">Invoice PDF export with line-item totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>16m</span><span class="r">$0.52</span></div></div>
+      <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">07</span><span class="ti">Move to uv workspaces</span></div><div class="ft"><span class="agent cx sm">CX</span><span>25m</span><span class="r">$0.55</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><span class="flag info">Checks 2 of 3</span><div class="tt"><span class="bead info">10</span><span class="ti">Refactor Stripe webhook handlers</span></div><div class="ft"><span class="agent cl sm">CL</span><span>38m</span><span class="r tr"><span class="dot info pulse"></span>running</span></div></div>
+      <div class="bcard ghost"><span class="flag bad">Tests failed</span><div class="tt"><span class="bead bad">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>26m</span><span class="r tr"><svg class="trust-sm trust-mini" width="18" height="18" viewBox="0 0 20 20" role="img" aria-label="Trust score 25"><circle class="tr-bg-mini" cx="10" cy="10" r="7"/><circle class="tr-bad" cx="10" cy="10" r="7" stroke-dasharray="11.0 33.0" transform="rotate(-90.0 10 10)"/></svg><b class="bad-t">25</b></span></div></div>
+    </div>
+    <div class="col8 drop">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cx sm">CX</span><span>30m</span><span class="r tr"><svg class="trust-sm trust-mini" width="18" height="18" viewBox="0 0 20 20" role="img" aria-label="Trust score 81"><circle class="tr-bg-mini" cx="10" cy="10" r="7"/><circle class="tr-ok" cx="10" cy="10" r="7" stroke-dasharray="35.6 8.4" transform="rotate(-90.0 10 10)"/></svg><b class="ok-t">81</b></span></div></div>
+      <div class="bcard override"><span class="flag road">Override</span><div class="tt"><span class="bead ok">11</span><span class="ti">Fix flaky login test</span></div><div class="ft"><span class="agent cx sm">CX</span><span>12m</span><span class="r tr"><svg class="trust-sm trust-mini" width="18" height="18" viewBox="0 0 20 20" role="img" aria-label="Trust score 53"><circle class="tr-bg-mini" cx="10" cy="10" r="7"/><circle class="tr-road" cx="10" cy="10" r="7" stroke-dasharray="23.3 20.7" transform="rotate(-90.0 10 10)"/></svg><b class="road">53</b></span></div></div>
+      <div class="drop-hint"><b>T-0012 dropped here</b><br>Waiting for your reason</div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Upgrade FastAPI to 0.115</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Add pagination to /invoices</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
+    </div>
+    <div class="col8 dim"></div>
   </div>
 </div>
 <div class="scrim">
   <div class="modal">
     <div class="modal-head">
-      <span class="dot lg red"></span>
+      <span class="dot lg bad"></span>
       <h2>Move T-0012 to Review with red checks?</h2>
     </div>
     <div class="modal-body">
       <div class="banner err" style="align-items:flex-start">
-        <div class="col" style="gap:3px;min-width:0">
-          <div><b>Required checks failed: tests</b> <span class="muted">· latest Proof Card · 11:41</span></div>
-          <div class="mono xs text2 ellipsis">FAILED tests/billing/test_invoice_pdf.py::test_totals_rounding</div>
-          <div class="mono xs muted">1 failed, 318 passed in 6.52s</div>
+        <svg class="trust-sm" width="40" height="40" viewBox="0 0 52 52" role="img" aria-label="Trust score 25"><circle class="tr-bg" cx="26" cy="26" r="21"/><circle class="tr-bad" cx="26" cy="26" r="21" stroke-dasharray="33.0 99.0" transform="rotate(-90.0 26 26)"/><text class="tr-num-sm" x="26" y="31" text-anchor="middle">25</text></svg>
+        <div class="col grow" style="gap:3px">
+          <div><b>Required check failed: tests</b> <span class="muted">· Proof Card #1 · 11:02</span></div>
+          <div class="mono xs text2 ellipsis">FAILED tests/auth/test_password_reset.py::test_token_expires_after_30_min</div>
+          <div class="mono xs muted">1 failed, 318 passed in 6.41s</div>
         </div>
       </div>
       <div class="field">
         <label>Why move on? You must type a reason.</label>
-        <textarea class="textarea focus" style="min-height:76px;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)">test_totals_rounding fails on main too. T-0018 fixes it. Not related to reset.</textarea>
-        <div class="row between"><span class="hint">At least 10 characters.</span><span class="xs green mono">78 characters ✓</span></div>
+        <textarea class="textarea reason">CI runs in UTC; the test fixture freezes local time. T-0019 fixes the fixture.</textarea>
+        <div class="row between"><span class="hint">At least 10 characters.</span><span class="xs ok-t mono">78 characters ✓</span></div>
       </div>
-      <div class="small muted pretty">The reason is saved on the Proof Card and in the task's event log, and it goes into the PR body. The board dot turns amber.</div>
-      <div class="mono xs faint" style="padding:8px 10px;border:1px dashed var(--line-strong);border-radius:6px">CLI: saarthi task move T-0012 review --reason "…"</div>
+      <div class="small muted pretty">The reason is saved on the Proof Card and in the task's event log, and it goes into the PR body. The card gets an amber Override flag. The Trust score (25) does not change and never blocks you.</div>
+      <div class="mono xs faint cli-hint">CLI: saarthi task move T-0012 review --reason "…"</div>
     </div>
     <div class="modal-foot">
       <button class="btn ghost">Cancel</button>
@@ -790,6 +716,6 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M4 5/6</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M4 · 5/6 · Override - move to Review with red checks</span><span class="sep">|</span><a href="04_board_check_dots.html">&larr; prev</a><a href="06_fix_rounds_used.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M4 5/6</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M4 · 5/6 · Override · move on with red checks</span><span class="sep">|</span><a href="04_board_check_dots.html">&larr; prev</a><a href="06_fix_rounds_used.html">next &rarr;</a></span></div>
 </body>
 </html>

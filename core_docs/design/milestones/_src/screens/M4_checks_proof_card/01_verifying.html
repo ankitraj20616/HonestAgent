@@ -1,215 +1,65 @@
-<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.12", "slots": "2 of 4", "title": "Proof tab - checks running", "note": "T-0012 is in Verifying right after build run R-0027 ended. Checks run by themselves, one at a time: lint passed, tests streams live output, types is queued. Board and tab dots pulse blue. Coverage waits for green. F7.1, F7.2, F2.5"} -->
+<!-- {"title": "Proof · checks running", "note": "T-0012 is in Verify right after build run R-0027 ended. Checks run by themselves, one at a time: lint passed, tests streams live output, types is queued. The Trust ring fills as checks pass; the tab dot pulses blue. Brief criteria wait for green checks. F7.1, F7.2, F7.7, F2.5", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 14m", "cost": "$0.41"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "build · 6m", "cost": "$0.13"}]} -->
 <style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .kv3 > .hl { border-color: var(--accent); background: var(--accent-soft); }
-  .room-side .crit { font-size: 12.5px; }
-  .tab .tdot { width: 6px; height: 6px; }
-  .side-run .tag { font-size: 10.5px; padding: 0 4px; }
-  /* proof tab */
-  .pf { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-  .pf-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
-  .pf-head.ok { border-color: var(--green); }
-  .pf-head.bad { border-color: var(--red); }
-  .pf-head.info { border-color: var(--blue); }
-  .pf-head .bdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--line-strong); }
-  .pf-head .bdot.green { background: var(--green); } .pf-head .bdot.red { background: var(--red); } .pf-head .bdot.blue { background: var(--blue); }
-  .pf-head h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
-  .pf-head .sub { font-size: 13px; color: var(--muted); }
-  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-  .pf-stat { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .pf-stat .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-  .pf-stat .v { font-family: 'JetBrains Mono', monospace; font-size: 18px; white-space: nowrap; }
-  .pf-stat .skeleton { width: 54px; height: 14px; margin: 6px 0 4px; }
-  .panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
-  .panel.open { overflow: visible; }
-  .panel-h { border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg-side); border-bottom: 1px solid var(--line); }
-  .panel-h .upper { color: var(--muted); }
-  .ck { border-bottom: 1px solid var(--line); }
-  .ck:last-child { border-bottom: none; }
-  .ck-row { display: grid; grid-template-columns: 12px 14px 64px minmax(0, 1fr) 70px 118px; gap: 10px; align-items: center; padding: 9px 14px; font-size: 13px; }
-  .ck-row .tw { color: var(--faint); font-size: 11px; }
-  .ck-row .cmd { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ck-row .req { font-size: 12px; color: var(--muted); }
-  .ck-row .res { font-size: 12px; text-align: right; font-weight: 600; white-space: nowrap; }
-  .ck-row .dot { width: 9px; height: 9px; }
-  .tail { margin: 0 14px 12px 50px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .tail-bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); background: var(--bg-side); border-bottom: 1px solid var(--line); }
-  .tail pre { margin: 0; padding: 9px 12px; background: var(--term-bg); color: var(--term-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; font-variant-ligatures: none; }
-  .tail .r { color: var(--red); } .tail .g { color: var(--green); } .tail .d { color: var(--faint); } .tail .b { font-weight: 600; }
-  .cov { display: grid; grid-template-columns: 22px minmax(0, 1fr) 128px; gap: 10px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
-  .cov:last-child { border-bottom: none; }
-  .cov .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--faint); padding-top: 1px; }
-  .cov .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .pick { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
-  .pick .car { color: var(--faint); font-weight: 400; }
-  .pick.met { color: var(--green); } .pick.notsure { color: var(--accent-text); } .pick.notmet { color: var(--red); }
-  .pick.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .pick-wrap { position: relative; }
-  .menu { position: absolute; right: 0; top: calc(100% + 4px); width: 150px; z-index: 5; padding: 4px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-sm); }
-  .menu div { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; }
-  .menu div.on { background: var(--chip-on); }
-  .hist { display: grid; grid-template-columns: 12px 62px 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-  .hist:last-child { border-bottom: none; }
-  .hist.on { background: var(--surface-2); }
-  .ovr { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 8px; }
-  /* review tab */
-  .rv { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-  .rv-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .rv-top h2 { font-size: 17px; font-weight: 600; }
-  .riskbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-  .rflag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--red); color: var(--red); white-space: nowrap; }
-  .rflag.sm { font-size: 11px; padding: 1px 7px; }
-  .grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
-  .grp-h { display: flex; flex-direction: column; gap: 5px; padding: 12px 16px; }
-  .grp-h .t { font-weight: 600; font-size: 14.5px; }
-  .grp-h .tw { color: var(--faint); font-size: 12px; width: 12px; }
-  .grp-why { font-size: 13.5px; color: var(--text-2); padding-left: 22px; text-wrap: pretty; }
-  .grp-files { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); padding-left: 22px; }
-  .hunks { border-top: 1px solid var(--line); padding: 6px 0 8px; background: var(--panel); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
-  .hunks .hh { padding: 2px 16px; color: var(--blue); }
-  .hunks .dl { padding: 0 16px; white-space: pre; color: var(--muted); }
-  .hunks .dl.add { background: var(--green-soft); color: var(--diff-add); }
-  .hunks .dl.del { background: var(--red-soft); color: var(--diff-del); }
-  .cmt-badge { font-size: 11.5px; color: var(--accent-text); white-space: nowrap; }
-  .so { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-  .so h3 { font-size: 14.5px; font-weight: 600; }
-  .decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .gate.run { border-color: var(--info); background: var(--info-soft); }
+  .gate.run b { color: var(--info); }
+  .proof-r .ck-row .tm.run { color: var(--info); }
+  .proof-r .ck-row .tm.off { color: var(--faint); }
+  .ck-live { margin-top: 6px; }
+  .ck-live .term-body { padding: 10px 14px; font-size: 12px; line-height: 1.55; font-variant-ligatures: none; }
+  .wait-note { display: flex; gap: 12px; align-items: center; }
+  .skel-v { height: 22px; width: 52px; margin: 4px 0 6px; border-radius: 5px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage verifying">Verifying</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">26m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.92</span></span>
-    <button class="btn primary disabled" title="Wait for the checks to finish">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage verify">Verifying</span>
+    <div class="journey-box"><x-journey stage="verify" tone="info"></x-journey>
+      <div class="lbl"><b>Verify · 5 of 8</b>Checks running · 1 of 3 done</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>26m</b></span><span class="room-meta">Cost <b>$0.92</b></span>
+    <button class="btn disabled" title="Wait for the checks to finish">Run agent</button>
   </div>
-  <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box "></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
-        <div class="crit"><span class="box "></span><span>The link expires after 30 minutes</span></div>
-        <div class="crit"><span class="box "></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box "></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box "></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>3 ahead</div>
-          <div><div class="k">Changed</div>6 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0027</span></div>
-        </div>
-        <div class="row wrap" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row side-run on">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab on">Proof <span class="dot tdot blue pulse"></span></button>
-        <button class="tab">Code <span class="n">6</span></button>
-        <button class="tab">Timeline</button>
+  <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab on">Proof <span class="dot info pulse"></span></span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
+  <div class="proof">
+    <div class="proof-l">
+      <x-trust checks="25" criteria="0" second="0" size="250" label="SO FAR"></x-trust>
+      <div class="legend">
+        <div class="lg-row"><i class="sw-ok"></i><span>Required checks · 1 pass, 1 running</span><b>25 / 50</b></div>
+        <div class="lg-row"><i class="sw-off"></i><span class="faint">Brief criteria · after green checks</span><b class="faint">0 / 35</b></div>
+        <div class="lg-row"><i class="sw-off"></i><span class="faint">Second opinion · arrives in M5</span><b class="faint">0 / 15</b></div>
       </div>
-      <div class="tab-body">
-        <div class="pf">
-        <div class="pf-head info">
-          <span class="spinner" style="border-top-color:var(--blue);width:14px;height:14px"></span>
-          <div class="grow" style="min-width:220px">
-            <h2>Checks running · 1 of 3 done</h2>
-            <div class="sub">Run R-0027 (build) ended at 11:02, so the checks started by themselves. One at a time, in the task worktree.</div>
-          </div>
-          <span class="mono muted" style="font-size:13px">00:07</span>
-          <button class="btn disabled" title="Checks already running">Run checks</button>
-        </div>
-        <div class="pf-stats">
-          <div class="pf-stat"><div class="k">Files changed</div><div class="skeleton"></div></div>
-          <div class="pf-stat"><div class="k">Lines vs main</div><div class="skeleton"></div></div>
-          <div class="pf-stat"><div class="k">Tests added</div><div class="skeleton"></div></div>
-          <div class="pf-stat"><div class="k">Run cost</div><div class="v">$0.84</div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-h"><span class="upper">Checks</span><span class="mono xs faint">.saarthi/project.toml</span><span class="grow"></span><span class="xs faint">one at a time · checks_parallel = false</span></div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▸</span><span class="dot green"></span>
-              <span class="strong">lint</span>
-              <span class="cmd">uv run ruff check .</span>
-              <span class="req">required</span>
-              <span class="res green">Pass · 0.3s</span>
-            </div>
-          </div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▾</span><span class="dot blue pulse"></span>
-              <span class="strong">tests</span>
-              <span class="cmd">uv run pytest -q</span>
-              <span class="req">required</span>
-              <span class="res blue">Running · 0:07</span>
-            </div>
-            <div class="tail">
-              <div class="tail-bar"><span class="dot blue pulse" style="width:6px;height:6px"></span><span>Live output</span><span class="grow"></span><span class="xs faint">timeout 600s</span></div>
-<pre><span class="d">$ uv run pytest -q</span>
+      <div class="gate run"><b>Gate · waiting for checks</b>When every required check passes, the task moves to Review by itself. If one fails, it moves to Failed.</div>
+    </div>
+    <div class="proof-r">
+      <div class="stats4">
+        <div><div class="skeleton skel-v"></div><span>files changed</span></div>
+        <div><div class="skeleton skel-v"></div><span>lines vs main</span></div>
+        <div><div class="skeleton skel-v"></div><span>tests added</span></div>
+        <div><b>$0.84</b><span>build run cost</span></div>
+      </div>
+      <div>
+        <div class="row between"><span class="upper">Checks · card #1 · started 11:02</span><span class="row"><span class="xs faint">one at a time · <span class="mono">checks_parallel = false</span></span><button class="btn sm disabled" title="Checks already running">Run checks</button></span></div>
+        <div class="ck-row"><span class="st">✓</span><b>lint</b><span class="cmd">uv run ruff check .</span><span class="req">required</span><span class="tm">0.3s</span></div>
+        <div class="ck-row"><span class="st run">●</span><b>tests</b><span class="cmd">uv run pytest -q</span><span class="req">required</span><span class="tm run">running · 0:07</span></div>
+        <div class="term ck-live">
+          <div class="term-bar"><span class="dot info pulse"></span><span>tests · live output</span><span class="grow"></span><span class="xs faint">timeout 600s</span></div>
+          <div class="term-body"><span class="d">$ uv run pytest -q</span>
 ........................................................................ [ 22%]
 ........................................................................ [ 45%]
 ........................................................................ [ 67%]
-.............................................<span class="cursor"></span></pre>
-            </div>
-          </div>
-          <div class="ck">
-            <div class="ck-row">
-              <span class="tw">▸</span><span class="dot "></span>
-              <span class="strong">types</span>
-              <span class="cmd">uv run pyright</span>
-              <span class="req">optional</span>
-              <span class="res faint">Queued</span>
-            </div>
-          </div>
+.............................................<span class="cursor"></span></div>
         </div>
-
-        <div class="panel">
-          <div class="panel-h"><span class="upper">Brief coverage</span><span class="xs faint">agent fills, you confirm</span></div>
-          <div class="row" style="padding:14px;gap:12px">
-            <span class="dot"></span>
-            <div class="grow small muted">Waits for green checks. When every required check passes, Claude reads the work (read-only) and marks each of the 5 criteria. If checks fail, no agent call is made.</div>
-          </div>
-        </div>
-        <div class="small faint">Files, lines and tests added are counted when the checks finish, against <span class="mono">origin/main</span>. Untracked files count too.</div>
+        <div class="ck-row"><span class="st off"></span><b class="faint">types</b><span class="cmd">uv run pyright</span><span class="req">optional</span><span class="tm off">queued</span></div>
+      </div>
+      <div><div class="upper">Brief criteria · filled by a side run, you confirm</div>
+        <div class="card mt-8 wait-note">
+          <span class="dot"></span>
+          <div class="grow small muted pretty">Waits for green checks. When every required check passes, a read-only side run marks each of the 5 criteria and you confirm them. If checks fail, no agent call is made.</div>
         </div>
       </div>
-    </section>
+      <div class="small faint">Files, lines and tests added are counted when the checks finish, against <span class="mono">origin/main</span>. Untracked files count too.</div>
+    </div>
   </div>
 </div>
