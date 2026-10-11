@@ -608,6 +608,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
+/* M8 Safety, cost, rewind: pieces shared by the Task Room screens */
+
+/* permission profile pill in the room header */
+.pp-wrap { position: relative; display: inline-flex; }
+.ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface2); font-size: 12px; color: var(--text); white-space: nowrap; }
+.ppill.open { border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); }
+.ppill svg, .lock svg { display: block; }
+.lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 11px; }
+
+/* profile popover, hangs under the pill */
+.pop { position: absolute; top: calc(100% + 10px); left: 0; width: 470px; z-index: 20; background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.pop-opt { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pop-opt.on { background: var(--road-soft); }
+.pop-opt ul { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pop-opt li::before { content: '· '; color: var(--faint); }
+.lvl { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12px; padding: 5px 0; align-items: baseline; }
+.lvl .tag { justify-self: start; }
+
+/* cost meter in the room header: plain bar under 80% of the budget, .red from 80% */
+.meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.meter .progress { width: 72px; }
+.meter b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+.runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; white-space: nowrap; }
+
+/* a divider line inside the .tl Stream (a new run starts) */
+.tl-div { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--faint); font-family: 'JetBrains Mono', monospace; padding: 2px 0 2px 74px; }
+.tl-div::before, .tl-div::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.tl-ev .card-ev { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; }
+.tl-ev .card-ev.err { border-color: var(--bad); background: var(--bad-soft); }
+.tl-ev .card-ev.ok { border-color: var(--ok); background: var(--ok-soft); }
+.tl-ev .card-ev.warn { border-color: var(--road); background: var(--road-soft); }
+.tl-ev .out { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--term-text); white-space: pre-wrap; border: 1px solid var(--line); }
+
+/* checkpoints list (rewind) */
+.room.wide-side { grid-template-columns: 380px minmax(0, 1fr); }
+.cp { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; background: var(--surface); }
+.cp.now { border-color: var(--ok); }
+.cp.here { border-color: var(--ok); background: var(--ok-soft); }
+.cp.sel, .cp.new { border-color: var(--road); background: var(--road-soft); }
+.cp .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--line); border-radius: 6px; }
+.cp .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
 .after-top:empty { display: none; }
 </style>
@@ -619,14 +660,14 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a>Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear on" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.80</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .set-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -634,8 +675,8 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .bind { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 12px; align-items: baseline; }
   .bind > span:first-child { color: var(--muted); }
   .paths { display: flex; flex-wrap: wrap; gap: 4px; }
-  .paths span { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--text-2); }
-  .paths.red span { border-color: var(--red); color: var(--red); }
+  .paths span { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 0 5px; border: 1px solid var(--line); border-radius: 6px; color: var(--text2); }
+  .paths.red span { border-color: var(--bad); color: var(--bad); }
   .rule { display: grid; grid-template-columns: minmax(0, 1fr) 62px 86px 18px; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 12px; }
   .rule .p { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rule .x { color: var(--faint); text-align: center; }
@@ -659,16 +700,16 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <div><div style="font-size:13.5px">Sandbox mode</div><div class="xs faint">Full always uses the sandbox, whatever this says.</div></div>
           <div class="seg"><button class="on">Always</button><button>Full only</button></div>
         </div>
-        <div class="probe"><span class="muted">bwrap</span><span class="mono">/usr/bin/bwrap 0.9.0</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
-        <div class="probe"><span class="muted">user ns</span><span class="mono">allowed</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
-        <div class="probe"><span class="muted">probe</span><span class="mono ellipsis">cat ~/.ssh/* → No such file or directory</span><span class="row xs green"><span class="dot green"></span>ok</span></div>
+        <div class="probe"><span class="muted">bwrap</span><span class="mono">/usr/bin/bwrap 0.9.0</span><span class="row xs ok-t"><span class="dot ok"></span>ok</span></div>
+        <div class="probe"><span class="muted">user ns</span><span class="mono">allowed</span><span class="row xs ok-t"><span class="dot ok"></span>ok</span></div>
+        <div class="probe"><span class="muted">probe</span><span class="mono ellipsis">cat ~/.ssh/* → No such file or directory</span><span class="row xs ok-t"><span class="dot ok"></span>ok</span></div>
         <div class="mono xs faint" style="padding-top:6px">$ saarthi safety check</div>
       </section>
 
       <section class="card">
         <div class="card-head"><h2>What the agent sees</h2><span class="small muted">hide all of $HOME, add back a short list</span></div>
         <div class="bind"><span>Hidden</span><div class="paths"><span>$HOME</span><span>/run/user/1000</span><span class="faint" style="border:none;font-family:inherit">ssh-agent, keyring</span></div></div>
-        <div class="bind"><span>Read-only</span><div class="paths"><span>.local/bin</span><span>.local/share/uv</span><span>.nvm</span><span>.cargo/bin</span><span>.rustup</span><span>.pyenv</span><span>.gitconfig</span><span>.config/git</span><span style="border-color:var(--accent)">.config/pnpm · project</span></div></div>
+        <div class="bind"><span>Read-only</span><div class="paths"><span>.local/bin</span><span>.local/share/uv</span><span>.nvm</span><span>.cargo/bin</span><span>.rustup</span><span>.pyenv</span><span>.gitconfig</span><span>.config/git</span><span style="border-color:var(--road)">.config/pnpm · project</span></div></div>
         <div class="bind"><span>Read-write</span><div class="paths"><span>worktree</span><span>&lt;repo&gt;/.git</span><span>.claude</span><span>.claude.json</span><span>.codex</span><span>sandbox-cache → .cache</span></div></div>
         <div class="bind"><span>Never visible</span><div class="paths red"><span>.ssh</span><span>.aws</span><span>.gnupg</span><span>.config/gh</span><span>.git-credentials</span><span>.netrc</span><span>.docker</span><span>.kube</span><span>+ 6 more</span></div></div>
         <div class="bind"><span>Also</span><span class="text2">Network stays on (agents need their provider). <span class="mono">.git/hooks</span> and <span class="mono">.git/config</span> are read-only.</span></div>
@@ -680,7 +721,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <div class="field"><label>Per task</label><div class="input mono" style="padding:5px 8px">$3.00</div></div>
           <div class="field"><label>Per day</label><div class="input mono" style="padding:5px 8px">$10.00</div></div>
         </div>
-        <div class="xs faint mt-8">Amber at 80%. One alert per task and per day. Project override: <span class="mono">[budget] task_usd</span>.</div>
+        <div class="xs faint mt-8">The cost bar turns red at 80%. One alert per task and per day. Project override: <span class="mono">[budget] task_usd</span>.</div>
       </section>
     </div>
 
@@ -704,7 +745,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 
       <section class="card">
         <div class="card-head"><h2>Secret masking</h2><span class="tag green">on · always</span></div>
-        <div class="small text2 pretty"><span class="mono">.env</span> values, known key shapes and secret-looking env vars become <span class="mono accent">****</span> before anything is saved or sent. Values under 8 characters are skipped.</div>
+        <div class="small text2 pretty"><span class="mono">.env</span> values, known key shapes and secret-looking env vars become <span class="mono road">****</span> before anything is saved or sent. Values under 8 characters are skipped.</div>
         <div class="row mt-12">
           <div class="grow"><div class="small">Scrub data saved before M8</div><div class="xs faint">Last run: 18,204 events, 61 run logs, 210 check logs. Masked 37 values.</div></div>
           <button class="btn sm">Scrub now</button>

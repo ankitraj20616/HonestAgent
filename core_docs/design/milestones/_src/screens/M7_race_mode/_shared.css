@@ -1,0 +1,35 @@
+/* M7 Race Mode: pieces shared by the race screens */
+.race-tag { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--road); color: var(--road-text); background: var(--road-soft); white-space: nowrap; }
+
+/* small Wheel that shows the two lanes as two beads on the Run spoke */
+.race-wheel { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.race-wheel .wheel .w-lbl { font-size: 19px; letter-spacing: 1px; }
+.race-wheel .wheel .b-txt { font-size: 15px; }
+.race-wheel .wheel .w-big { font-size: 44px; }
+.race-wheel .wheel .w-sub { font-size: 15px; }
+.race-wheel .wheel .b-link { stroke-width: 9; opacity: .8; }
+.race-wheel .cap { font-size: 11.5px; color: var(--faint); text-align: center; text-wrap: pretty; }
+
+/* Compare tab */
+.cmp { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); flex-shrink: 0; }
+.cmp th, .cmp td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.cmp tr:last-child td { border-bottom: none; }
+.cmp th { background: var(--panel); font-weight: 500; vertical-align: top; }
+.cmp td:first-child, .cmp th:first-child { color: var(--muted); width: 150px; }
+.cmp td + td, .cmp th + th { border-left: 1px solid var(--line); width: calc(50% - 75px); }
+.cmp .best { font-weight: 700; color: var(--ok); }
+.lane-trust { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 8px; }
+.lane-trust .lg { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 400; }
+.lane-trust .lg-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; color: var(--text2); }
+.lane-trust .lg-row i { width: 10px; height: 10px; border-radius: 3px; }
+.lane-trust .lg-row b { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 11.5px; color: var(--text); }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; flex: 1; min-height: 0; }
+.col-scroll { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
+.mini-proof { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.mini-proof.ok { border-color: var(--ok); }
+.mini-proof.bad { border-color: var(--bad); }
+.ck { display: grid; grid-template-columns: 10px 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.grp .why { font-size: 12.5px; color: var(--text2); }
+.flagp { font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 10px; border: 1px solid var(--bad); color: var(--bad); white-space: nowrap; }
+.out { margin-top: 2px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--bad); white-space: pre-wrap; }

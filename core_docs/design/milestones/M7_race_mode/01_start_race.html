@@ -608,6 +608,41 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
+/* M7 Race Mode: pieces shared by the race screens */
+.race-tag { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--road); color: var(--road-text); background: var(--road-soft); white-space: nowrap; }
+
+/* small Wheel that shows the two lanes as two beads on the Run spoke */
+.race-wheel { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.race-wheel .wheel .w-lbl { font-size: 19px; letter-spacing: 1px; }
+.race-wheel .wheel .b-txt { font-size: 15px; }
+.race-wheel .wheel .w-big { font-size: 44px; }
+.race-wheel .wheel .w-sub { font-size: 15px; }
+.race-wheel .wheel .b-link { stroke-width: 9; opacity: .8; }
+.race-wheel .cap { font-size: 11.5px; color: var(--faint); text-align: center; text-wrap: pretty; }
+
+/* Compare tab */
+.cmp { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); flex-shrink: 0; }
+.cmp th, .cmp td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.cmp tr:last-child td { border-bottom: none; }
+.cmp th { background: var(--panel); font-weight: 500; vertical-align: top; }
+.cmp td:first-child, .cmp th:first-child { color: var(--muted); width: 150px; }
+.cmp td + td, .cmp th + th { border-left: 1px solid var(--line); width: calc(50% - 75px); }
+.cmp .best { font-weight: 700; color: var(--ok); }
+.lane-trust { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 8px; }
+.lane-trust .lg { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 400; }
+.lane-trust .lg-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; color: var(--text2); }
+.lane-trust .lg-row i { width: 10px; height: 10px; border-radius: 3px; }
+.lane-trust .lg-row b { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 11.5px; color: var(--text); }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; flex: 1; min-height: 0; }
+.col-scroll { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
+.mini-proof { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.mini-proof.ok { border-color: var(--ok); }
+.mini-proof.bad { border-color: var(--bad); }
+.ck { display: grid; grid-template-columns: 10px 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.grp .why { font-size: 12.5px; color: var(--text2); }
+.flagp { font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 10px; border: 1px solid var(--bad); color: var(--bad); white-space: nowrap; }
+.out { margin-top: 2px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--bad); white-space: pre-wrap; }
 
 .after-top:empty { display: none; }
 </style>
@@ -619,44 +654,41 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .lane-box { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); min-width: 0; }
   .lane-box .kvr { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; font-size: 12px; align-items: baseline; }
   .lane-box .kvr > span:first-child { color: var(--faint); font-size: 11.5px; }
   .opt-mode { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; text-align: left; }
-  .opt-mode.on { border-color: var(--accent); background: var(--accent-soft); }
+  .opt-mode.on { border-color: var(--road); background: var(--road-soft); }
   .opt-mode.off { opacity: .45; }
   .sel { display: flex; align-items: center; justify-content: space-between; }
   .pack-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 12px; font-size: 12.5px; border-top: 1px solid var(--line); }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage ready">Ready</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">—</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.09</span></span>
-    <button class="btn" style="border-color:var(--accent)">Race</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage ready">Ready</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 3 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="29.8 89.5" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="42.0" cy="23.0" r="5"/></svg>
+      <div class="lbl"><b>Brief · 3 of 8</b>Ready to run · brief v3</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>—</b></span><span class="room-meta">Cost <b>$0.09</b></span>
+    <button class="btn" style="border-color:var(--road)">Race</button>
     <button class="btn primary">Run agent</button>
   </div>
   <div class="room">
     <aside class="room-side">
       <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved</span></div>
-        <div class="xs faint">Goal</div>
-        <div class="pretty" style="font-size:13.5px">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="xs faint mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved</span></div>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+                <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
         <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
@@ -667,7 +699,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       </section>
       <section class="col" style="gap:6px">
         <h3>Runs</h3>
-        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">10:22 · 4m 51s · $0.09</div></div><span class="xs green strong">done</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">10:22 · 4m 51s · $0.09</div></div><span class="small ok-t strong">done</span></div>
       </section>
     </aside>
     <section class="room-main">
@@ -676,10 +708,10 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
         <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
       </div>
       <div class="tab-body">
-        <div class="stream">
-          <div class="ev"><span class="time">10:22</span><div class="ev-card msg">Research run 01JAT2 started · Claude · read only</div></div>
-          <div class="ev"><span class="time">10:24</span><div class="ev-card msg">Login lives in <span class="mono">app/auth/routes.py</span>. Email goes through <span class="mono">app.mail.send_mail</span>. There is no reset flow yet.</div></div>
-          <div class="ev"><span class="time">10:26</span><div class="ev-card ok"><div class="ev-head"><span class="dot green"></span>Research ended · 3 findings saved to the Research tab</div></div></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:22</span><span class="node info"></span><div class="bx">Research run <b>01JAT2</b> started with <b>Claude</b> · read only.</div></div>
+          <div class="tl-ev"><span class="tm">10:24</span><span class="node"></span><div class="bx">Login lives in <span class="mono">app/auth/routes.py</span>. Email goes through <span class="mono">app.mail.send_mail</span>. There is no reset flow yet.</div></div>
+          <div class="tl-ev"><span class="tm">10:26</span><span class="node ok"></span><div class="bx">Research ended · 3 findings saved to the Research tab.</div></div>
         </div>
       </div>
     </section>
@@ -697,13 +729,13 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       <div class="grid-2" style="gap:10px">
         <div class="lane-box">
           <div class="row"><span class="agent cl">CL</span><span class="strong">Lane claude</span><span class="grow"></span><span class="row xs green"><span class="dot green"></span>ready · logged in</span></div>
-          <div class="kvr"><span>Branch</span><span class="mono accent" style="word-break:break-all">saarthi/T-0012-add-password-reset-api-claude</span></div>
+          <div class="kvr"><span>Branch</span><span class="mono road" style="word-break:break-all">saarthi/T-0012-add-password-reset-api-claude</span></div>
           <div class="kvr"><span>Worktree</span><span class="mono faint ellipsis">…/acme-billing-3f9k2a/T-0012-claude</span></div>
           <div class="kvr"><span>Ports</span><span class="mono">41010-41019 <span class="faint">· SAARTHI_PORT=41010</span></span></div>
         </div>
         <div class="lane-box">
           <div class="row"><span class="agent cx">CX</span><span class="strong">Lane codex</span><span class="grow"></span><span class="row xs green"><span class="dot green"></span>ready · logged in</span></div>
-          <div class="kvr"><span>Branch</span><span class="mono accent" style="word-break:break-all">saarthi/T-0012-add-password-reset-api-codex</span></div>
+          <div class="kvr"><span>Branch</span><span class="mono road" style="word-break:break-all">saarthi/T-0012-add-password-reset-api-codex</span></div>
           <div class="kvr"><span>Worktree</span><span class="mono faint ellipsis">…/acme-billing-3f9k2a/T-0012-codex</span></div>
           <div class="kvr"><span>Ports</span><span class="mono">41020-41029 <span class="faint">· SAARTHI_PORT=41020</span></span></div>
         </div>

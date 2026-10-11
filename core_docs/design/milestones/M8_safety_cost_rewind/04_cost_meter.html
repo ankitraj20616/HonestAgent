@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M8 · Cost meter</title>
-<meta name="description" content="Cost at three levels: per run (with ~ for estimates from tokens), per task (meter in the Task Room header, amber at 80% of $3.00), per day (top bar popover: today by task and the last 7 days vs the $10.00 day budget). F16.2">
+<meta name="description" content="Cost at three levels: per run (with ~ for estimates from tokens), per task (meter in the Task Room header, red at 80% of $3.00), per day (top bar popover: today by task and the last 7 days vs the $10.00 day budget). F16.2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -608,6 +608,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
+/* M8 Safety, cost, rewind: pieces shared by the Task Room screens */
+
+/* permission profile pill in the room header */
+.pp-wrap { position: relative; display: inline-flex; }
+.ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface2); font-size: 12px; color: var(--text); white-space: nowrap; }
+.ppill.open { border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); }
+.ppill svg, .lock svg { display: block; }
+.lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 11px; }
+
+/* profile popover, hangs under the pill */
+.pop { position: absolute; top: calc(100% + 10px); left: 0; width: 470px; z-index: 20; background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.pop-opt { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pop-opt.on { background: var(--road-soft); }
+.pop-opt ul { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pop-opt li::before { content: '· '; color: var(--faint); }
+.lvl { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12px; padding: 5px 0; align-items: baseline; }
+.lvl .tag { justify-self: start; }
+
+/* cost meter in the room header: plain bar under 80% of the budget, .red from 80% */
+.meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.meter .progress { width: 72px; }
+.meter b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+.runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; white-space: nowrap; }
+
+/* a divider line inside the .tl Stream (a new run starts) */
+.tl-div { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--faint); font-family: 'JetBrains Mono', monospace; padding: 2px 0 2px 74px; }
+.tl-div::before, .tl-div::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.tl-ev .card-ev { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; }
+.tl-ev .card-ev.err { border-color: var(--bad); background: var(--bad-soft); }
+.tl-ev .card-ev.ok { border-color: var(--ok); background: var(--ok-soft); }
+.tl-ev .card-ev.warn { border-color: var(--road); background: var(--road-soft); }
+.tl-ev .out { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--term-text); white-space: pre-wrap; border: 1px solid var(--line); }
+
+/* checkpoints list (rewind) */
+.room.wide-side { grid-template-columns: 380px minmax(0, 1fr); }
+.cp { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; background: var(--surface); }
+.cp.now { border-color: var(--ok); }
+.cp.here { border-color: var(--ok); background: var(--ok-soft); }
+.cp.sel, .cp.new { border-color: var(--road); background: var(--road-soft); }
+.cp .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--line); border-radius: 6px; }
+.cp .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
 .after-top:empty { display: none; }
 </style>
@@ -619,20 +660,18 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.80</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
-  .meter .progress { width: 72px; }
-  .cpop { position: absolute; top: 6px; right: 14px; width: 410px; z-index: 20; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-  .cpop::before { content: ''; position: absolute; top: -6px; right: 22px; width: 10px; height: 10px; background: var(--surface); border-left: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); transform: rotate(45deg); }
+  .cpop { position: absolute; top: 6px; right: 14px; width: 410px; z-index: 20; background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .cpop::before { content: ''; position: absolute; top: -6px; right: 22px; width: 10px; height: 10px; background: var(--surface); border-left: 1px solid var(--line2); border-top: 1px solid var(--line2); transform: rotate(45deg); }
   .cp-sec { padding: 12px 16px; border-top: 1px solid var(--line); }
   .trow { display: grid; grid-template-columns: 54px minmax(0, 1fr) 56px 54px; gap: 8px; align-items: center; font-size: 12.5px; padding: 4px 0; }
   .trow .progress { height: 4px; }
@@ -640,39 +679,38 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .chart .bud { position: absolute; left: 0; right: 0; bottom: calc(18px + 75px); border-top: 1px dashed var(--line-hover); }
   .chart .bud span { position: absolute; right: 0; top: -15px; font-size: 10.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
   .bar { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .bar i { display: block; width: 100%; max-width: 26px; border-radius: 3px 3px 0 0; background: var(--line-strong); }
-  .bar i.today { background: var(--accent); }
-  .bar i.over { background: var(--red); }
+  .bar i { display: block; width: 100%; max-width: 26px; border-radius: 3px 3px 0 0; background: var(--line2); }
+  .bar i.today { background: var(--road); }
+  .bar i.over { background: var(--bad); }
   .bar b { font-weight: 400; font-size: 10.5px; color: var(--faint); }
   .bar em { font-style: normal; font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
-  .runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage review">Review</span>
-    <span class="meter" style="margin-left:6px">Cost <span class="progress"><span style="width:80%"></span></span><span class="mono accent">$2.40</span><span class="faint">/ $3.00</span></span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">41m 05s</span></span>
-    <button class="btn ok">Ship</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 6 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="74.6 44.8" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-ok" cx="9.6" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Review · 6 of 8</b>Proof is green · waiting for your eyes</div></div>
+    <span class="meter">Cost <span class="progress red"><span style="width:80%"></span></span><b>$2.40</b><span class="faint">/ $3.00</span></span>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>41m 05s</b></span>
+    <button class="btn primary">Ship</button>
   </div>
 
   <div class="cpop">
     <div style="padding:14px 16px 12px">
       <div class="row between"><span class="strong">Today · Sunday 11 October</span><span class="xs faint">all projects</span></div>
       <div class="row base" style="margin-top:6px;gap:10px"><span class="mono" style="font-size:26px;font-weight:500">$4.80</span><span class="small muted">of $10.00 day budget · 9 runs</span></div>
-      <div class="progress green mt-8"><span style="width:48%"></span></div>
+      <div class="progress mt-8"><span style="width:48%"></span></div>
     </div>
     <div class="cp-sec">
       <div class="row between" style="margin-bottom:4px"><span class="upper">Today by task</span><span class="xs faint">task budget $3.00</span></div>
-      <div class="trow"><span class="mono accent">T-0012</span><span class="ellipsis">Add password reset API</span><span class="progress"><span style="width:80%"></span></span><span class="mono" style="text-align:right">$2.40</span></div>
-      <div class="trow"><span class="mono faint">T-0018</span><span class="ellipsis">Invoice PDF export with line-item totals</span><span class="progress green"><span style="width:43%"></span></span><span class="mono" style="text-align:right">$1.30</span></div>
-      <div class="trow"><span class="mono faint">T-0027</span><span class="ellipsis">Event replay after WebSocket reconnect</span><span class="progress green"><span style="width:21%"></span></span><span class="mono" style="text-align:right">~$0.62</span></div>
-      <div class="trow"><span class="mono faint">T-0031</span><span class="ellipsis">Upgrade Alembic to 1.14</span><span class="progress green"><span style="width:16%"></span></span><span class="mono" style="text-align:right">~$0.48</span></div>
+      <div class="trow"><span class="mono road">T-0012</span><span class="ellipsis">Add password reset API</span><span class="progress red"><span style="width:80%"></span></span><span class="mono" style="text-align:right">$2.40</span></div>
+      <div class="trow"><span class="mono faint">T-0018</span><span class="ellipsis">Invoice PDF export with line-item totals</span><span class="progress"><span style="width:43%"></span></span><span class="mono" style="text-align:right">$1.30</span></div>
+      <div class="trow"><span class="mono faint">T-0027</span><span class="ellipsis">Event replay after WebSocket reconnect</span><span class="progress"><span style="width:21%"></span></span><span class="mono" style="text-align:right">~$0.62</span></div>
+      <div class="trow"><span class="mono faint">T-0031</span><span class="ellipsis">Upgrade Alembic to 1.14</span><span class="progress"><span style="width:16%"></span></span><span class="mono" style="text-align:right">~$0.48</span></div>
     </div>
     <div class="cp-sec">
-      <div class="row between"><span class="upper">Last 7 days</span><span class="xs red">1 day over budget</span></div>
+      <div class="row between"><span class="upper">Last 7 days</span><span class="xs bad-t">1 day over budget</span></div>
       <div class="chart">
         <div class="bud"><span>$10</span></div>
         <div class="bar"><em>3.10</em><i style="height:23px"></i><b>Mon</b></div>
@@ -680,7 +718,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
         <div class="bar"><em>2.20</em><i style="height:17px"></i><b>Wed</b></div>
         <div class="bar"><em>7.90</em><i style="height:59px"></i><b>Thu</b></div>
         <div class="bar"><em>~2.10</em><i style="height:16px"></i><b>Fri</b></div>
-        <div class="bar"><em class="red">11.20</em><i class="over" style="height:84px"></i><b>Sat</b></div>
+        <div class="bar"><em class="bad-t">11.20</em><i class="over" style="height:84px"></i><b>Sat</b></div>
         <div class="bar"><em style="color:var(--text)">4.80</em><i class="today" style="height:36px"></i><b class="strong" style="color:var(--text)">Today</b></div>
       </div>
     </div>
@@ -691,38 +729,39 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   </div>
 
   <div class="room">
-    <aside class="room-side">
-      <section class="col" style="gap:8px">
+    <div class="room-side">
+      <div class="col" style="gap:8px">
         <div class="row between"><h3>Cost</h3><span class="xs faint">task budget $3.00</span></div>
-        <div class="row base" style="gap:8px"><span class="mono" style="font-size:22px">$2.40</span><span class="small accent">80% · amber from 80%</span></div>
-        <div class="progress"><span style="width:80%"></span></div>
-        <div class="xs faint">One warning when it goes over. Runs are never stopped.</div>
-      </section>
-      <section class="col" style="gap:6px">
+        <div class="row base" style="gap:8px"><span class="mono" style="font-size:22px">$2.40</span><span class="small bad-t">80% · the bar turns red at 80%</span></div>
+        <div class="progress red"><span style="width:80%"></span></div>
+        <div class="xs faint">One alert when it goes over. Runs are never stopped.</div>
+      </div>
+      <div class="col" style="gap:6px">
         <div class="row between"><h3>Runs</h3><span class="xs faint">5 runs</span></div>
         <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAX3</span> · fix</div><div class="xs faint">11:20 · 4m 10s · reported</div></div><span class="mono">$0.86</span></div>
-        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 2m 02s · 41k tokens</div></div><span class="mono accent">~$0.42</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 2m 02s · 41k tokens</div></div><span class="mono road">~$0.42</span></div>
         <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JC5A1B2C</span> · build</div><div class="xs faint">race lane claude · winner</div></div><span class="mono">$0.62</span></div>
-        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JC5A1B3D</span> · build</div><div class="xs faint">race lane codex · 38k tokens</div></div><span class="mono accent">~$0.41</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JC5A1B3D</span> · build</div><div class="xs faint">race lane codex · 38k tokens</div></div><span class="mono road">~$0.41</span></div>
         <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">10:22 · 4m 51s · reported</div></div><span class="mono">$0.09</span></div>
-      </section>
-    </aside>
-    <section class="room-main">
+      </div>
+    </div>
+    <div class="room-main">
       <div class="tabs">
-        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot green"></span></button>
+        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot ok"></span></button>
         <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
       </div>
       <div class="tab-body">
-        <div class="stream" style="max-width:520px">
-          <div class="ev"><span class="time">10:59</span><div class="ev-card"><div class="ev-head"><span class="agent sm cl">CL</span>Build run ended · race lane claude<span class="runc">$0.62</span></div></div></div>
-          <div class="ev"><span class="time">11:00</span><div class="ev-card"><div class="ev-head"><span class="agent sm cx">CX</span>Build run ended · race lane codex<span class="runc accent">~$0.41</span></div><div class="xs faint mt-4">Codex reported tokens only: 31k in, 7k out. Estimated from the price table.</div></div></div>
-          <div class="ev"><span class="time">11:14</span><div class="ev-card"><div class="ev-head"><span class="agent sm cx">CX</span>Second opinion ended · 3 findings<span class="runc accent">~$0.42</span></div></div></div>
-          <div class="ev"><span class="time">11:24</span><div class="ev-card"><div class="ev-head"><span class="agent sm cl">CL</span>Fix run ended · checks green<span class="runc">$0.86</span></div></div></div>
-          <div class="ev"><span class="time">11:25</span><div class="ev-card ok"><div class="ev-head"><span class="dot green"></span>All checks green. Task moved to Review.</div></div></div>
-          <div class="ev"><span class="time">11:25</span><div class="ev-card needs"><div class="ev-head"><span class="dot amber"></span>Task cost at 80% of its budget: $2.40 of $3.00</div><div class="xs muted mt-4">Meter is amber. No alert yet; you get one when it goes over.</div></div></div>
+        <div class="tl" style="max-width:560px">
+          <div class="tl-ev"><span class="tm">10:59</span><span class="node ok"></span><div class="bx"><div class="tool-row"><span class="agent sm cl">CL</span><span>Build run ended · race lane claude</span><span class="r">$0.62</span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:00</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="agent sm cx">CX</span><span>Build run ended · race lane codex</span><span class="r road">~$0.41</span></div>
+            <div class="xs faint" style="margin:4px 0 0 2px">Codex reported tokens only: 31k in, 7k out. Estimated from the price table.</div></div></div>
+          <div class="tl-ev"><span class="tm">11:14</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="agent sm cx">CX</span><span>Second opinion ended · 3 findings</span><span class="r road">~$0.42</span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:24</span><span class="node ok"></span><div class="bx"><div class="tool-row"><span class="agent sm cl">CL</span><span>Fix run ended · checks green</span><span class="r">$0.86</span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:25</span><span class="node ok"></span><div class="bx"><div class="card-ev ok">All checks green. Task moved to Review.</div></div></div>
+          <div class="tl-ev"><span class="tm">11:25</span><span class="node bad"></span><div class="bx"><div class="card-ev err"><div class="strong" style="color:var(--text)">Task cost at 80% of its budget: $2.40 of $3.00</div><div class="xs muted" style="margin-top:4px">The meter is red from 80%. No alert yet; you get one when it goes over.</div></div></div></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 </div>

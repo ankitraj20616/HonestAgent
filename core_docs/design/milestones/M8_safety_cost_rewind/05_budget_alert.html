@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M8 · Budget alert</title>
-<meta name="description" content="Task over its budget ($3.40 of $3.00): one desktop notification, red meter, banner in the Task Room with what you can do next. The run is not stopped. Day meter is amber at 86% of $10.00. F16.3">
+<meta name="description" content="Task over its budget ($3.40 of $3.00): one desktop notification, red meter, banner in the Task Room with what you can do next. The run is not stopped. The day meter is red too: 86% of $10.00 (red from 80%). F16.3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -608,6 +608,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
+/* M8 Safety, cost, rewind: pieces shared by the Task Room screens */
+
+/* permission profile pill in the room header */
+.pp-wrap { position: relative; display: inline-flex; }
+.ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface2); font-size: 12px; color: var(--text); white-space: nowrap; }
+.ppill.open { border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); }
+.ppill svg, .lock svg { display: block; }
+.lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 11px; }
+
+/* profile popover, hangs under the pill */
+.pop { position: absolute; top: calc(100% + 10px); left: 0; width: 470px; z-index: 20; background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.pop-opt { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pop-opt.on { background: var(--road-soft); }
+.pop-opt ul { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pop-opt li::before { content: '· '; color: var(--faint); }
+.lvl { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12px; padding: 5px 0; align-items: baseline; }
+.lvl .tag { justify-self: start; }
+
+/* cost meter in the room header: plain bar under 80% of the budget, .red from 80% */
+.meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.meter .progress { width: 72px; }
+.meter b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+.runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; white-space: nowrap; }
+
+/* a divider line inside the .tl Stream (a new run starts) */
+.tl-div { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--faint); font-family: 'JetBrains Mono', monospace; padding: 2px 0 2px 74px; }
+.tl-div::before, .tl-div::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.tl-ev .card-ev { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; }
+.tl-ev .card-ev.err { border-color: var(--bad); background: var(--bad-soft); }
+.tl-ev .card-ev.ok { border-color: var(--ok); background: var(--ok-soft); }
+.tl-ev .card-ev.warn { border-color: var(--road); background: var(--road-soft); }
+.tl-ev .out { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--term-text); white-space: pre-wrap; border: 1px solid var(--line); }
+
+/* checkpoints list (rewind) */
+.room.wide-side { grid-template-columns: 380px minmax(0, 1fr); }
+.cp { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; background: var(--surface); }
+.cp.now { border-color: var(--ok); }
+.cp.here { border-color: var(--ok); background: var(--ok-soft); }
+.cp.sel, .cp.new { border-color: var(--road); background: var(--road-soft); }
+.cp .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--line); border-radius: 6px; }
+.cp .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
 .after-top:empty { display: none; }
 </style>
@@ -619,65 +660,61 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$8.60</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0012 · over budget"><span class="agent cl">CL</span><i class="ra-dot tone-bg-bad"></i></div><small>12</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
-  .meter .progress { width: 72px; }
-  .runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; }
   .next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
-  .next > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
-  .divl { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
-  .divl::before, .divl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .next > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+  .ev-top { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage running">Running</span>
-    <span class="meter" style="margin-left:6px">Cost <span class="progress red"><span style="width:100%"></span></span><span class="mono red strong">$3.40</span><span class="faint">/ $3.00</span></span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">58m 31s</span></span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage running">Running</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 4 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="44.8 74.6" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="36.4" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Run · 4 of 8</b>Fix round 3 of 3</div></div>
+    <span class="meter">Cost <span class="progress red"><span style="width:100%"></span></span><b style="color:var(--bad)">$3.40</b><span class="faint">/ $3.00</span></span>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>58m 31s</b></span>
     <button class="btn">Stop run</button>
   </div>
   <div class="room">
-    <aside class="room-side">
-      <section class="col" style="gap:8px">
+    <div class="room-side">
+      <div class="col" style="gap:8px">
         <div class="row between"><h3>Cost</h3><span class="xs faint">task budget $3.00</span></div>
-        <div class="row base" style="gap:8px"><span class="mono red" style="font-size:22px">$3.40</span><span class="small red strong">113% · over</span></div>
+        <div class="row base" style="gap:8px"><span class="mono bad-t" style="font-size:22px">$3.40</span><span class="small bad-t strong">113% · over</span></div>
         <div class="progress red"><span style="width:100%"></span></div>
         <div class="xs faint">Alerted once at 11:52. Next alert only if you raise the limit and it goes over again.</div>
-      </section>
-      <section class="col" style="gap:6px">
+      </div>
+      <div class="col" style="gap:6px">
         <div class="row between"><h3>Runs</h3><span class="xs faint">fix loop · round 3</span></div>
         <div class="run-row on"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JB2K</span> · fix · round 3</div><div class="xs faint">11:49 · running</div></div><span class="mono">$0.49</span></div>
         <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JB1F</span> · fix · round 2</div><div class="xs faint">11:38 · 6m 12s</div></div><span class="mono">$0.21</span></div>
         <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAX3</span> · fix · round 1</div><div class="xs faint">11:20 · 4m 10s</div></div><span class="mono">$0.86</span></div>
-        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 41k tokens</div></div><span class="mono accent">~$0.42</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 41k tokens</div></div><span class="mono road">~$0.42</span></div>
         <div class="xs faint" style="padding:2px 2px 0">+ 3 earlier runs · $1.42</div>
-      </section>
-      <section class="col" style="gap:8px">
+      </div>
+      <div class="col" style="gap:8px">
         <div class="row between"><h3>Today</h3><span class="xs faint">day budget $10.00</span></div>
-        <div class="row base" style="gap:8px"><span class="mono accent" style="font-size:16px">$8.60</span><span class="small accent">86% · amber</span></div>
-        <div class="progress"><span style="width:86%"></span></div>
-      </section>
-    </aside>
-    <section class="room-main">
+        <div class="row base" style="gap:8px"><span class="mono bad-t" style="font-size:16px">$8.60</span><span class="small bad-t">86% · red from 80%</span></div>
+        <div class="progress red"><span style="width:86%"></span></div>
+      </div>
+    </div>
+    <div class="room-main">
       <div class="tabs">
-        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot red"></span></button>
+        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot bad"></span></button>
         <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
       </div>
       <div class="tab-body" style="display:flex;flex-direction:column;gap:16px">
-        <div class="card bad" style="padding:14px 16px">
+        <div class="banner err" style="display:block;padding:14px 16px">
           <div class="row gap-12">
-            <span class="dot lg red"></span>
+            <span class="dot lg bad"></span>
             <div class="grow">
               <div class="strong" style="font-size:15px">Over budget: $3.40 of $3.00</div>
               <div class="small muted">This task went over its budget during fix round 3. Saarthi only warns: the run keeps going.</div>
@@ -691,17 +728,17 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           </div>
         </div>
 
-        <div class="stream">
-          <div class="ev"><span class="time">11:38</span><div class="ev-card"><div class="ev-head"><span class="agent sm cl">CL</span>Fix round 2 ended · tests still red (1)<span class="runc">$0.21</span></div></div></div>
-          <div class="ev"><span class="time">11:44</span><div class="ev-card"><div class="ev-head"><span class="dot amber"></span>Task cost $2.91 of $3.00 (97%) · meter amber, no alert yet</div></div></div>
-          <div class="divl">11:49 · fix round 3 · Claude · safe_build · sandboxed</div>
-          <div class="ev"><span class="time">11:50</span><div class="ev-card msg">The 410 test still fails. The token is marked used after the password check, so a second call wins the race. Moving the update into the same transaction.</div></div>
-          <div class="ev"><span class="time">11:51</span><div class="ev-card"><div class="ev-head"><span class="tool blue">Edit</span><span class="mono ellipsis">app/auth/reset.py</span><span class="grow"></span><span class="mono xs"><span class="green">+6</span> <span class="red">−3</span></span></div></div></div>
-          <div class="ev"><span class="time">11:52</span><div class="ev-card err"><div class="ev-head"><span class="flag red"><span class="dot red"></span>Budget alert</span><span class="mono xs muted">cost.budget_exceeded · task T-0012 · limit $3.00</span><span class="runc red">$3.40</span></div></div></div>
-          <div class="ev"><span class="time">11:52</span><div class="ev-card"><div class="ev-head"><span class="tool blue">Bash</span><span class="mono ellipsis">uv run pytest tests/auth -q</span><span class="grow"></span><span class="row xs muted"><span class="dot amber pulse"></span>running</span></div></div></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">11:38</span><span class="node bad"></span><div class="bx"><div class="tool-row"><span class="agent sm cl">CL</span><span>Fix round 2 ended · tests still red (1)</span><span class="r">$0.21</span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:44</span><span class="node bad"></span><div class="bx">Task cost $2.91 of $3.00 (97%) · meter red, no alert yet</div></div>
+          <div class="tl-div">11:49 · fix round 3 · Claude · safe_build · sandboxed</div>
+          <div class="tl-ev"><span class="tm">11:50</span><span class="node"></span><div class="bx">The 410 test still fails. The token is marked used after the password check, so a second call wins the race. Moving the update into the same transaction.</div></div>
+          <div class="tl-ev"><span class="tm">11:51</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">EDIT</span><span class="mono ellipsis">app/auth/reset.py</span><span class="r"><span class="ok-t">+6</span> <span class="bad-t">−3</span></span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:52</span><span class="node bad"></span><div class="bx"><div class="card-ev err"><div class="ev-top"><span class="flag bad"><span class="dot bad"></span>Budget alert</span><span class="mono xs muted ellipsis">cost.budget_exceeded · task T-0012 · limit $3.00</span><span class="runc bad-t">$3.40</span></div></div></div></div>
+          <div class="tl-ev"><span class="tm">11:52</span><span class="node road"></span><div class="bx"><div class="tool-row"><span class="k">RUN</span><span class="mono ellipsis">uv run pytest tests/auth -q</span><span class="r row xs muted"><span class="dot road pulse"></span>running</span></div></div></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 

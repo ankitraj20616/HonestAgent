@@ -608,6 +608,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
+/* M8 Safety, cost, rewind: pieces shared by the Task Room screens */
+
+/* permission profile pill in the room header */
+.pp-wrap { position: relative; display: inline-flex; }
+.ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface2); font-size: 12px; color: var(--text); white-space: nowrap; }
+.ppill.open { border-color: var(--road); box-shadow: 0 0 0 3px var(--road-soft); }
+.ppill svg, .lock svg { display: block; }
+.lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: 11px; }
+
+/* profile popover, hangs under the pill */
+.pop { position: absolute; top: calc(100% + 10px); left: 0; width: 470px; z-index: 20; background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.pop-opt { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pop-opt.on { background: var(--road-soft); }
+.pop-opt ul { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pop-opt li::before { content: '· '; color: var(--faint); }
+.lvl { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12px; padding: 5px 0; align-items: baseline; }
+.lvl .tag { justify-self: start; }
+
+/* cost meter in the room header: plain bar under 80% of the budget, .red from 80% */
+.meter { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.meter .progress { width: 72px; }
+.meter b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+.runc { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; white-space: nowrap; }
+
+/* a divider line inside the .tl Stream (a new run starts) */
+.tl-div { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--faint); font-family: 'JetBrains Mono', monospace; padding: 2px 0 2px 74px; }
+.tl-div::before, .tl-div::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.tl-ev .card-ev { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; }
+.tl-ev .card-ev.err { border-color: var(--bad); background: var(--bad-soft); }
+.tl-ev .card-ev.ok { border-color: var(--ok); background: var(--ok-soft); }
+.tl-ev .card-ev.warn { border-color: var(--road); background: var(--road-soft); }
+.tl-ev .out { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--term-text); white-space: pre-wrap; border: 1px solid var(--line); }
+
+/* checkpoints list (rewind) */
+.room.wide-side { grid-template-columns: 380px minmax(0, 1fr); }
+.cp { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; background: var(--surface); }
+.cp.now { border-color: var(--ok); }
+.cp.here { border-color: var(--ok); background: var(--ok-soft); }
+.cp.sel, .cp.new { border-color: var(--road); background: var(--road-soft); }
+.cp .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; padding: 2px 0; border: 1px solid var(--line); border-radius: 6px; }
+.cp .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
 .after-top:empty { display: none; }
 </style>
@@ -619,63 +660,49 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .probe { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: 12.5px; padding: 5px 0; }
   .flags { width: 100%; border-collapse: collapse; font-size: 11.5px; }
   .flags th { text-align: left; font-weight: 500; color: var(--faint); padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 11px; }
-  .flags td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-family: 'JetBrains Mono', monospace; color: var(--text-2); }
-  .flags td:first-child { font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; color: var(--text); white-space: nowrap; }
-  .flags tr.on td { background: var(--accent-soft); }
+  .flags td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-family: 'JetBrains Mono', monospace; color: var(--text2); }
+  .flags td:first-child { font-weight: 600; color: var(--text); white-space: nowrap; }
+  .flags tr.on td { background: var(--road-soft); }
   .flags tr:last-child td { border-bottom: none; }
-  .still { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-2); }
-</style>
-<style>
-  .ppill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); font-size: 12px; color: var(--text); white-space: nowrap; }
-  .ppill.open { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .ppill svg, .lock svg { display: block; }
-  .lock { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-size: 11px; }
-  .pop { position: absolute; top: 50px; left: 370px; width: 470px; z-index: 20; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-  .pop-opt { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); }
-  .pop-opt.on { background: var(--accent-soft); }
-  .pop-opt ul { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--muted); }
-  .pop-opt li::before { content: '· '; color: var(--faint); }
-  .lvl { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 12px; padding: 5px 0; align-items: baseline; }
-  .lvl .tag { justify-self: start; }
+  .still { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text2); }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage ready">Ready</span>
-    <button class="ppill open"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>safe build<span class="faint">▾</span></button>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">—</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.09</span></span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage ready">Ready</span>
+    <span class="pp-wrap">
+      <button class="ppill"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>safe build<span class="faint">▾</span></button>
+    </span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 3 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="29.8 89.5" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="42.0" cy="23.0" r="5"/></svg>
+      <div class="lbl"><b>Brief · 3 of 8</b>Ready to run · brief v3</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>—</b></span><span class="room-meta">Cost <b>$0.09</b></span>
     <button class="btn">Race</button>
     <button class="btn primary">Run agent</button>
   </div>
 
   <div class="room">
-    <aside class="room-side">
-      <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved</span></div>
-        <div class="pretty" style="font-size:13.5px">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved</span></div>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
         <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
         <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
-      </section>
-      <section class="col" style="gap:8px">
-        <h3>Safety</h3>
+      </div>
+      <div class="col" style="gap:8px"><h3>Safety</h3>
         <div class="kv">
           <div><div class="k">Profile</div><span class="mono">safe_build</span></div>
           <div><div class="k">Sandbox</div><span class="lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>on · bwrap 0.9.0</span></div>
@@ -683,27 +710,23 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <div><div class="k">Always ask</div>2 rules</div>
         </div>
         <div class="mono xs faint">$ saarthi safety show T-0012</div>
-      </section>
-      <section class="col" style="gap:6px">
-        <h3>Runs</h3>
-        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAT2</span> · research</div><div class="xs faint">read_only · 4m 51s · $0.09</div></div><span class="lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span></div>
-      </section>
-    </aside>
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof</button>
-        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Timeline</button>
       </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>01JAT2 · research · 4m</span><span class="lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>read_only</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab on">Stream</span><span class="tab">Terminal</span><span class="tab">Proof</span><span class="tab">Review</span><span class="tab">Research <span class="n">3</span></span><span class="tab">Code</span><span class="tab">Timeline</span></div>
       <div class="tab-body">
-        <div class="stream">
-          <div class="ev"><span class="time">10:22</span><div class="ev-card msg">Run 01JAT2 started · Claude · research · <span class="mono">profile: read_only · sandboxed</span></div></div>
-          <div class="ev"><span class="time">10:23</span><div class="ev-card"><div class="ev-head"><span class="tool blue">Read</span><span class="mono ellipsis">app/auth/routes.py</span><span class="grow"></span><span class="xs faint">84 lines</span></div></div></div>
-          <div class="ev"><span class="time">10:24</span><div class="ev-card msg">Login lives in <span class="mono">app/auth/routes.py</span>. Email goes through <span class="mono">app.mail.send_mail</span>. There is no reset flow yet.</div></div>
-          <div class="ev"><span class="time">10:26</span><div class="ev-card ok"><div class="ev-head"><span class="dot green"></span>Research ended · 3 findings saved</div></div></div>
-          <div class="ev"><span class="time">10:39</span><div class="ev-card msg">Stage moved Research → Ready. Brief v3 saved.</div></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:22</span><span class="node info"></span><div class="bx">Run <b>01JAT2</b> started with <b>Claude</b> · research · <span class="mono">profile: read_only · sandboxed</span></div></div>
+          <div class="tl-ev"><span class="tm">10:23</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">READ</span><span class="mono ellipsis">app/auth/routes.py</span><span class="r faint">84 lines</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:24</span><span class="node"></span><div class="bx">Login lives in <span class="mono">app/auth/routes.py</span>. Email goes through <span class="mono">app.mail.send_mail</span>. There is no reset flow yet.</div></div>
+          <div class="tl-ev"><span class="tm">10:26</span><span class="node ok"></span><div class="bx">Research ended · 3 findings saved.</div></div>
+          <div class="tl-ev"><span class="tm">10:39</span><span class="node"></span><div class="bx">Stage moved Research → Ready. Brief v3 saved.</div></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 
@@ -716,11 +739,11 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
     </div>
     <div class="modal-body">
       <div class="grid-2" style="gap:12px">
-        <div class="card ok" style="padding:10px 14px">
-          <div class="row" style="margin-bottom:4px"><span class="lock"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span><span class="strong small">Sandbox check</span><span class="grow"></span><span class="xs green strong">ok</span></div>
-          <div class="probe"><span class="muted">bwrap</span><span class="mono">/usr/bin/bwrap 0.9.0</span><span class="green xs">ok</span></div>
-          <div class="probe"><span class="muted">user ns</span><span class="mono">allowed</span><span class="green xs">ok</span></div>
-          <div class="probe"><span class="muted">probe</span><span class="mono ellipsis">cat ~/.ssh/* → No such file</span><span class="green xs">ok</span></div>
+        <div class="card" style="padding:10px 14px;border-color:var(--ok)">
+          <div class="row" style="margin-bottom:4px"><span class="lock"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span><span class="strong small">Sandbox check</span><span class="grow"></span><span class="xs ok-t strong">ok</span></div>
+          <div class="probe"><span class="muted">bwrap</span><span class="mono">/usr/bin/bwrap 0.9.0</span><span class="ok-t xs">ok</span></div>
+          <div class="probe"><span class="muted">user ns</span><span class="mono">allowed</span><span class="ok-t xs">ok</span></div>
+          <div class="probe"><span class="muted">probe</span><span class="mono ellipsis">cat ~/.ssh/* → No such file</span><span class="ok-t xs">ok</span></div>
         </div>
         <div class="card" style="padding:10px 14px">
           <div class="strong small" style="margin-bottom:6px">Still true in Full</div>
@@ -732,14 +755,14 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
         </div>
       </div>
 
-      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
         <div class="row between" style="padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line)"><span class="upper">Agent flags per profile</span><span class="xs faint">checked with --help on 2026-10-11</span></div>
         <table class="flags">
           <thead><tr><th>Profile</th><th>Claude</th><th>Codex</th><th>bwrap</th></tr></thead>
           <tbody>
             <tr><td>read_only</td><td>--permission-mode plan<br>--allowedTools Read Grep Glob</td><td>--sandbox read-only</td><td>worktree ro</td></tr>
             <tr><td>safe_build</td><td>--permission-mode acceptEdits<br>+ allowed list, deny + ask rules</td><td>--sandbox workspace-write</td><td>worktree rw</td></tr>
-            <tr class="on"><td>full <span class="tag amber" style="font-family:inherit;font-weight:500">next run</span></td><td>--dangerously-skip-permissions<br>--settings claude-settings.json (deny)</td><td>--sandbox workspace-write<br>-c approval_policy="never"<br>-c …network_access=true</td><td class="green">required</td></tr>
+            <tr class="on"><td>full <span class="tag amber" style="font-family:inherit;font-weight:500">next run</span></td><td>--dangerously-skip-permissions<br>--settings claude-settings.json (deny)</td><td>--sandbox workspace-write<br>-c approval_policy="never"<br>-c …network_access=true</td><td class="ok-t">required</td></tr>
           </tbody>
         </table>
       </div>
