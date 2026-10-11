@@ -136,3 +136,14 @@ def test_chip_sits_on_the_right_edge_and_has_fit_toggle(out):
     assert 'id="chip-fit"' in rest
     assert 'data-fit="fit"' in rest and 'data-fit="real"' in rest
     assert "localStorage" in rest and "resize" in rest
+
+
+def test_docs_and_tickets_views_are_wired():
+    for view in ("room-docs", "tickets", "ticket-start", "room-ticket", "ticket-confirm"):
+        assert view in proto.VIEWS
+    assert proto.Rule(".tab", "room-docs", "Docs") in proto.GLOBAL_RULES
+    assert proto.Rule(".navs a", "tickets", "Tickets") in proto.GLOBAL_RULES
+    assert "ticket-start" in proto.DIALOG_VIEWS
+    assert {"room-docs", "room-ticket", "ticket-confirm"} <= proto.ROOM_VIEWS
+    assert any(r.go == "ticket-start" for r in proto.CLICKS["tickets"])
+    assert any(r.go == "ticket-confirm" for r in proto.CLICKS["ticket-start"])

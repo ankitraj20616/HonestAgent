@@ -12,7 +12,7 @@ How it works
   (CSS selector + optional text) and asks the outer page to go to that view.
 - Fit (default): the iframe is max(1440, window) x max(900, window) and is scaled down so the whole screen
   fits the window. "100%" in the chip shows real size with scrolling. The choice is kept in localStorage.
-- Keys: Esc = back, Ctrl+K = command bar, G then H/B/M/P = Home/Board/Memory/Playbooks, ? = shortcut sheet.
+- Keys: Esc = back, Ctrl+K = command bar, G then H/B/M/P/T = Home/Board/Memory/Playbooks/Tickets, ? = shortcut sheet.
 - URL: "#review" opens a view. "?selftest" walks the main flow with real clicks and writes PASS/FAIL in the
   page title; "?selftest&steps=3" stops after 3 steps (for screenshots).
 
@@ -37,6 +37,7 @@ DESIGN_SIZE = (1440, 900)  # the screens are drawn at this size; "Fit" scales it
 
 M3, M4, M5 = "M3_desktop_ui_v1", "M4_checks_proof_card", "M5_review_ship"
 M6, M7, M8, M9 = "M6_research_memory_playbooks", "M7_race_mode", "M8_safety_cost_rewind", "M9_polish_package"
+M10 = "M10_jira_tickets"
 
 # view name -> (milestone folder, screen file stem). The first view opens first.
 VIEWS: dict[str, tuple[str, str]] = {
@@ -47,6 +48,7 @@ VIEWS: dict[str, tuple[str, str]] = {
     "room-terminal": (M3, "04_task_room_terminal"),
     "room-timeline": (M3, "05_task_room_timeline"),
     "room-code": (M3, "06_code_peek"),
+    "room-docs": (M3, "12_task_room_docs"),
     "start-run": (M3, "08_start_run_dialog"),
     "cmdk": (M3, "09_command_bar"),
     "capture": (M3, "10_quick_capture"),
@@ -70,6 +72,10 @@ VIEWS: dict[str, tuple[str, str]] = {
     "rewind": (M8, "06_rewind_confirm"),
     "shortcuts": (M9, "09_shortcut_sheet"),
     "empty-home": (M9, "07_empty_deck"),
+    "tickets": (M10, "01_tickets_panel"),
+    "ticket-start": (M10, "02_start_from_ticket"),
+    "room-ticket": (M10, "03_task_room_ticket"),
+    "ticket-confirm": (M10, "04_write_back_confirm"),
 }
 
 BACK = "back"  # special target: go back one view
@@ -94,6 +100,7 @@ GLOBAL_RULES = [  # top bar, agents dock / rail, Task Room tabs: on every "app" 
     Rule(".navs a", "board", "Board"),
     Rule(".navs a", "memory", "Memory"),
     Rule(".navs a", "playbooks", "Playbooks"),
+    Rule(".navs a", "tickets", "Tickets"),
     Rule(".brand", "home"),
     Rule(".gear", "settings"),
     Rule(".search-btn", "cmdk"),
@@ -108,6 +115,7 @@ GLOBAL_RULES = [  # top bar, agents dock / rail, Task Room tabs: on every "app" 
     Rule(".tab", "room", "Stream"),
     Rule(".tab", "room-terminal", "Terminal"),
     Rule(".tab", "room-code", "Code"),
+    Rule(".tab", "room-docs", "Docs"),
     Rule(".tab", "room-timeline", "Timeline"),
     Rule(".tab", "proof", "Proof"),
     Rule(".tab", "review", "Review"),
@@ -155,6 +163,7 @@ CLICKS: dict[str, list[Rule]] = {
         Rule(".tl-ev", "rewind", "Checkpoint"),
     ],
     "room-code": [],
+    "room-docs": [],
     "start-run": [
         Rule(".btn", "room", "Start run"),
     ],
@@ -250,11 +259,26 @@ CLICKS: dict[str, list[Rule]] = {
         Rule(".btn", "capture", "Capture your first task"),
         Rule(".btn", "settings", "Add project"),
     ],
+    "tickets": [
+        Rule(".btn", "ticket-start", "Start as task"),
+        Rule(".jt-row", "room-ticket", "ACME-142"),
+    ],
+    "ticket-start": [
+        Rule(".btn", "ticket-confirm", "Start task"),  # the new task runs, checks pass, it reaches Review
+    ],
+    "room-ticket": [
+        Rule(".btn", "ship", "Approve"),
+    ],
+    "ticket-confirm": [
+        Rule(".btn", "room-ticket", "Send"),
+        Rule(".btn", "room-ticket", "Skip"),
+    ],
 }
 
-ROOM_VIEWS = {"room", "room-terminal", "room-timeline", "room-code", "proof-failed", "proof", "review", "diff",
-              "second-opinion", "research", "memory-updates", "race", "compare", "safety", "cost"}
-DIALOG_VIEWS = {"start-run", "cmdk", "override", "ship", "rewind", "shortcuts"}
+ROOM_VIEWS = {"room", "room-terminal", "room-timeline", "room-code", "room-docs", "proof-failed", "proof", "review", "diff",
+              "second-opinion", "research", "memory-updates", "race", "compare", "safety", "cost",
+              "room-ticket", "ticket-confirm"}
+DIALOG_VIEWS = {"start-run", "cmdk", "override", "ship", "rewind", "shortcuts", "ticket-start"}
 
 KEYS = {  # key or key sequence -> view
     "Escape": BACK,
@@ -263,6 +287,7 @@ KEYS = {  # key or key sequence -> view
     "G B": "board",
     "G M": "memory",
     "G P": "playbooks",
+    "G T": "tickets",
     "?": "shortcuts",
 }
 
@@ -289,6 +314,12 @@ SELFTEST: list[dict] = [
     {"click": [".bcard", "Export invoices as CSV"], "expect": "start-run"},
     {"hash": "rewind", "expect": "rewind"},
     {"chip_back": True, "expect": "start-run"},
+    {"hash": "room", "expect": "room"},
+    {"click": [".tab", "Docs"], "expect": "room-docs"},
+    {"key": ["g", "t"], "expect": "tickets"},
+    {"click": [".btn", "Start as task"], "expect": "ticket-start"},
+    {"click": [".btn", "Start task"], "expect": "ticket-confirm"},
+    {"click": [".btn", "Skip"], "expect": "room-ticket"},
 ]
 
 
