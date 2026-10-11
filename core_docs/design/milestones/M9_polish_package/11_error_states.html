@@ -619,48 +619,47 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>2 need you</button>
+  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra wait" title="T-0012 · needs you"><span class="agent cl">CL</span><i class="ra-dot tone-bg-road"></i></div><small>12</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .err-toast { position: fixed; right: 20px; bottom: 84px; width: 450px; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; padding: 12px 14px;
     border-radius: 10px; background: var(--surface); border: 1px solid var(--red); box-shadow: var(--shadow-sm); font-size: 13px; z-index: 60; }
   .err-toast .dot { margin-top: 6px; }
-  .hint-box { margin-top: 6px; padding: 7px 9px; border-radius: 6px; background: var(--surface-2); font-size: 12.5px; color: var(--text-2); }
+  .hint-box { margin-top: 6px; padding: 7px 9px; border-radius: 8px; background: var(--surface2); font-size: 12.5px; color: var(--text2); }
   .search-box { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; }
-  .profile-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--line-strong); font-size: 12px; color: var(--muted); }
+  .profile-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--line2); font-size: 12px; color: var(--muted); }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage needs">Needs You</span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage needs">Needs you</span>
     <span class="profile-pill mono">safe build ▾</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">18m 14s</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.62</span></span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 4 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="44.8 74.6" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="36.4" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Run · 4 of 8</b>Capture → Research → Brief → <span class="road">Run</span></div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>18m 14s</b></span><span class="room-meta">Cost <b>$0.62</b></span>
     <button class="btn">Run checks</button>
   </div>
   <div class="room">
     <div class="room-side">
       <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved</span></div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
         <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
       </section>
       <section class="col" style="gap:8px">
         <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv"><div><div class="k">vs main</div>3 ahead · 0 behind</div><div><div class="k">Changed files</div>2</div></div>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <span class="mono faint" style="font-size:11px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</span>
+          <div class="kvs"><span><b>3</b> ahead</span><span><b>0</b> behind</span><span><b>2</b> files</span></div></div>
       </section>
       <section class="col" style="gap:6px">
         <h3>Runs</h3>
@@ -687,7 +686,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <div class="grow col" style="gap:8px">
             <div><span class="strong">ripgrep not found.</span> <span class="text2">Code search needs <span class="mono">rg</span>. The daemon could not find it on its PATH.</span></div>
             <div class="row" style="gap:8px">
-              <div class="row grow" style="padding:6px 6px 6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--term-bg);font-size:12.5px">
+              <div class="row grow" style="padding:6px 6px 6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--term-bg);font-size:12.5px">
                 <span class="xs faint">Fix</span><span class="mono grow">sudo apt install ripgrep</span><button class="btn xs">Copy</button></div>
               <button class="btn sm">Check again</button>
             </div>
@@ -704,7 +703,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       </div>
       <div class="composer">
         <div class="box">Answer the agent…</div>
-        <button class="btn primary">Send <span class="kbd" style="background:transparent;border-color:var(--on-accent);color:var(--on-accent);opacity:.6">Ctrl Enter</span></button>
+        <button class="btn primary">Send <span class="kbd" style="background:transparent;border-color:var(--on-road);color:var(--on-road);opacity:.6">Ctrl Enter</span></button>
       </div>
     </div>
   </div>

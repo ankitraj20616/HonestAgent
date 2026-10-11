@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M9 · Empty Task Room - no runs yet</title>
-<meta name="description" content="T-0012 is Ready with a brief but no run yet: Stream shows one line + one button (Press R); Workspace, Runs and Checkpoints show their empty lines. Other tabs use the same pattern. FSD M9 5.5; TDD 5.3 Task Room, Proof / Review, Checkpoints rows">
+<meta name="description" content="T-0012 has a saved brief but no run yet (journey Wheel on Brief): Stream shows one line + one button (Press R); Workspace, Runs and Checkpoints show their empty lines. Other tabs use the same pattern. FSD M9 5.5; TDD 5.3 Task Room, Proof / Review, Checkpoints rows">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -626,30 +626,28 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .side-empty { font-size: 12.5px; color: var(--muted); padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: 6px; text-wrap: pretty; }
+  .side-empty { font-size: 12.5px; color: var(--muted); padding: 10px 12px; border: 1px dashed var(--line2); border-radius: 10px; text-wrap: pretty; }
   .tab .key { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--faint); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
-  .mini-empty { border: 1px dashed var(--line-strong); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .mini-empty { border: 1px dashed var(--line2); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage ready">Ready</span>
-    <span class="tag">P1</span><span class="small muted">auth · api</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">0m</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.00</span></span>
-    <button class="btn primary">Run agent <span class="kbd" style="background:transparent;border-color:var(--on-accent);color:var(--on-accent);opacity:.6">R</span></button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief ready</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 3 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="29.8 89.5" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="42.0" cy="23.0" r="5"/></svg>
+      <div class="lbl"><b>Brief · 3 of 8</b>Capture → Research → <span class="road">Brief</span> · no run yet</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>0m</b></span><span class="room-meta">Cost <b>$0.00</b></span>
+    <button class="btn primary">Run agent <span class="kbd" style="background:transparent;border-color:var(--on-road);color:var(--on-road);opacity:.6">R</span></button>
   </div>
   <div class="room">
     <div class="room-side">
       <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved</span></div>
+        <div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved</span></div>
         <div class="xs faint">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
         <div class="xs faint mt-4">Acceptance criteria</div>
         <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
@@ -683,8 +681,8 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       </div>
       <div class="tab-body col" style="gap:18px">
         <div class="empty" style="padding:56px 24px;max-width:920px">
-          <div class="icon" style="width:52px;height:52px;font-size:20px;font-weight:600;color:var(--accent-text);border-bottom-width:3px;background:var(--surface-2)">R</div>
-          <div style="font-size:17px;font-weight:600;color:var(--text)">No runs yet</div>
+          <div class="icon" style="width:52px;height:52px;font-size:20px;font-weight:600;color:var(--road-text);border-color:var(--road);background:var(--road-soft)">R</div>
+          <h2 style="font-size:18px;font-weight:600;color:var(--text)">No runs yet</h2>
           <div style="font-size:13.5px">Press <span class="kbd">R</span> to start one. The agent's work streams here, live.</div>
           <div class="row mt-8">
             <button class="btn primary">Run agent</button>

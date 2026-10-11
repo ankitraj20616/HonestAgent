@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M9 · Shortcut sheet (?)</title>
-<meta name="description" content="Press ? on any screen: grouped shortcuts (Global, Board, Task Room, Review) over the board. One list in shortcuts.ts feeds this sheet and the Command Bar; keys do not fire while typing. FSD M9 5.4, F18.2; TDD Decision 9">
+<meta name="description" content="Press ? on any screen: grouped shortcuts (Global, Go to, Board, Task Room, Review) over the Board. Go to follows the nav: G H Home, G B Board, G M Memory, G P Playbooks. One list in shortcuts.ts feeds this sheet and the Command Bar; keys do not fire while typing. FSD M9 5.4, F18.2; TDD Decision 9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -626,7 +626,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra wait" title="T-0012 · needs you"><span class="agent cl">CL</span><i class="ra-dot tone-bg-road"></i></div><small>12</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .sheet { width: min(980px, calc(100vw - 48px)); max-height: none; }
@@ -638,44 +638,36 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .sk { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--line); }
   .grp .sk:last-child { border-bottom: none; }
   .sk .keys { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-  .sk .keys .kbd { font-size: 11px; color: var(--text-2); background: var(--surface-2); border-color: var(--line-strong); border-bottom-width: 2px; padding: 1px 6px; }
+  .sk .keys .kbd { font-size: 11px; color: var(--text2); background: var(--surface2); border-color: var(--line2); border-bottom-width: 2px; padding: 1px 6px; }
   .sk .keys .then { font-size: 11px; color: var(--faint); }
-  .sk.hl { background: var(--accent-soft); margin: 0 -8px; padding: 5px 8px; border-radius: 5px; border-bottom-color: transparent; }
+  .sk.hl { background: var(--road-soft); margin: 0 -8px; padding: 5px 8px; border-radius: 7px; border-bottom-color: transparent; }
 </style>
 <div class="fill">
-  <div class="toolbar">
-    <h1>Task Board</h1>
-    <div class="input" style="width:240px;color:var(--faint)">Filter by title, ID or label</div>
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
     <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
-    <div class="grow"></div>
-    <span class="small faint">Drag cards between stages. The daemon checks every move.</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
   </div>
-  <div style="flex:1;min-height:0;overflow:hidden;padding:16px 20px">
-    <div class="board">
-      <div class="lane"><div class="lane-head"><span class="sq"></span><span class="strong" style="font-size:13px">Inbox</span><span class="faint small">2</span></div>
-        <div class="tcard"><div class="title">Add audit log for admin actions</div><div class="meta"><span class="mono faint">T-0016</span><span class="tag">P2</span><span>security</span></div></div>
-        <div class="tcard"><div class="title">Dark mode for the settings page</div><div class="meta"><span class="mono faint">T-0014</span><span class="tag">P3</span><span>ui</span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Research</span><span class="faint small">1</span></div>
-        <div class="tcard"><div class="title">Investigate slow dashboard query</div><div class="meta"><span class="mono faint">T-0015</span><span class="tag">P2</span><span>perf</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">5m</span><span class="mono">$0.09</span><span class="grow"></span><span class="dot"></span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--muted)"></span><span class="strong" style="font-size:13px">Ready</span><span class="faint small">1</span></div>
-        <div class="tcard"><div class="title">Export invoices as CSV</div><div class="meta"><span class="mono faint">T-0013</span><span class="tag">P2</span><span>billing</span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--accent)"></span><span class="strong" style="font-size:13px">Running</span><span class="faint small">2</span></div>
-        <div class="tcard needs"><div class="flag amber"><span class="dot amber pulse" style="width:6px;height:6px"></span>Needs you</div><div class="title">Add password reset API</div><div class="meta"><span class="mono faint">T-0012</span><span class="tag">P1</span><span>auth · api</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">18m 14s</span><span class="mono">$0.62</span><span class="grow"></span><span class="dot"></span></div></div>
-        <div class="tcard"><div class="title">Invoice PDF export with line-item totals</div><div class="meta"><span class="mono faint">T-0018</span><span class="tag">P2</span><span>billing</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">12m 04s</span><span class="mono">$0.48</span><span class="grow"></span><span class="dot"></span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--blue)"></span><span class="strong" style="font-size:13px">Verifying</span><span class="faint small">1</span></div>
-        <div class="tcard"><div class="title">Refactor Stripe webhook handlers</div><div class="meta"><span class="mono faint">T-0010</span><span class="tag">P2</span><span>billing</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">38m 30s</span><span class="mono">$1.08</span><span class="grow"></span><span class="dot blue"></span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Review</span><span class="faint small">1</span></div>
-        <div class="tcard"><div class="title">Rate-limit the login endpoint</div><div class="meta"><span class="mono faint">T-0009</span><span class="tag">P1</span><span>auth · security</span></div><div class="foot"><span class="agent cx sm">CX</span><span class="mono">30m 20s</span><span class="mono">$0.77</span><span class="grow"></span><span class="dot green"></span></div></div>
-      </div>
-      <div class="lane"><div class="lane-head"><span class="sq" style="background:var(--green)"></span><span class="strong" style="font-size:13px">Shipped</span><span class="faint small">1</span></div>
-        <div class="tcard"><div class="title">Upgrade FastAPI to 0.115</div><div class="meta"><span class="mono faint">T-0008</span><span class="tag">P2</span><span>deps</span></div><div class="foot"><span class="agent cl sm">CL</span><span class="mono">33m 00s</span><span class="mono">$0.71</span><span class="grow"></span><span class="dot green"></span></div></div>
-      </div>
-    </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>1</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8"><b>VERIFY</b><span>1</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>1</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead idle">16</span><span class="ti">Add audit log for admin actions</span></div><div class="ft"><span>P2</span><span>security</span><span class="r">2d</span></div></div><div class="bcard"><div class="tt"><span class="bead idle">14</span><span class="ti">Dark mode for the settings page</span></div><div class="ft"><span>P3</span><span>ui</span><span class="r">4d</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead info">15</span><span class="ti">Investigate slow dashboard query</span></div><div class="ft"><span class="agent cl sm">CL</span><span>research</span><span class="r">done</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v1</span><span class="r">P2</span></div></div></div>
+    <div class="col8"><div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div><div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with line-item totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.48</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead info">10</span><span class="ti">Refactor Stripe webhook handlers</span></div><div class="ft"><span>checks 3 of 5</span><span class="r">$1.08</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cx sm">CX</span><span>30m</span><span class="r">$0.77</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Upgrade FastAPI to 0.115</span></div><div class="ft"><span>PR #108</span><span class="r">Tue</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead road dim">08</span><span class="ti">1 memory note to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div></div>
   </div>
 </div>
 
@@ -701,8 +693,8 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
         </div>
         <div class="grp">
           <div class="upper">Go to</div>
-          <div class="sk"><span>Command Deck</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">D</span></span></div>
-          <div class="sk"><span>Task Board</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">B</span></span></div>
+          <div class="sk"><span>Home</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">H</span></span></div>
+          <div class="sk"><span>Board</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">B</span></span></div>
           <div class="sk"><span>Memory</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">M</span></span></div>
           <div class="sk"><span>Playbooks</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">P</span></span></div>
           <div class="sk"><span>Settings</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">S</span></span></div>

@@ -1,4 +1,7 @@
-<!-- {"title": "Settings - About + Health", "note": "About Saarthi: app and daemon both 1.0.0 (API 1), service state, data/config paths, logs; Run setup again (wizard) and service commands; Health lists the same tool checks as the wizard and saarthi doctor. FSD M9 5.2 (About shows 1.0.0), 5.3 (Run setup again); TDD Decision 7, 8", "shell": "app", "nav": "settings", "crumb": "Settings · About", "needs": 2, "cost": "$4.12", "slots": "2 of 4", "projects": [["acme-billing", 9, "amber"], ["saarthi", 4, "green"], ["clinic-portal", 2, ""]], "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"}} -->
+<!-- {"title": "Settings - About + Health", "note": "About Saarthi: app and daemon both 1.0.0 (API 1), service state, data/config paths, logs; Run setup again (wizard) and service commands; Health lists the same tool checks as the wizard and saarthi doctor. FSD M9 5.2 (About shows 1.0.0), 5.3 (Run setup again); TDD Decision 7, 8", "shell": "app", "nav": "settings", "needs": 2, "cost": "$4.12", "slots": 4, "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"},
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "needs you", "tone": "road", "line": "fix · 4m", "cost": "$0.11"}]} -->
 <style>
   .about-kv { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; font-size: 13px; }
   .about-kv > span { padding: 8px 0; border-top: 1px solid var(--line); }
@@ -18,7 +21,7 @@
     <div class="col gap-22" style="gap:18px">
       <section class="card" style="padding:20px">
         <div class="row gap-16" style="margin-bottom:14px">
-          <div class="logo lg">S</div>
+          <svg class="logo-w" width="56" height="56" viewBox="0 0 34 34" aria-hidden="true"><circle class="lw-rim" cx="17" cy="17" r="14"/><g class="lw-spoke"><line x1="17" y1="3" x2="17" y2="31"/><line x1="3" y1="17" x2="31" y2="17"/><line x1="7.1" y1="7.1" x2="26.9" y2="26.9"/><line x1="26.9" y1="7.1" x2="7.1" y2="26.9"/></g><circle class="lw-hub" cx="17" cy="17" r="4.5"/></svg>
           <div class="grow">
             <div class="row base"><span style="font-size:20px;font-weight:600">Saarthi</span><span class="mono" style="font-size:15px">1.0.0</span></div>
             <div class="small muted">Task-first Agentic Development Environment for Linux</div>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M9 · Version mismatch (blocking)</title>
-<meta name="description" content="Desktop app 1.0.0 (API 1) meets an older daemon 0.9.0 (API 0): blocking banner plus dialog with the upgrade command; actions are off until the versions match. Same API but other package version only shows a grey note in About. FSD M9 5.2, flow 6.3; TDD Decision 8">
+<meta name="description" content="Desktop app 1.0.0 (API 1) meets an older daemon 0.9.0 (API 0): blocking banner under the top bar plus a dialog with the upgrade command; the dock shows the old daemon, Home is paused and actions are off until the versions match. Same API but other package version only shows a grey note in About. FSD M9 5.2, flow 6.3; TDD Decision 8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -625,27 +625,33 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"><div class="banner err" style="border-radius:0;border-width:0 0 1px 0;padding:8px 20px;flex-shrink:0"><span class="dot red"></span><span class="grow"><span class="strong">Update needed.</span> <span class="text2">The daemon speaks API 0, this app needs API 1. Run</span> <span class="mono">uv tool upgrade saarthi</span></span><button class="btn xs">Copy command</button></div></div>
-<div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid 0.9.0"><span class="dot amber"></span></div></aside>
+<div class="frame full">
+<aside class="dock"><div class="dock-h"><span>Agents</span><span>0 of 4</span></div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="grow"></div><div class="daemon"><span class="dot amber"></span><div><b>saarthid <span class="mono">0.9.0</span></b><small>127.0.0.1:7878 · api 0</small><div class="note">App needs api 1</div></div></div></aside>
 <div class="content">
 <style>
   .vt { display: grid; grid-template-columns: 120px minmax(0,1fr) 90px 70px; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; }
   .vt.head { border-top: none; padding: 8px 14px; font-size: 11.5px; color: var(--faint); }
-  .vt-box { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .vt-box { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
   .cmd { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--term-text); }
   .cmd .pr { color: var(--faint); }
-  .cmd .btn { font-family: 'IBM Plex Sans', sans-serif; }
-  .behind { filter: saturate(.6); }
+  .cmd .btn { font-family: 'Inter', sans-serif; }
+  .home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+  .behind { opacity: .45; }
+  aside.dock .ag-card.free { opacity: .45; }
 </style>
-<div class="page behind">
-  <div class="page-head">
-    <div><div class="muted" style="font-size:13px">Sunday, 11 October</div><h1 class="title">Command Deck</h1></div>
-    <div class="row"><button class="btn" disabled>Open board</button><button class="btn primary" disabled>New task</button></div>
+<div class="home behind">
+  <div class="wheel-wrap">
+    <svg class="wheel" width="500" height="500" viewBox="0 0 520 520" role="img" aria-label="The Wheel"><circle class="w-ring" cx="260.0" cy="260.0" r="238"/><circle class="w-rim" cx="260.0" cy="260.0" r="190.0"/><line class="w-spoke" x1="260.0" y1="70.0" x2="260.0" y2="450.0"/><line class="w-spoke" x1="394.4" y1="125.6" x2="125.6" y2="394.4"/><line class="w-spoke" x1="450.0" y1="260.0" x2="70.0" y2="260.0"/><line class="w-spoke" x1="394.4" y1="394.4" x2="125.6" y2="125.6"/><circle class="w-hubglow" cx="260.0" cy="260.0" r="96"/><circle class="w-hub" cx="260.0" cy="260.0" r="70"/><text class="w-big" x="260.0" y="256.0" text-anchor="middle">–</text><text class="w-sub" x="260.0" y="279.0" text-anchor="middle">PAUSED</text><text class="w-lbl" x="260.0" y="32.0" text-anchor="middle">CAPTURE</text><text class="w-lbl" x="424.0" y="100.0" text-anchor="middle">RESEARCH</text><text class="w-lbl" x="492.0" y="264.0" text-anchor="middle">BRIEF</text><text class="w-lbl" x="424.0" y="428.0" text-anchor="middle">RUN</text><text class="w-lbl" x="260.0" y="496.0" text-anchor="middle">VERIFY</text><text class="w-lbl" x="96.0" y="428.0" text-anchor="middle">REVIEW</text><text class="w-lbl" x="28.0" y="264.0" text-anchor="middle">SHIP</text><text class="w-lbl" x="96.0" y="100.0" text-anchor="middle">REMEMBER</text></svg>
   </div>
-  <section class="card hot" style="padding:18px 18px 8px;height:170px"><div class="row gap-12"><span class="dot lg amber"></span><h2 class="accent" style="font-size:15px;font-weight:600">Needs You</h2></div></section>
-  <div class="grid-2"><section class="card" style="height:200px"><div class="card-head"><h2>Running now</h2></div></section><section class="card" style="height:200px"><div class="card-head"><h2>Projects</h2></div></section></div>
+  <div class="side-r">
+    <div class="row between upper"><span>Needs you</span><span>–</span></div>
+    <div class="skeleton" style="height:96px;border-radius:12px"></div>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="skeleton" style="height:44px;border-radius:12px"></div>
+    <div class="skeleton" style="height:44px;border-radius:12px"></div>
+  </div>
 </div>
-<div class="scrim center" style="left:228px;top:90px">
+<div class="scrim center" style="left:250px;top:93px">
   <div class="modal" style="width:min(620px,calc(100vw - 32px));max-height:none">
     <div class="modal-head" style="padding:20px 22px 6px;align-items:flex-start">
       <span class="dot lg red" style="margin-top:8px"></span>

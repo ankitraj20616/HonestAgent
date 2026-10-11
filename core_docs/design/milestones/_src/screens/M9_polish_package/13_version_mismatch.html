@@ -1,22 +1,28 @@
-<!-- {"title": "Version mismatch (blocking)", "note": "Desktop app 1.0.0 (API 1) meets an older daemon 0.9.0 (API 0): blocking banner plus dialog with the upgrade command; actions are off until the versions match. Same API but other package version only shows a grey note in About. FSD M9 5.2, flow 6.3; TDD Decision 8", "shell": "app", "nav": "deck", "crumb": "Command Deck", "needs": 0, "cost": "$4.12", "projects": [["acme-billing", 9, "amber"], ["saarthi", 4, "green"], ["clinic-portal", 2, ""]], "daemon": {"dot": "amber", "label": "saarthid <span class=\"mono\">0.9.0</span>", "sub": "127.0.0.1:7878 · api 0", "note": "App needs api 1", "note_class": "accent"}, "after_topbar": "<div class=\"banner err\" style=\"border-radius:0;border-width:0 0 1px 0;padding:8px 20px;flex-shrink:0\"><span class=\"dot red\"></span><span class=\"grow\"><span class=\"strong\">Update needed.</span> <span class=\"text2\">The daemon speaks API 0, this app needs API 1. Run</span> <span class=\"mono\">uv tool upgrade saarthi</span></span><button class=\"btn xs\">Copy command</button></div>"} -->
+<!-- {"title": "Version mismatch (blocking)", "note": "Desktop app 1.0.0 (API 1) meets an older daemon 0.9.0 (API 0): blocking banner under the top bar plus a dialog with the upgrade command; the dock shows the old daemon, Home is paused and actions are off until the versions match. Same API but other package version only shows a grey note in About. FSD M9 5.2, flow 6.3; TDD Decision 8", "shell": "app", "nav": "home", "dock": "full", "needs": 0, "cost": "$4.12", "slots": 4, "agents": [], "daemon": {"dot": "amber", "label": "saarthid <span class=\"mono\">0.9.0</span>", "sub": "127.0.0.1:7878 · api 0", "note": "App needs api 1"}, "after_topbar": "<div class=\"banner err\" style=\"border-radius:0;border-width:0 0 1px 0;padding:8px 20px;flex-shrink:0\"><span class=\"dot red\"></span><span class=\"grow\"><span class=\"strong\">Update needed.</span> <span class=\"text2\">The daemon speaks API 0, this app needs API 1. Run</span> <span class=\"mono\">uv tool upgrade saarthi</span></span><button class=\"btn xs\">Copy command</button></div>"} -->
 <style>
   .vt { display: grid; grid-template-columns: 120px minmax(0,1fr) 90px 70px; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; }
   .vt.head { border-top: none; padding: 8px 14px; font-size: 11.5px; color: var(--faint); }
-  .vt-box { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .vt-box { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
   .cmd { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--term-text); }
   .cmd .pr { color: var(--faint); }
-  .cmd .btn { font-family: 'IBM Plex Sans', sans-serif; }
-  .behind { filter: saturate(.6); }
+  .cmd .btn { font-family: 'Inter', sans-serif; }
+  .home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+  .behind { opacity: .45; }
+  aside.dock .ag-card.free { opacity: .45; }
 </style>
-<div class="page behind">
-  <div class="page-head">
-    <div><div class="muted" style="font-size:13px">Sunday, 11 October</div><h1 class="title">Command Deck</h1></div>
-    <div class="row"><button class="btn" disabled>Open board</button><button class="btn primary" disabled>New task</button></div>
+<div class="home behind">
+  <div class="wheel-wrap">
+    <x-wheel data='{"size": 500, "capture_plus": false, "lit": [], "hub": {"big": "–", "sub": "PAUSED"}, "beads": []}'></x-wheel>
   </div>
-  <section class="card hot" style="padding:18px 18px 8px;height:170px"><div class="row gap-12"><span class="dot lg amber"></span><h2 class="accent" style="font-size:15px;font-weight:600">Needs You</h2></div></section>
-  <div class="grid-2"><section class="card" style="height:200px"><div class="card-head"><h2>Running now</h2></div></section><section class="card" style="height:200px"><div class="card-head"><h2>Projects</h2></div></section></div>
+  <div class="side-r">
+    <div class="row between upper"><span>Needs you</span><span>–</span></div>
+    <div class="skeleton" style="height:96px;border-radius:12px"></div>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="skeleton" style="height:44px;border-radius:12px"></div>
+    <div class="skeleton" style="height:44px;border-radius:12px"></div>
+  </div>
 </div>
-<div class="scrim center" style="left:228px;top:90px">
+<div class="scrim center" style="left:250px;top:93px">
   <div class="modal" style="width:min(620px,calc(100vw - 32px));max-height:none">
     <div class="modal-head" style="padding:20px 22px 6px;align-items:flex-start">
       <span class="dot lg red" style="margin-top:8px"></span>

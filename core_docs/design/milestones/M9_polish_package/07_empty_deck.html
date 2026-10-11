@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M9 · Empty Command Deck - no projects</title>
-<meta name="description" content="Fresh install when the project step was skipped: Deck says Add your first project (opens wizard step 3), and Needs You / Running / cost show their empty lines. FSD M9 5.3 (Skip), 5.5 (Empty); TDD 5.3 Command Deck row">
+<title>Saarthi M9 · Empty Home - no tasks yet</title>
+<meta name="description" content="Fresh install when the project step was skipped: Home shows an empty Wheel (0 tasks, no beads) with &#x27;Capture your first task&#x27; under it. The right side says Add your first project (opens wizard step 3), Needs You is empty, and the dock shows 4 free slots. FSD M9 5.3 (Skip), 5.5 (Empty); TDD 5.3 Home row">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -625,90 +625,53 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <div class="cost-box"><span class="mono">$0.00</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
-<div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<div class="frame full">
+<aside class="dock"><div class="dock-h"><span>Agents</span><span>0 of 4</span></div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="ag-card free">+ Free slot · start a run</div><div class="grow"></div><div class="daemon"><span class="dot green"></span><div><b>saarthid running</b><small>127.0.0.1:7878 · v1.0.0</small></div></div></aside>
 <div class="content">
 <style>
-  .flow { display: grid; grid-template-columns: repeat(6, minmax(0,1fr) 18px) minmax(0,1fr); gap: 8px; align-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
-  .flow .arr { color: var(--faint); padding-top: 3px; text-align: center; }
-  .keys3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
-  .kitem { display: flex; align-items: center; gap: 12px; }
-  .kitem .kbd { font-size: 11.5px; padding: 3px 8px; }
+  .home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+  .home .wheel-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; }
+  .home .start { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .home .start .btn.primary { padding: 10px 18px; font-size: 14px; }
+  .first { border: 1px solid var(--road); border-radius: 12px; padding: 14px; background: var(--road-soft); display: flex; flex-direction: column; gap: 8px; }
+  .first h2 { font-size: 16px; font-weight: 600; }
+  .keys { display: flex; flex-direction: column; gap: 8px; }
+  .keys > div { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 12.5px; color: var(--text2); }
+  .keys .kbd { justify-self: start; font-size: 11px; padding: 2px 7px; }
 </style>
-<div class="page">
-  <div class="page-head">
-    <div>
-      <div class="muted" style="font-size:13px">Sunday, 11 October</div>
-      <h1 class="title">Command Deck</h1>
-    </div>
-    <div class="row">
-      <button class="btn" disabled>Open board</button>
-      <button class="btn" disabled>New task</button>
+<div class="home">
+  <div class="wheel-wrap">
+    <svg class="wheel" width="470" height="470" viewBox="0 0 520 520" role="img" aria-label="The Wheel"><circle class="w-ring" cx="260.0" cy="260.0" r="238"/><circle class="w-rim" cx="260.0" cy="260.0" r="190.0"/><line class="w-spoke" x1="260.0" y1="70.0" x2="260.0" y2="450.0"/><line class="w-spoke" x1="394.4" y1="125.6" x2="125.6" y2="394.4"/><line class="w-spoke" x1="450.0" y1="260.0" x2="70.0" y2="260.0"/><line class="w-spoke" x1="394.4" y1="394.4" x2="125.6" y2="125.6"/><circle class="w-hubglow" cx="260.0" cy="260.0" r="96"/><circle class="w-hub" cx="260.0" cy="260.0" r="70"/><text class="w-big" x="260.0" y="256.0" text-anchor="middle">0</text><text class="w-sub" x="260.0" y="279.0" text-anchor="middle">TASKS</text><text class="w-lbl" x="260.0" y="32.0" text-anchor="middle">CAPTURE</text><text class="w-lbl" x="424.0" y="100.0" text-anchor="middle">RESEARCH</text><text class="w-lbl" x="492.0" y="264.0" text-anchor="middle">BRIEF</text><text class="w-lbl" x="424.0" y="428.0" text-anchor="middle">RUN</text><text class="w-lbl" x="260.0" y="496.0" text-anchor="middle">VERIFY</text><text class="w-lbl" x="96.0" y="428.0" text-anchor="middle">REVIEW</text><text class="w-lbl" x="28.0" y="264.0" text-anchor="middle">SHIP</text><text class="w-lbl" x="96.0" y="100.0" text-anchor="middle">REMEMBER</text><circle class="b-plus" cx="260.0" cy="70.0" r="12"/><text class="b-plus-t" x="260.0" y="74.5" text-anchor="middle">+</text></svg>
+    <div class="start">
+      <button class="btn primary">+ Capture your first task</button>
+      <div class="small muted pretty" style="max-width:420px">An idea, a bug or a pasted error log. It lands on the Capture spoke, then moves round the Wheel to Ship.</div>
     </div>
   </div>
-
-  <section class="card hot" style="padding:36px 28px">
-    <div class="row gap-22 top">
-      <div class="logo lg">S</div>
-      <div class="col gap-12 grow">
-        <div>
-          <h2 style="font-size:20px;font-weight:600">Add your first project</h2>
-          <div class="text2 pretty mt-4" style="font-size:14px">Saarthi works on git repos. Add one, and its board opens. Tasks, agents and checks all live inside a project.</div>
-        </div>
-        <div class="row gap-12">
-          <button class="btn primary">Add project</button>
-          <button class="btn ghost">Run setup again</button>
-          <span class="small muted">or in a terminal: <span class="mono text2">saarthi project add ~/OFFICE/acme-billing</span></span>
-        </div>
+  <div class="side-r">
+    <div class="first">
+      <div class="row between"><span class="upper" style="color:var(--road-text)">Start here</span><span class="xs faint">step 3 of setup</span></div>
+      <h2>Add your first project</h2>
+      <div class="small text2 pretty">Saarthi works on git repos. Tasks, agents and checks all live inside a project. Capture asks for one if you skip this.</div>
+      <div class="row wrap" style="gap:6px"><button class="btn primary">Add project</button><button class="btn">Run setup again</button></div>
+      <div class="xs faint">or in a terminal: <span class="mono text2 nowrap">saarthi project add &lt;folder&gt;</span></div>
+    </div>
+    <div class="upper mt-8">Needs you</div>
+    <div class="small muted pretty">Nothing is waiting for you. Agents ask here when they need an answer.</div>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="small muted pretty">Tasks with green checks show here.</div>
+    <div class="mem-note">
+      <div class="keys">
+        <div><span class="kbd">N</span><span>Capture a task</span></div>
+        <div><span class="kbd">Ctrl K</span><span>Command Bar</span></div>
+        <div><span class="kbd">Ctrl Alt N</span><span>Quick capture from any app</span></div>
+        <div><span class="kbd">?</span><span>Every shortcut</span></div>
       </div>
     </div>
-  </section>
-
-  <div class="grid-3">
-    <section class="card">
-      <div class="card-head"><h2>Needs You</h2><span class="small muted">0</span></div>
-      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">Nothing is waiting for you. Agents ask here when they need an answer.</div>
-    </section>
-    <section class="card">
-      <div class="card-head"><h2>Running now</h2><span class="small muted">0 of 4 slots</span></div>
-      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">No agent is running. Runs start from a task's room.</div>
-    </section>
-    <section class="card">
-      <div class="card-head"><h2>Today's cost</h2><span class="mono" style="font-size:15px">$0.00</span></div>
-      <div class="small muted" style="padding:10px 0 2px;border-top:1px solid var(--line)">Cost per run and per project shows here.</div>
-    </section>
   </div>
-
-  <section class="card">
-    <div class="card-head"><h2>How a task moves</h2><span class="small muted">one board per project · the daemon checks every move</span></div>
-    <div class="flow">
-      <div><span class="stage inbox">Inbox</span><div class="xs muted mt-8">An idea, a bug, a pasted error log.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage research">Research</span><div class="xs muted mt-8">An agent reads the code, read only.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage ready">Ready</span><div class="xs muted mt-8">The brief has a goal and criteria.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage running">Running</span><div class="xs muted mt-8">Claude or Codex works in a worktree.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage verifying">Verifying</span><div class="xs muted mt-8">Checks run. The Proof Card fills in.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage review">Review</span><div class="xs muted mt-8">You read the diff and the proof.</div></div>
-      <span class="arr">→</span>
-      <div><span class="stage shipped">Shipped</span><div class="xs muted mt-8">Branch pushed, PR opened. Never main.</div></div>
-    </div>
-  </section>
-
-  <section class="card dashed" style="padding:16px 20px">
-    <div class="keys3">
-      <div class="kitem"><span class="kbd">?</span><div class="small"><span class="strong">Every shortcut</span> <span class="muted">· on any screen</span></div></div>
-      <div class="kitem"><span class="kbd">Ctrl K</span><div class="small"><span class="strong">Command Bar</span> <span class="muted">· search or run any action</span></div></div>
-      <div class="kitem"><span class="kbd">Ctrl Alt N</span><div class="small"><span class="strong">Quick capture</span> <span class="muted">· from any app</span></div></div>
-    </div>
-  </section>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M9 7/15</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M9 · 7/15 · Empty Command Deck - no projects</span><span class="sep">|</span><a href="06_empty_board.html">&larr; prev</a><a href="08_empty_task_room.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M9 7/15</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M9 · 7/15 · Empty Home - no tasks yet</span><span class="sep">|</span><a href="06_empty_board.html">&larr; prev</a><a href="08_empty_task_room.html">next &rarr;</a></span></div>
 </body>
 </html>
