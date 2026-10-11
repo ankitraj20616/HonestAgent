@@ -54,6 +54,7 @@ Capture -> Research -> Brief -> Run agent -> Verify -> Review -> Ship -> Remembe
 
 | Folder | What goes inside |
 |---|---|
+| `milestones/` | One sub-folder per milestone (M0-M9), each with its own FSD and TDD. Start at `milestones/README.md`. |
 | `memory/` | `project_memory.md` - big wins, hard bugs (Problem -> Root cause -> Fix -> Result). One file per module later (`agent_runner_memory.md` etc.). |
 | `learnings/` | Patterns, mistakes, "do this, not that" rules. |
 | `decisions/` | One file per big decision (ADR). Example: `ADR-001-backend-language.md`. |
