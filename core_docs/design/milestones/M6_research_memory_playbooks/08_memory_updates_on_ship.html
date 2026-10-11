@@ -619,14 +619,14 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$5.31</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .mu { padding: 0; overflow: hidden; }
@@ -640,36 +640,32 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage shipped">Shipped</span>
-    <a class="small mono">PR #214</a>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">58m</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$1.37</span></span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage shipped">Shipped</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 8 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="104.5 14.9" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="9.6" cy="9.6" r="5"/></svg>
+      <div class="lbl"><b>Remember · 8 of 8</b>Shipped · PR #214 · 2 memory updates to approve</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>58m</b></span><span class="room-meta">Cost <b>$1.37</b></span>
+    <button class="btn">Open PR #214</button>
   </div>
   <div class="room">
     <div class="room-side">
-      <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3</span></div>
-        <div style="font-size:13.5px;line-height:1.5" class="pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">5 of 5 met</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
         <div class="crit"><span class="box met"></span><span>Email with a single-use link</span></div>
         <div class="crit"><span class="box met"></span><span>Link expires after 30 minutes</span></div>
         <div class="crit"><span class="box met"></span><span>Used or expired token returns 410</span></div>
         <div class="crit"><span class="box met"></span><span>Unknown email still returns 202</span></div>
         <div class="crit"><span class="box met"></span><span>Tests cover all of the above</span></div>
-      </section>
-      <section class="col">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="small muted pretty">Worktree deleted after ship. The branch is kept on <span class="mono">origin</span>.</div>
-      </section>
-      <section class="col" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row"><span class="agent cl sm">CL</span><div style="min-width:0"><div><span class="mono">R-0028</span> · Fix</div><div class="faint" style="font-size:11.5px">11:04 · 6m · $0.21</div></div><span class="green strong" style="font-size:11.5px">Done</span></div>
-        <div class="run-row"><span class="agent cl sm">CL</span><div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $1.08</div></div><span class="green strong" style="font-size:11.5px">Done</span></div>
-        <div class="run-row"><span class="agent cl sm">CL</span><div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 3m 52s · $0.08</div></div><span class="green strong" style="font-size:11.5px">Done</span></div>
-      </section>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="small muted pretty">Worktree deleted after ship. The branch is kept on <span class="mono">origin</span>.</div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0028 · fix · 6m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0027 · build · 21m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 4m</span><span class="small ok-t strong">done</span></div>
+      </div>
     </div>
 
     <div class="room-main">
@@ -685,12 +681,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       </div>
       <div class="tab-body">
         <div class="col gap-12" style="max-width:920px">
-          <div class="banner ok">
-            <span class="dot green"></span>
-            <div class="grow">Shipped at 11:48 · PR #214 is open. Saarthi drafted 3 memory updates. <b>Nothing is written until you decide.</b></div>
-            <span class="small muted nowrap">1 approved · 2 pending</span>
-          </div>
-
+          <div class="row" style="gap:10px;align-items:baseline"><h2 style="font-size:17px">Remember</h2><span class="small muted">Shipped 11:48 · PR #214 is open. Saarthi drafted 3 updates. <b class="text2">Nothing is written until you decide.</b></span><span class="grow"></span><span class="small road nowrap strong">1 approved · 2 pending</span></div>
           <section class="card mu editing">
             <div class="mu-head">
               <span class="mono small accent">core_docs/memory/project_memory.md</span>

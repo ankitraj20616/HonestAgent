@@ -619,23 +619,24 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a>Board</a><a>Memory</a><a class="on">Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$5.31</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .pb { display: grid; grid-template-columns: 300px minmax(0, 1fr) 270px; height: 100%; min-height: 0; }
+  .pb { display: grid; grid-template-columns: 300px minmax(0, 1fr) 270px; flex: 1; min-height: 0; border-top: 1px solid var(--line); }
   .pb-list { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; }
   .grp { display: flex; flex-direction: column; gap: 1px; padding: 12px 6px 4px; }
-  .pbi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 8px 10px; border-radius: 7px; border: 1px solid transparent; }
+  .pbi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid transparent; }
+  .pbi .nm { grid-column: 1 / -1; text-wrap: pretty; }
   .pbi .nm { font-size: 13.5px; font-weight: 500; }
   .pbi .sl { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); }
-  .pbi .df { grid-row: span 2; align-self: center; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .pbi .df { align-self: center; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
   .pbi.on { background: var(--surface); border-color: var(--accent); }
   .pbi.hidden .nm, .pbi.hidden .sl { color: var(--faint); text-decoration: line-through; }
   .pb-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
@@ -643,65 +644,67 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .pb-head h1 { font-size: 17px; font-weight: 600; }
   .pb-edit { flex: 1; min-height: 0; overflow: auto; padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
   .code .ln > span:last-child { white-space: pre-wrap; }
-  .var { color: var(--blue); background: var(--blue-soft); border-radius: 3px; }
+  .var { color: var(--blue); background: var(--blue-soft); border-radius: 4px; }
   .var.bad { color: var(--red); background: var(--red-soft); text-decoration: underline wavy var(--red); text-underline-offset: 3px; }
   .fm { color: var(--faint); }
   .pb-side { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 16px; }
-  .pb-side h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .pb-side h3 { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
   .vr { display: flex; flex-direction: column; gap: 1px; padding: 6px 0; border-top: 1px solid var(--line); }
   .vr .k { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--blue); }
   .vr .v { font-size: 12.5px; color: var(--text-2); }
 </style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Playbooks</h1><span class="mono faint small">acme-billing · 8 playbooks</span>
+    <span class="grow"></span><span class="small faint">Reusable instructions for a run. Plain markdown files.</span>
+    <button class="btn">Import quick-prompts.md…</button><button class="btn primary">New playbook</button>
+  </div>
 <div class="pb">
   <nav class="pb-list">
-    <div class="row" style="gap:6px">
-      <input class="input" placeholder="Search playbooks" style="padding:6px 9px">
-      <button class="btn sm primary">New</button>
-    </div>
-    <div class="row" style="gap:6px;padding:6px 2px 0"><button class="btn xs ghost">Import quick-prompts.md…</button></div>
+    <input class="input" placeholder="Search playbooks" style="padding:6px 9px">
 
     <div class="grp"><span class="upper">Project · acme-billing</span><span class="mono xs faint">.saarthi/playbooks/</span></div>
     <div class="pbi on">
-      <span class="nm ellipsis">Fix bug with TDD (failing test first)</span>
+      <span class="nm">Fix bug with TDD (failing test first)</span>
       <span class="df"><span class="agent cl sm">CL</span>build</span>
       <span class="sl">fix-bug-tdd · <span class="accent">overrides</span></span>
     </div>
     <div class="pbi">
-      <span class="nm ellipsis">acme: add an API endpoint</span>
+      <span class="nm">acme: add an API endpoint</span>
       <span class="df"><span class="agent cl sm">CL</span>build</span>
       <span class="sl">add-api-endpoint</span>
     </div>
 
     <div class="grp"><span class="upper">Global</span><span class="mono xs faint">~/.config/saarthi/playbooks/</span></div>
     <div class="pbi">
-      <span class="nm ellipsis">Small steps, one commit each</span>
+      <span class="nm">Small steps, one commit each</span>
       <span class="df faint">no defaults</span>
       <span class="sl">small-commits</span>
     </div>
 
     <div class="grp"><span class="upper">Built-in</span><span class="xs faint">read-only · Copy to edit</span></div>
     <div class="pbi">
-      <span class="nm ellipsis">Plan first, then build</span>
+      <span class="nm">Plan first, then build</span>
       <span class="df"><span class="agent cl sm">CL</span>build</span>
       <span class="sl">plan-then-build</span>
     </div>
     <div class="pbi hidden">
-      <span class="nm ellipsis">Fix bug with TDD (failing test first)</span>
+      <span class="nm">Fix bug with TDD (failing test first)</span>
       <span class="df"><span class="agent cl sm">CL</span>build</span>
       <span class="sl">fix-bug-tdd · hidden</span>
     </div>
     <div class="pbi">
-      <span class="nm ellipsis">Refactor without behaviour change</span>
+      <span class="nm">Refactor without behaviour change</span>
       <span class="df"><span class="agent cl sm">CL</span>build</span>
       <span class="sl">refactor-safe</span>
     </div>
     <div class="pbi">
-      <span class="nm ellipsis">Write tests for this module</span>
+      <span class="nm">Write tests for this module</span>
       <span class="df"><span class="agent cx sm">CX</span>build</span>
       <span class="sl">write-tests</span>
     </div>
     <div class="pbi">
-      <span class="nm ellipsis">Review for security</span>
+      <span class="nm">Review for security</span>
       <span class="df"><span class="agent cx sm">CX</span>research</span>
       <span class="sl">security-review</span>
     </div>
@@ -785,6 +788,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       <div class="small text2"><span class="mono">R-0019</span> · T-0011 · Fix · 10 Oct</div>
     </div>
   </aside>
+</div>
 </div>
 </div>
 </div>

@@ -619,19 +619,19 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.23</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .bv { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: start; }
   .ver { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 8px; padding: 10px 12px; border: 1px solid var(--line);
-         border-radius: 8px; background: var(--surface); font-size: 12.5px; }
+         border-radius: 12px; background: var(--surface); font-size: 12.5px; }
   .ver .n { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px; grid-row: span 2; }
   .ver.cur { border-color: var(--green); }
   .ver.sel { border-color: var(--accent); background: var(--accent-soft); }
@@ -641,38 +641,26 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage research">Research</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">16m</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.11</span></span>
-    <button class="btn primary" style="padding:7px 14px">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 3 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="29.8 89.5" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="42.0" cy="23.0" r="5"/></svg>
+      <div class="lbl"><b>Brief · 3 of 8</b>Capture → Research → <span class="road">Brief</span> · v3 saved</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>16m</b></span><span class="room-meta">Cost <b>$0.11</b></span>
+    <button class="btn primary">Run agent</button>
   </div>
   <div class="room">
     <div class="room-side">
-      <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved 10:38</span></div>
-        <div class="xs faint">Goal</div>
-        <div style="font-size:13.5px;line-height:1.5" class="pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="xs faint mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box"></span><span class="pretty">POST /auth/password-reset sends an email with a single-use link</span></div>
-        <div class="crit"><span class="box"></span><span class="pretty">The link expires after 30 minutes</span></div>
-        <div class="crit"><span class="box"></span><span class="pretty">A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box"></span><span class="pretty">Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box"></span><span class="pretty">Tests cover all of the above</span></div>
-      </section>
-      <section class="col" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row">
-          <span class="agent cl sm">CL</span>
-          <div style="min-width:0">
-            <div><span class="mono">R-0026</span> · Research</div>
-            <div class="faint" style="font-size:11.5px">10:22 · 3m 52s · $0.08</div>
-          </div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved 10:38</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 3m 52s</span><span class="small ok-t strong">done</span></div>
+      </div>
     </div>
 
     <div class="room-main">

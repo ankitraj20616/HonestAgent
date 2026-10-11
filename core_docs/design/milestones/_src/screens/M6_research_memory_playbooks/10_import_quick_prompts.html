@@ -1,43 +1,49 @@
-<!-- {"title": "Import quick-prompts.md", "note": "Dry run of importing core_docs/quick-prompts.md into the saarthi project: 7 playbooks found (one per ## heading), slug clash gets -2, text kept word for word, nothing written until Import. F13.1, F13.4, M6 import", "shell": "app", "nav": "playbooks", "project": "saarthi", "crumb": "Playbooks", "needs": 1, "cost": "$5.31", "slots": "1 of 4"} -->
+<!-- {"title": "Import quick-prompts.md", "note": "Dry run of importing core_docs/quick-prompts.md into the saarthi project: 7 playbooks found (one per ## heading), slug clash gets -2, text kept word for word, nothing written until Import. F13.1, F13.4, M6 import", "shell": "app", "nav": "playbooks", "project": "saarthi", "needs": 0, "cost": "$5.31", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"}]} -->
 <style>
-  .pb { display: grid; grid-template-columns: 300px minmax(0, 1fr); height: 100%; min-height: 0; }
+  .pb { display: grid; grid-template-columns: 300px minmax(0, 1fr); flex: 1; min-height: 0; border-top: 1px solid var(--line); }
   .pb-list { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; }
   .grp { display: flex; flex-direction: column; gap: 1px; padding: 12px 6px 4px; }
-  .pbi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 8px 10px; border-radius: 7px; border: 1px solid transparent; }
+  .pbi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid transparent; }
+  .pbi .nm { grid-column: 1 / -1; text-wrap: pretty; }
   .pbi .nm { font-size: 13.5px; font-weight: 500; }
   .pbi .sl { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); }
-  .pbi .df { grid-row: span 2; align-self: center; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .pbi .df { align-self: center; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
   .pbi.on { background: var(--surface); border-color: var(--accent); }
   .imp { width: min(900px, calc(100vw - 32px)); max-height: 92vh; }
   .ct { display: grid; grid-template-columns: 18px 22px 176px 178px minmax(0, 1fr) 46px; gap: 10px; align-items: center; padding: 7px 10px; font-size: 12.5px; border-top: 1px solid var(--line); }
   .ct.head { color: var(--faint); font-size: 11px; border-top: none; }
-  .ct.sel { background: var(--accent-soft); border-radius: 6px; border-top-color: transparent; }
+  .ct.sel { background: var(--accent-soft); border-radius: 8px; border-top-color: transparent; }
   .ct.off { color: var(--faint); }
   .ct .n { text-align: right; font-family: 'JetBrains Mono', monospace; }
   .check.on::after { content: '✓'; color: var(--on-accent); font-size: 10px; line-height: 1; }
 </style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Playbooks</h1><span class="mono faint small">saarthi · 7 playbooks</span>
+    <span class="grow"></span><span class="small faint">Reusable instructions for a run. Plain markdown files.</span>
+    <button class="btn">Import quick-prompts.md…</button><button class="btn primary">New playbook</button>
+  </div>
 <div class="pb">
   <nav class="pb-list">
-    <div class="row" style="gap:6px">
-      <input class="input" placeholder="Search playbooks" style="padding:6px 9px">
-      <button class="btn sm primary">New</button>
-    </div>
-    <div class="row" style="gap:6px;padding:6px 2px 0"><button class="btn xs">Import quick-prompts.md…</button></div>
+    <input class="input" placeholder="Search playbooks" style="padding:6px 9px">
     <div class="grp"><span class="upper">Project · saarthi</span><span class="mono xs faint">.saarthi/playbooks/</span></div>
-    <div class="pbi"><span class="nm ellipsis">Bug fix</span><span class="df faint">no defaults</span><span class="sl">bug-fix</span></div>
+    <div class="pbi"><span class="nm">Bug fix</span><span class="df faint">no defaults</span><span class="sl">bug-fix</span></div>
     <div class="grp"><span class="upper">Global</span><span class="mono xs faint">~/.config/saarthi/playbooks/</span></div>
-    <div class="pbi"><span class="nm ellipsis">Small steps, one commit each</span><span class="df faint">no defaults</span><span class="sl">small-commits</span></div>
+    <div class="pbi"><span class="nm">Small steps, one commit each</span><span class="df faint">no defaults</span><span class="sl">small-commits</span></div>
     <div class="grp"><span class="upper">Built-in</span><span class="xs faint">read-only · Copy to edit</span></div>
-    <div class="pbi on"><span class="nm ellipsis">Plan first, then build</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">plan-then-build</span></div>
-    <div class="pbi"><span class="nm ellipsis">Fix bug with TDD (failing test first)</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">fix-bug-tdd</span></div>
-    <div class="pbi"><span class="nm ellipsis">Refactor without behaviour change</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">refactor-safe</span></div>
-    <div class="pbi"><span class="nm ellipsis">Write tests for this module</span><span class="df"><span class="agent cx sm">CX</span>build</span><span class="sl">write-tests</span></div>
-    <div class="pbi"><span class="nm ellipsis">Review for security</span><span class="df"><span class="agent cx sm">CX</span>research</span><span class="sl">security-review</span></div>
+    <div class="pbi on"><span class="nm">Plan first, then build</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">plan-then-build</span></div>
+    <div class="pbi"><span class="nm">Fix bug with TDD (failing test first)</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">fix-bug-tdd</span></div>
+    <div class="pbi"><span class="nm">Refactor without behaviour change</span><span class="df"><span class="agent cl sm">CL</span>build</span><span class="sl">refactor-safe</span></div>
+    <div class="pbi"><span class="nm">Write tests for this module</span><span class="df"><span class="agent cx sm">CX</span>build</span><span class="sl">write-tests</span></div>
+    <div class="pbi"><span class="nm">Review for security</span><span class="df"><span class="agent cx sm">CX</span>research</span><span class="sl">security-review</span></div>
   </nav>
   <section style="padding:20px 24px" class="col gap-12">
     <div class="row"><h1 style="font-size:17px;font-weight:600">Plan first, then build</h1><span class="tag">built-in</span></div>
     <div class="code" style="padding:8px 0"><div class="ln"><span>1</span><span>+++</span></div><div class="ln"><span>2</span><span>name = "Plan first, then build"</span></div></div>
   </section>
+</div>
 </div>
 
 <div class="scrim" style="padding-top:5vh">
@@ -76,7 +82,7 @@
 
       <div class="col" style="gap:6px">
         <div class="row between"><span class="small"><b>5 · Bug fix</b> <span class="muted">→ <span class="mono">.saarthi/playbooks/bug-fix-2.md</span></span></span><span class="xs faint">Text kept word for word · no default agent or mode</span></div>
-        <div class="term" style="border-radius:8px"><div class="term-body" style="padding:10px 12px;font-size:12px;line-height:1.6"><span class="d">+++
+        <div class="term" style="border-radius:10px"><div class="term-body" style="padding:10px 12px;font-size:12px;line-height:1.6"><span class="d">+++
 name = "Bug fix"
 +++</span>
 Read the full files involved, not snippets. Find the root cause first and explain it in 3 lines. Then write a failing test that shows the bug, then fix it. Add the problem -&gt; root cause -&gt; fix -&gt; result to `core_docs/memory/project_memory.md`.</div></div>

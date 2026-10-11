@@ -1,4 +1,7 @@
-<!-- {"title": "Research this - finding saved", "note": "A read-only research run ended. The agent finding is saved as a research item with four fixed headings. Stage and worktree are unchanged. F4.4, F4.6", "shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.20", "slots": "2 of 4"} -->
+<!-- {"title": "Research this - finding saved", "note": "A read-only research run ended. The agent finding is saved as a research item with four fixed headings. Stage and worktree are unchanged. F4.4, F4.6", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.20", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
 <style>
   .ri-kind { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
   .send { display: flex; align-items: center; gap: 8px; border: none; background: none; color: var(--muted); font-size: 12px; padding: 0; }
@@ -12,45 +15,27 @@
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage research">Research</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">4m</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.08</span></span>
-    <button class="btn primary" style="padding:7px 14px">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage research">Research</span>
+    <div class="journey-box"><x-journey stage="research" tone="info"></x-journey>
+      <div class="lbl"><b>Research · 2 of 8</b>Finding saved · stage unchanged</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>4m</b></span><span class="room-meta">Cost <b>$0.08</b></span>
+    <button class="btn primary">Run agent</button>
   </div>
   <div class="room">
     <div class="room-side">
-      <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v2 · saved</span></div>
-        <div class="xs faint">Goal</div>
-        <div style="font-size:13.5px;line-height:1.5">Add password reset API</div>
-        <div class="xs faint mt-4">Acceptance criteria</div>
-        <div class="small muted" style="padding:10px;border:1px dashed var(--line-strong);border-radius:6px">None yet. Collect research, then click <b class="text2">Draft brief</b>.</div>
-        <div class="xs faint mt-4">Notes</div>
-        <div class="small muted pretty">Client asked in ticket #4821.</div>
-      </section>
-      <section class="col">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv">
-          <div><div class="k">vs main</div>0 ahead · 0 behind</div>
-          <div><div class="k">Changed files</div><span class="green">0 · clean</span></div>
-        </div>
-      </section>
-      <section class="col" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row">
-          <span class="agent cl sm">CL</span>
-          <div style="min-width:0">
-            <div><span class="mono">R-0026</span> · Research</div>
-            <div class="faint" style="font-size:11.5px">10:22 · 3m 52s · $0.08</div>
-          </div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
+      <div class="col"><div class="row between"><h3>Brief · v2</h3><span class="xs faint">saved</span></div>
+        <div class="goal">Add password reset API</div>
+        <div class="small muted" style="padding:10px;border:1px dashed var(--line2);border-radius:10px">No acceptance criteria yet. Collect research, then click <b class="text2">Draft brief</b>.</div>
+        <div class="small muted pretty">Note: client asked in ticket #4821.</div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>0</b> ahead</span><span><b>0</b> files</span><span class="ok-t">clean</span></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 3m 52s</span><span class="small ok-t strong">done</span></div>
+      </div>
     </div>
 
     <div class="room-main">

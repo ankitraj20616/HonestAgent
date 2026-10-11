@@ -619,23 +619,23 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.23</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .cp { width: min(1200px, calc(100vw - 32px)); max-height: 94vh; }
-  .cp-body { display: grid; grid-template-columns: 440px minmax(0, 1fr); min-height: 0; height: 664px; border-top: 1px solid var(--line); }
-  .cp-left { overflow: auto; padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 14px; border-right: 1px solid var(--line); }
+  .cp-body { display: grid; grid-template-columns: 440px minmax(0, 1fr); min-height: 0; height: 702px; border-top: 1px solid var(--line); }
+  .cp-left { overflow: auto; padding: 12px 18px 14px; display: flex; flex-direction: column; gap: 12px; border-right: 1px solid var(--line); }
   .cp-right { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--panel); }
-  .sec { display: grid; grid-template-columns: 74px minmax(0, 1fr) 62px; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .sec { display: grid; grid-template-columns: 74px minmax(0, 1fr) 62px; gap: 8px; align-items: baseline; padding: 4px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
   .sec .n { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-  .mm { display: grid; grid-template-columns: minmax(0, 1fr) 36px 52px 50px; gap: 8px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); font-size: 12px; }
+  .mm { display: grid; grid-template-columns: minmax(0, 1fr) 36px 52px 50px; gap: 8px; align-items: center; padding: 4px 0; border-top: 1px solid var(--line); font-size: 12px; }
   .mm .n { text-align: right; font-family: 'JetBrains Mono', monospace; }
   .mm.head { color: var(--faint); font-size: 11px; border-top: none; padding-top: 0; }
   .kw { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface-3); color: var(--text-2); }
@@ -644,27 +644,24 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .md .h { color: var(--accent-text); font-weight: 600; }
   .md .h2 { color: var(--blue); font-weight: 600; }
   .fold { display: grid; grid-template-columns: 44px minmax(0, 1fr); }
-  .fold > span:last-child { margin: 1px 0; padding: 0 8px; width: fit-content; border-radius: 4px; background: var(--surface-3); color: var(--muted); font-size: 11.5px; }
+  .fold > span:last-child { margin: 1px 0; padding: 0 8px; width: fit-content; border-radius: 999px; background: var(--surface-3); color: var(--muted); font-size: 11.5px; }
   .jump { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
   .jump .chip { padding: 2px 9px; font-size: 11.5px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage ready">Ready</span>
-    <div class="grow"></div>
-    <span class="small muted">Time <span class="mono" style="color:var(--text)">17m</span></span>
-    <span class="small muted">Cost <span class="mono" style="color:var(--text)">$0.11</span></span>
-    <button class="btn primary" style="padding:7px 14px">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 3 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="29.8 89.5" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-road" cx="42.0" cy="23.0" r="5"/></svg>
+      <div class="lbl"><b>Brief · 3 of 8</b>Brief v3 saved · ready to run</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>17m</b></span><span class="room-meta">Cost <b>$0.11</b></span>
+    <button class="btn primary">Run agent</button>
   </div>
   <div class="room">
     <div class="room-side">
-      <section class="col" style="gap:10px">
-        <div class="row between"><h3>Brief</h3><span class="xs faint">v3 · saved 10:38</span></div>
-        <div class="xs faint">Goal</div>
-        <div style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-      </section>
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved 10:38</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+      </div>
     </div>
     <div class="room-main">
       <div class="tabs"><button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Brief</button><button class="tab">Research <span class="n">7</span></button></div>
@@ -673,7 +670,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   </div>
 </div>
 
-<div class="scrim" style="padding-top:3vh">
+<div class="scrim" style="padding-top:2vh">
   <div class="modal cp">
     <div class="modal-head" style="padding-bottom:12px">
       <div class="grow">
