@@ -1,126 +1,76 @@
-<!-- {"shell": "app", "nav": "room", "crumb": "T-0012 · Add password reset API", "needs": 1, "cost": "$4.12", "slots": "2 of 4", "title": "Shipped - worktree cleanup", "note": "Ship ran commit, push and gh pr create; T-0012 is Shipped with PR #118. The steps and the PR body summary stay on the Review tab. The app then asks to delete the worktree; the branch and checkpoints are kept. F11.1, F11.2, F6.6, F2.5"} -->
+<!-- {"title": "Shipped - worktree cleanup", "note": "Ship ran commit, push and gh pr create; T-0012 is Shipped with PR #118. The steps and the PR body summary stay on the Review tab. The app then asks to delete the worktree; the branch and checkpoints are kept. No memory drafts yet (M6), so the journey Wheel stays on Ship. F11.1, F11.2, F6.6, F2.5", "shell": "app", "nav": "board", "needs": 0, "cost": "$5.03", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 35m", "cost": "$0.72"}]} -->
+<style>
+.step { display: grid; grid-template-columns: 20px 96px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+.prbody { font-size: 12.5px; color: var(--text2); line-height: 1.7; }
+.prbody b { color: var(--text); font-weight: 600; }
+</style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage shipped">Shipped</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">37m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$1.47</span></span>
-    <button class="btn primary disabled" title="Task is shipped">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage shipped">Shipped</span>
+    <div class="journey-box"><x-journey stage="ship" tone="ok"></x-journey>
+      <div class="lbl"><b>Ship · 7 of 8</b>PR #118 open · base main</div></div>
+    <span class="grow"></span>
+    <x-trust checks="50" criteria="28" second="15" size="40"></x-trust>
+    <span class="room-meta">Time <b>37m</b></span><span class="room-meta">Cost <b>$1.47</b></span>
   </div>
-  <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
-        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
-        <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>7 ahead</div>
-          <div><div class="k">Changed</div>0 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0032</span></div>
+  <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
+  <div class="review-tab">
+    <div class="review-l">
+      <div class="card ok">
+        <div class="row" style="gap:12px">
+          <span class="dot lg ok"></span>
+          <h2 style="font-size:17px;font-weight:600">Shipped · PR #118 is open</h2>
+          <span class="grow"></span>
+          <button class="btn">Copy link</button>
+          <button class="btn primary">Open PR</button>
         </div>
-        <div class="small"><span class="dot green"></span> <a href="#">PR #118</a> <span class="muted">open · base main</span></div>
-        <div class="row wrap" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0034</span> · Commit msg <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:25 · 9s · $0.01</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0033</span> · Story <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:21 · 38s · $0.03</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0032</span> · Fix</div><div class="faint" style="font-size:11.5px">11:16 · 3m · $0.14</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cx">CX</span>
-          <div style="min-width:0"><div><span class="mono">R-0031</span> · Review <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:12 · 3m · $0.21</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab">Proof <span class="dot tdot green"></span></button>
-        <button class="tab on">Review</button>
-        <button class="tab">Code <span class="n">6</span></button>
-        <button class="tab">Timeline</button>
-      </div>
-      <div class="tab-body">
-        <div class="rv">
-        <div class="card ok">
-          <div class="row" style="gap:12px">
-            <span class="dot lg green"></span>
-            <h2 style="font-size:17px;font-weight:600">Shipped · PR #118 is open</h2>
-            <div class="grow"></div>
-            <button class="btn">Copy link</button>
-            <button class="btn primary">Open PR</button>
-          </div>
-          <div class="mt-12">
-            <div class="step"><span class="ok">✓</span><span class="muted">Commit</span><span><span class="mono accent">7c1e9a2</span> feat(auth): add password reset with single-use tokens <span class="xs faint">· 6 files</span></span></div>
-            <div class="step"><span class="ok">✓</span><span class="muted">Push</span><span class="mono small">saarthi/T-0012-add-password-reset-api → origin <span class="faint">(new branch)</span></span></div>
-            <div class="step"><span class="ok">✓</span><span class="muted">Pull request</span><span><a class="mono small" href="#">https://github.com/acme/acme-billing/pull/118</a> <span class="xs faint">· base main</span></span></div>
-            <div class="step"><span class="ok">✓</span><span class="muted">Stage</span><span class="small">Review → Shipped · 11:26</span></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-h"><span class="upper">PR body</span><span class="grow"></span><span class="xs faint">built by the daemon · 4.1 KB</span></div>
-          <div class="small text2" style="padding:12px 14px;line-height:1.6">
-            <b>Goal</b> · Users can reset a forgotten password by email.<br>
-            <b>Acceptance criteria</b> · 4 met, 1 not sure (confirmed by you)<br>
-            <b>Change Story</b> · New API endpoints · Database change · Tests · Config<br>
-            <b>Risk flags</b> · auth (3), migration (1), config (1)<br>
-            <b>Proof</b> · lint pass · tests pass · types pass (optional) · 6 files, +182 −4, 8 tests added<br>
-            <b>Second Opinion</b> · Codex: 2 sent, 1 open, 1 ignored<br>
-            <span class="faint">Made with Saarthi · T-0012</span>
-          </div>
-        </div>
+        <div class="mt-12">
+          <div class="step"><span class="ok-t strong">✓</span><span class="muted">Commit</span><span><span class="mono road">7c1e9a2</span> feat(auth): add password reset with single-use tokens <span class="xs faint">· 6 files</span></span></div>
+          <div class="step"><span class="ok-t strong">✓</span><span class="muted">Push</span><span class="mono small">saarthi/T-0012-add-password-reset-api → origin <span class="faint">(new branch)</span></span></div>
+          <div class="step"><span class="ok-t strong">✓</span><span class="muted">Pull request</span><span><a class="mono small" href="#">https://github.com/acme/acme-billing/pull/118</a> <span class="xs faint">· base main</span></span></div>
+          <div class="step"><span class="ok-t strong">✓</span><span class="muted">Stage</span><span class="small">Review → Shipped · 11:26</span></div>
         </div>
       </div>
-    </section>
+      <div class="card">
+        <div class="card-head"><span class="upper">PR body</span><span class="xs faint">built by the daemon · 4.1 KB</span></div>
+        <div class="prbody">
+          <b>Goal</b> · Users can reset a forgotten password by email.<br>
+          <b>Acceptance criteria</b> · 4 met, 1 not sure (confirmed by you)<br>
+          <b>Change Story</b> · New API endpoints · Database change · Settings · Tests<br>
+          <b>Risk flags</b> · auth (3), migration (1), config (1)<br>
+          <b>Proof</b> · Trust 93 · lint pass · tests pass · types pass (optional) · 6 files, +182 −4, 8 tests added<br>
+          <b>Second opinion</b> · Codex: 2 fixed, 1 open, 1 ignored<br>
+          <span class="faint">Made with Saarthi · T-0012</span>
+        </div>
+      </div>
+    </div>
+    <div class="review-r">
+      <div class="col" style="gap:6px"><span class="upper">Workspace</span>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>7</b> ahead</span><span><b>0</b> changed</span><span>checkpoint <b class="mono">ck-0032</b></span></div>
+          <div class="small"><span class="dot ok"></span> <a href="#">PR #118</a> <span class="muted">open · base main</span></div></div>
+      </div>
+      <div class="so"><div class="hd"><span class="agent cx">CX</span>Second opinion · Codex · 15 of 15</div>
+        <div class="fd mt-8"><span class="ok-t strong">✓</span><span><span class="sev ok-t">Fixed</span>High and medium findings, in fix run R-0032.</span></div>
+        <div class="fd"><span class="faint">○</span><span><span class="sev muted">Low</span>1 open, 1 ignored. Listed in the PR body.</span></div>
+      </div>
+    </div>
   </div>
 </div>
-<div class="scrim" style="padding-top:46vh">
+<div class="scrim" style="padding-top:44vh">
   <div class="modal">
     <div class="modal-head">
       <h2>Delete the worktree?</h2>
     </div>
     <div class="modal-body">
       <div class="small text2">T-0012 is shipped. The worktree folder is not needed any more. <b>The branch is kept.</b></div>
-      <div class="mono small" style="padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
+      <div class="ws"><span class="br">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</span></div>
       <div class="col" style="gap:6px">
-        <div class="row small"><span class="green strong">✓</span><span>Branch <span class="mono accent">saarthi/T-0012-add-password-reset-api</span> stays, local and on origin</span></div>
-        <div class="row small"><span class="green strong">✓</span><span>Checkpoints stay (ck-0026 … ck-0032)</span></div>
-        <div class="row small"><span class="green strong">✓</span><span>No uncommitted changes in the folder</span></div>
+        <div class="row small"><span class="ok-t strong">✓</span><span>Branch <span class="mono road">saarthi/T-0012-add-password-reset-api</span> stays, local and on origin</span></div>
+        <div class="row small"><span class="ok-t strong">✓</span><span>Checkpoints stay (ck-0026 … ck-0032)</span></div>
+        <div class="row small"><span class="ok-t strong">✓</span><span>No uncommitted changes in the folder</span></div>
       </div>
       <div class="xs faint">Later: <span class="mono">saarthi workspace remove T-0012</span></div>
     </div>

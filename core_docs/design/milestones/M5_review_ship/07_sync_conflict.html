@@ -608,155 +608,8 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proto-nav a:hover { color: var(--text); background: var(--surface3); text-decoration: none; }
 .proto-nav .sep { color: var(--line2); }
 
-/* Proof + Review styles used by every M5 screen (same rules, same order). Theme variables only. */
-.side-sec { display: flex; flex-direction: column; gap: 9px; }
-.side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-.room-side { gap: 18px; }
-.kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-.kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-.kv3 .k { color: var(--faint); font-size: 10.5px; }
-.kv3 > .hl { border-color: var(--accent); background: var(--accent-soft); }
-.room-side .crit { font-size: 12.5px; }
-.tab .tdot { width: 6px; height: 6px; }
-.side-run .tag { font-size: 10.5px; padding: 0 4px; }
-.pf { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-.pf-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
-.pf-head.ok { border-color: var(--green); }
-.pf-head.bad { border-color: var(--red); }
-.pf-head.info { border-color: var(--blue); }
-.pf-head .bdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--line-strong); }
-.pf-head .bdot.green { background: var(--green); }
-.pf-head .bdot.red { background: var(--red); }
-.pf-head .bdot.blue { background: var(--blue); }
-.pf-head h2 { font-size: 17px; font-weight: 600; line-height: 1.3; }
-.pf-head .sub { font-size: 13px; color: var(--muted); }
-.pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.pf-stat { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.pf-stat .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-.pf-stat .v { font-family: 'JetBrains Mono', monospace; font-size: 18px; white-space: nowrap; }
-.pf-stat .skeleton { width: 54px; height: 14px; margin: 6px 0 4px; }
-.panel { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
-.panel.open { overflow: visible; }
-.panel-h { border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg-side); border-bottom: 1px solid var(--line); }
-.panel-h .upper { color: var(--muted); }
-.ck { border-bottom: 1px solid var(--line); }
-.ck:last-child { border-bottom: none; }
-.ck-row { display: grid; grid-template-columns: 12px 14px 64px minmax(0, 1fr) 70px 118px; gap: 10px; align-items: center; padding: 9px 14px; font-size: 13px; }
-.ck-row .tw { color: var(--faint); font-size: 11px; }
-.ck-row .cmd { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ck-row .req { font-size: 12px; color: var(--muted); }
-.ck-row .res { font-size: 12px; text-align: right; font-weight: 600; white-space: nowrap; }
-.ck-row .dot { width: 9px; height: 9px; }
-.tail { margin: 0 14px 12px 50px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.tail-bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 12px; color: var(--muted); background: var(--bg-side); border-bottom: 1px solid var(--line); }
-.tail pre { margin: 0; padding: 9px 12px; background: var(--term-bg); color: var(--term-text); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; font-variant-ligatures: none; }
-.tail .r { color: var(--red); }
-.tail .g { color: var(--green); }
-.tail .d { color: var(--faint); }
-.tail .b { font-weight: 600; }
-.cov { display: grid; grid-template-columns: 22px minmax(0, 1fr) 128px; gap: 10px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
-.cov:last-child { border-bottom: none; }
-.cov .n { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--faint); padding-top: 1px; }
-.cov .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.pick { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
-.pick .car { color: var(--faint); font-weight: 400; }
-.pick.met { color: var(--green); }
-.pick.notsure { color: var(--accent-text); }
-.pick.notmet { color: var(--red); }
-.pick.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.pick-wrap { position: relative; }
-.menu { position: absolute; right: 0; top: calc(100% + 4px); width: 150px; z-index: 5; padding: 4px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-sm); }
-.menu div { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; }
-.menu div.on { background: var(--chip-on); }
-.hist { display: grid; grid-template-columns: 12px 62px 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-.hist:last-child { border-bottom: none; }
-.hist.on { background: var(--surface-2); }
-.ovr { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 8px; }
-.rv { display: flex; flex-direction: column; gap: 14px; max-width: 900px; }
-.rv-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rv-top h2 { font-size: 17px; font-weight: 600; }
-.riskbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.rflag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--red); color: var(--red); white-space: nowrap; }
-.rflag.sm { font-size: 11px; padding: 1px 7px; }
-.grp { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
-.grp-h { display: flex; flex-direction: column; gap: 5px; padding: 12px 16px; }
-.grp-h .t { font-weight: 600; font-size: 14.5px; }
-.grp-h .tw { color: var(--faint); font-size: 12px; width: 12px; }
-.grp-why { font-size: 13.5px; color: var(--text-2); padding-left: 22px; text-wrap: pretty; }
-.grp-files { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); padding-left: 22px; }
-.hunks { border-top: 1px solid var(--line); padding: 6px 0 8px; background: var(--panel); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
-.hunks .hh { padding: 2px 16px; color: var(--blue); }
-.hunks .dl { padding: 0 16px; white-space: pre; color: var(--muted); }
-.hunks .dl.add { background: var(--green-soft); color: var(--diff-add); }
-.hunks .dl.del { background: var(--red-soft); color: var(--diff-del); }
-.cmt-badge { font-size: 11.5px; color: var(--accent-text); white-space: nowrap; }
-.so { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.so h3 { font-size: 14.5px; font-weight: 600; }
-.decide { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
-.ud { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; font-variant-ligatures: none; }
-.ud .l { display: grid; grid-template-columns: 34px 34px 16px minmax(0, 1fr); }
-.ud .l > .n { color: var(--faint); text-align: right; padding-right: 6px; user-select: none; }
-.ud .l > .s { color: var(--faint); text-align: center; }
-.ud .l > .t { white-space: pre; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
-.ud .l.add { background: var(--green-soft); }
-.ud .l.add > .s { color: var(--green); }
-.ud .l.del { background: var(--red-soft); }
-.ud .l.del > .s { color: var(--red); }
-.ud .l.del > .t { color: var(--diff-del); }
-.ud .l.cm > .n:nth-child(2) { color: var(--accent-text); font-weight: 600; }
-.ud .hh { padding: 3px 12px; color: var(--blue); background: var(--blue-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.ud .gap { padding: 3px 12px; color: var(--faint); background: var(--bg-side); font-family: 'IBM Plex Sans', sans-serif; font-size: 11.5px; }
-.ud .l .t .tk-k { color: var(--blue); }
-.lc { margin: 4px 12px 6px 84px; padding: 8px 10px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; line-height: 1.45; box-shadow: var(--shadow-sm); }
-.lc .who { font-size: 11.5px; color: var(--muted); }
-.dv { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 14px; align-items: start; }
-.frow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-.frow:last-child { border-bottom: none; }
-.frow.on { background: var(--chip-on); }
-.frow .st { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; }
-.frow .fn { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-.frow .dir { min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.frow .num { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; text-align: right; white-space: nowrap; }
-.crow { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-.crow .where { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-text); }
-.fd { display: grid; grid-template-columns: 16px 62px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
-.fd .sev { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
-.fd .loc { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
-.fd .why { font-size: 13.5px; text-wrap: pretty; }
-.fd.ign { opacity: .5; }
-.fd .mono { font-variant-ligatures: none; }
-.brt { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); }
-.brt .k { font-size: 11.5px; color: var(--muted); padding: 0; }
-.brt .v { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.check { margin-top: 2px; }
-.gl { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
-.gl:last-child { border-bottom: none; }
-.fcount { font-size: 11.5px; font-weight: 600; color: var(--accent-text); white-space: nowrap; }
-.sendbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft); }
-.okchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 9px; border-radius: 12px; border: 1px solid var(--green); color: var(--green); white-space: nowrap; }
-.br { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.brbox { display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); min-width: 0; }
-.brbox .k { font-size: 10.5px; color: var(--faint); }
-.brbox .v { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; }
-.guard { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-2); padding: 7px 10px; border-radius: 6px; border: 1px solid var(--green); background: var(--green-soft); }
-.shipbox { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.shiprow { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); align-items: start; }
-.shiprow:last-child { border-bottom: none; }
-.shiprow .k { font-size: 12px; color: var(--muted); padding-top: 2px; }
-.msg { width: 100%; min-height: 168px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--term-bg); color: var(--term-text); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; }
-.step { display: grid; grid-template-columns: 20px 96px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
-.step .ok { color: var(--green); font-weight: 700; }
-.cfl { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; background: var(--term-bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 0; font-variant-ligatures: none; }
-.cfl .l { display: grid; grid-template-columns: 40px minmax(0, 1fr); }
-.cfl .l > span:first-child { color: var(--faint); text-align: right; padding-right: 10px; }
-.cfl .l > span:last-child { white-space: pre; color: var(--term-text); }
-.cfl .l.mk > span:last-child { color: var(--red); font-weight: 600; }
-.cfl .l.ours { background: var(--blue-soft); }
-.cfl .l.theirs { background: var(--accent-soft); }
-.numlist { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.numlist div { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; }
-.numlist .i { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--faint); padding-top: 1px; }
-.fade { opacity: .45; }
+/* M5 finding rows: nudge the tick box down so it lines up with the first text line. Theme variables only. */
+.review-r .fd .check { margin-top: 2px; }
 
 .after-top:empty { display: none; }
 </style>
@@ -768,138 +621,98 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
-  <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
+  <div class="cost-box"><span class="mono">$4.85</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
+<style>
+.cf-files { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.cf-files > div { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12.5px; }
+.cf-files > div:first-child { border-top: none; }
+.cfl { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.6; background: var(--term-bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 0; font-variant-ligatures: none; overflow: hidden; }
+.cfl .l { display: grid; grid-template-columns: 40px minmax(0, 1fr); }
+.cfl .l > span:first-child { color: var(--faint); text-align: right; padding-right: 10px; }
+.cfl .l > span:last-child { white-space: pre; color: var(--term-text); overflow: hidden; text-overflow: ellipsis; }
+.cfl .l.mk > span:last-child { color: var(--bad); font-weight: 600; }
+.cfl .l.ours { background: var(--info-soft); }
+.cfl .l.theirs { background: var(--road-soft); }
+.fade { opacity: .45; }
+</style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage review">Review</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">31m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$1.29</span></span>
-    <button class="btn primary">Run agent</button>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 6 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="74.6 44.8" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-bad" cx="9.6" cy="36.4" r="5"/></svg>
+      <div class="lbl"><b>Review · 6 of 8</b>Sync conflict · Ship blocked</div></div>
+    <span class="grow"></span>
+    <svg class="trust-sm" width="40" height="40" viewBox="0 0 52 52" role="img" aria-label="Trust score 86"><circle class="tr-bg" cx="26" cy="26" r="21"/><circle class="tr-ok" cx="26" cy="26" r="21" stroke-dasharray="113.5 18.5" transform="rotate(-90.0 26 26)"/><text class="tr-num-sm" x="26" y="31" text-anchor="middle">86</text></svg>
+    <span class="room-meta">Time <b>32m</b></span><span class="room-meta">Cost <b>$1.29</b></span>
   </div>
-  <div class="banner err" style="margin:12px 20px 0;flex-shrink:0">
-    <span class="dot lg red"></span>
+  <div class="banner err" style="margin:12px 20px;flex-shrink:0">
+    <span class="dot lg bad"></span>
     <div class="grow"><b>Sync conflict.</b> The rebase stopped on 2 files. T-0012 stays in Review; Ship is blocked until the sync is finished or aborted.</div>
     <button class="btn sm">Abort sync</button>
     <button class="btn sm primary">Let agent fix</button>
   </div>
-  <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+  <div class="room" style="border-top:1px solid var(--line)">
+    <div class="room-side">
+      <div class="col"><h3>Brief · v3</h3>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support (ticket #4821).</div>
+        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends a single-use link</span></div>
         <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202</span></div>
         <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div class="hl"><div class="k">vs main</div>rebasing</div>
-          <div><div class="k">Changed</div>2 conflicts</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0033</span></div>
-        </div>
-        <div class="row wrap" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row side-run">
-          <span class="agent sm cx">CX</span>
-          <div style="min-width:0"><div><span class="mono">R-0031</span> · Review <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:12 · 3m · $0.21</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0030</span> · Story <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:07 · 41s · $0.03</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0029</span> · Coverage <span class="tag">side</span></div><div class="faint" style="font-size:11.5px">11:06 · 24s · $0.02</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row side-run">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0028</span> · Fix</div><div class="faint" style="font-size:11.5px">11:04 · 2m · $0.11</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab">Proof <span class="dot tdot green"></span></button>
-        <button class="tab on">Review</button>
-        <button class="tab">Code <span class="n">6</span></button>
-        <button class="tab">Timeline</button>
       </div>
-      <div class="tab-body">
-        <div class="rv">
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span class="bad-t">rebasing</span><span><b class="bad-t">2</b> conflicts</span><b class="mono">ck-0033</b></div>
+          <div class="row wrap" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cx">CX</span><span>R-0031 · review · 3m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0030 · story · 41s</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0028 · fix · 2m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
+      <div class="review-l">
         <div class="card bad">
           <div class="row wrap" style="gap:10px">
             <h2 style="font-size:16px;font-weight:600">Merge conflicts</h2>
             <span class="tag red">phase: rebase</span>
             <span class="small muted">onto origin/main b72f019 · checkpoint <span class="mono">ck-0033</span> (before-sync)</span>
           </div>
-          <div class="mt-12 panel" style="background:var(--surface)">
-            <div class="hist" style="grid-template-columns:14px minmax(0,1fr) auto"><span class="dot red"></span><span class="mono small">app/settings.py</span><span class="xs muted">1 conflict</span></div>
-            <div class="hist" style="grid-template-columns:14px minmax(0,1fr) auto"><span class="dot red"></span><span class="mono small">app/auth/routes.py</span><span class="xs muted">2 conflicts · LoginRequest renamed on main</span></div>
+          <div class="cf-files mt-12">
+            <div><span class="dot bad"></span><span class="mono small">app/settings.py</span><span class="xs muted">1 conflict</span></div>
+            <div><span class="dot bad"></span><span class="mono small">app/auth/routes.py</span><span class="xs muted">2 conflicts · LoginRequest renamed on main</span></div>
           </div>
-          <div class="mt-12 small muted">app/settings.py</div>
+          <div class="mt-12 small muted mono">app/settings.py</div>
           <div class="cfl mt-4">
-              <div class="l "><span>12</span><span>class Settings(BaseSettings):</span></div>
-              <div class="l "><span>13</span><span>    SMTP_HOST: str</span></div>
-              <div class="l mk"><span>14</span><span>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD (origin/main)</span></div>
-              <div class="l ours"><span>15</span><span>    SESSION_TTL_MINUTES: int = 60</span></div>
-              <div class="l mk"><span>16</span><span>=======</span></div>
-              <div class="l theirs"><span>17</span><span>    RESET_TOKEN_TTL_MINUTES: int = 30</span></div>
-              <div class="l mk"><span>18</span><span>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 3c8d2e1 (feat(auth): add password reset API)</span></div>
-              <div class="l "><span>19</span><span></span></div>
+            <div class="l"><span>12</span><span>class Settings(BaseSettings):</span></div>
+            <div class="l"><span>13</span><span>    SMTP_HOST: str</span></div>
+            <div class="l mk"><span>14</span><span>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD (origin/main)</span></div>
+            <div class="l ours"><span>15</span><span>    SESSION_TTL_MINUTES: int = 60</span></div>
+            <div class="l mk"><span>16</span><span>=======</span></div>
+            <div class="l theirs"><span>17</span><span>    RESET_TOKEN_TTL_MINUTES: int = 30</span></div>
+            <div class="l mk"><span>18</span><span>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 3c8d2e1 (feat(auth): add password reset API)</span></div>
           </div>
-          <div class="row wrap mt-12" style="gap:10px">
-            <div class="grow small text2 pretty" style="min-width:300px"><b>Let agent fix</b> starts a fix run with a “Merge conflicts” section: fix the markers, <span class="mono">git add</span>, then <span class="mono">git rebase --continue</span>. <b>Abort</b> puts the worktree back exactly as before.</div>
-            <button class="btn">Open in my editor</button>
-            <button class="btn">Abort sync</button>
-            <button class="btn primary">Let Claude fix</button>
+          <div class="row mt-12" style="gap:12px;align-items:flex-start">
+            <div class="grow small text2 pretty"><b>Let agent fix</b> starts a Claude fix run with a "Merge conflicts" section: fix the markers, <span class="mono">git add</span>, then <span class="mono">git rebase --continue</span>. <b>Abort sync</b> puts the worktree back exactly as before.</div>
+            <button class="btn sm">Open in my editor</button>
           </div>
         </div>
-        <div class="fade col gap-12">
-        <div class="rv-top">
-          <h2>Change Story</h2>
-          <span class="small muted">6 files · <span class="green">+171</span> <span class="red">−4</span> · 4 groups · grouped by <span class="agent sm cl">CL</span> Claude</span>
-          <div class="grow"></div>
-          <div class="seg"><button class="on">Story</button><button>Files</button></div>
-        </div>
-          <div class="small muted">Story #1 is out of date while the sync is open. A new story is built after checks pass.</div>
-        </div>
+        <div class="fade">
+          <div class="row" style="gap:10px"><h2 style="font-size:17px">Change Story</h2><span class="small faint">Story #1 · out of date</span></div>
+          <div class="small muted mt-4">Story #1 is out of date while the sync is open. A new story is built after checks pass.</div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 </div>
