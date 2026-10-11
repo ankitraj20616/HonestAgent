@@ -20,7 +20,7 @@
       <div class="chap"><div class="node"><b>1</b><i></i></div><div class="bx open">
         <div class="h"><b>New API endpoints</b><span class="risk sm">auth</span><span class="n">3 findings · 1 comment · +58 −4</span></div>
         <p>Two endpoints: ask for a reset link, and confirm with a new password. Tokens are hashed with SHA-256 before they are saved.</p>
-        <div class="diff" style="font-variant-ligatures:none"><div class="hh">@@ app/auth/reset.py  +38,6 @@</div><div class="a">+    row = db.query(ResetToken).filter_by(user_id=user.id).first()</div><div class="a">+    if row is None or row.token_hash == hash_token(token):</div><div class="cm"><b>Codex · high:</b> compare hashes with hmac.compare_digest, not ==, to avoid a timing leak.</div></div>
+        <div class="diff"><div class="hh">@@ app/auth/reset.py  +38,6 @@</div><div class="a">+    row = db.query(ResetToken).filter_by(user_id=user.id).first()</div><div class="a">+    if row is None or row.token_hash == hash_token(token):</div><div class="cm"><b>Codex · high:</b> compare hashes with hmac.compare_digest, not ==, to avoid a timing leak.</div></div>
       </div></div>
       <div class="chap"><div class="node"><b>2</b><i></i></div><div class="bx"><div class="h"><b>Database change</b><span class="risk sm">migration</span><span class="n">1 comment · +31</span></div><p>New table password_reset_tokens (user_id, token_hash, expires_at, used_at) with an index on token_hash.</p></div></div>
       <div class="chap"><div class="node"><b>3</b><i></i></div><div class="bx"><div class="h"><b>Settings</b><span class="risk warn sm">config</span><span class="n">+2</span></div><p>RESET_TOKEN_TTL_MIN = 30 in app/settings.py.</p></div></div>

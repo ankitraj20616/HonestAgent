@@ -102,6 +102,10 @@ button { cursor: pointer; }
 
 /* ---------- text helpers ---------- */
 .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+/* JetBrains Mono would draw == != -> as ligatures; code must show the real characters */
+.mono, .code, .term, .term-body, .diff, .ev-out, .tool-row, code, pre { font-variant-ligatures: none; }
+/* ...but Inter text inside those boxes keeps its normal shapes (e.g. parentheses next to capitals) */
+.term-bar, .diff .cm, .tool-row > :not(.k):not(.r):not(.mono) { font-variant-ligatures: normal; }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
 .text2 { color: var(--text2); }
@@ -643,7 +647,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .proof-r .ck-row .tm.run { color: var(--info); }
   .proof-r .ck-row .tm.off { color: var(--faint); }
   .ck-live { margin-top: 6px; }
-  .ck-live .term-body { padding: 10px 14px; font-size: 12px; line-height: 1.55; font-variant-ligatures: none; }
+  .ck-live .term-body { padding: 10px 14px; font-size: 12px; line-height: 1.55; }
   .wait-note { display: flex; gap: 12px; align-items: center; }
   .skel-v { height: 22px; width: 52px; margin: 4px 0 6px; border-radius: 5px; }
 </style>
