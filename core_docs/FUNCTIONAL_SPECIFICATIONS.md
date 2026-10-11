@@ -93,6 +93,8 @@
 | **Playbook** | A saved, reusable prompt recipe. Example: "Fix bug with TDD". |
 | **Memory** | Project knowledge: core_docs, learnings, decisions. |
 | **Needs You** | A state when the agent is waiting for your answer or permission. |
+| **Doc** | A markdown text about a task: a plan, a changed .md file, a pinned project doc, a research finding. |
+| **Ticket** | A Jira issue linked to a task. |
 
 ---
 
@@ -109,6 +111,8 @@
 9. **Playbooks**
 10. **Settings**
 11. **Command Bar** (Ctrl+K, works on every screen)
+12. **Docs** (tab inside Task Room)
+13. **Tickets** (per project)
 
 ---
 
@@ -174,8 +178,10 @@
 - **F3.2 Brief from research** (Must)
   - Button: "Draft brief". The agent reads the research notes and writes a brief draft.
   - User edits and approves.
-- **F3.3 Brief from ticket** (Later)
-  - Paste a Jira / GitHub issue URL. App pulls the text into the brief.
+- **F3.3 Brief from ticket** (Must, M10)
+  - Start a task from a Jira ticket (Cloud). App pulls the text into the brief draft.
+  - See F23.3.
+  - GitHub issues stay Later (F23.7).
 - **F3.4 Brief versions** (Must)
   - Every save keeps a version. User can see old versions.
 
@@ -487,6 +493,52 @@
 - **F21.2 Health check** (Must)
   - A page that shows: daemon running, git version, agent CLIs found and logged in, `gh` logged in.
 
+### F22. Task Docs
+
+- **F22.1 Docs tab in the Task Room** (Must, M3)
+  - A list of docs, a markdown view, and an outline of headings.
+  - Docs are read-only in Saarthi. "Open in editor" is for changes.
+- **F22.2 Plan run saved as a doc** (Must, M2)
+  - When a `Plan` run ends well, its full final answer is saved as a markdown file.
+  - A failed or stopped plan run saves nothing.
+  - The file is kept outside the worktree, so a plan run never changes a worktree file.
+- **F22.3 Changed markdown files are listed** (Must, M2 CLI + API, M3 UI)
+  - Every `.md` file added or changed on the task branch is listed (committed or not).
+  - Each one has an "added" or "modified" badge.
+- **F22.4 Pinned project docs are listed** (Must, M2 CLI + API, M3 UI)
+  - Docs like FSD, TDD, CLAUDE.md are listed. They are read from the task worktree.
+  - The pinned list is set in `project.toml`. Missing files are skipped quietly.
+  - A file that is pinned and changed shows once, as changed.
+- **F22.5 Research findings and plan in context** (Must, M6)
+  - Research findings show in Docs.
+  - The latest plan goes into the Context Pack of the next `Build` or `Fix` run.
+- **F22.6 Edit docs in Saarthi, render Mermaid diagrams** (Later)
+
+### F23. Tickets (Jira)
+
+- **F23.1 Connect Jira Cloud** (Must, M10)
+  - Site, email, API token. A health check shows who I am.
+  - The token is kept outside the repo.
+- **F23.2 Tickets panel per project** (Must, M10)
+  - Views: Mine, Sprint, and saved JQL views from `project.toml`.
+  - Search and refresh.
+- **F23.3 Start a task from a ticket** (Must, M10)
+  - One click makes a task with a brief draft from the ticket.
+  - A ticket already linked to a task opens that task.
+  - An existing task can be linked to a ticket.
+- **F23.4 Ticket chip** (Must, M10)
+  - Shown in the Task Room header and on Board cards.
+- **F23.5 Write back with confirm** (Must, M10)
+  - Move the ticket status, add a PR comment, add a link to the PR.
+  - Every write needs my OK by default. A project can turn on auto send.
+  - Home's "Needs You" list does not count these.
+- **F23.6 Cache and offline view** (Must, M10)
+  - Tickets are cached. When Jira is not reachable, the cache shows with "last synced" time.
+  - No background polling. Refresh is by hand, or when the panel opens and the cache is old.
+- **F23.7 GitHub Issues and other providers** (Later)
+- **F23.8 Create a Jira ticket from Saarthi; two-way comment sync** (Later)
+- **F23.9 Jira Data Center / Server** (Later)
+
 ---
 
 ## 6. Main user flows
@@ -520,6 +572,18 @@
 3. Agent writes a failing test, then the fix.
 4. Proof Card shows the new test: failed before, passes after.
 
+### 6.4 Ticket flow
+1. Open Tickets for project `acme-billing`.
+2. Pick the view "Mine". Find ACME-151 "Export invoices as CSV".
+3. Click "Start as task". Task T-0033 is made.
+4. T-0033 has a brief draft from the ticket: goal, acceptance criteria, notes. Edit it and approve.
+5. Run Claude -> Build. Checks run by themselves.
+6. Task moves to Review.
+7. A card shows: "Move ACME-151 to In Review?" Click Send. Jira status changes.
+8. Approve the Change Story. Click Ship. The PR is created.
+9. A card offers a PR comment and a link on ACME-151. Click Send.
+10. The ticket now shows the PR link and comment.
+
 ---
 
 ## 7. Non-functional requirements
@@ -550,6 +614,7 @@
 - Our own AI model or our own cloud server.
 - Team / multi-user features.
 - Mobile app (only a read-only phone page, later).
+- Jira Data Center, creating Jira tickets (v1).
 
 ---
 

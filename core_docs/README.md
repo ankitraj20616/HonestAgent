@@ -17,6 +17,8 @@ It is **not** an IDE. It is **not** built on VS Code.
 5. You review a **Change Story** (what changed and why), not a wall of diff.
 6. The project **remembers**: core_docs, learnings, and memory are fed to agents and updated after every task.
 
+Also: every task has a **Docs** tab (plans, changed .md files, pinned project docs), and tasks can start from **Jira tickets** (M10).
+
 ---
 
 ## Why we need this
@@ -47,14 +49,14 @@ Capture -> Research -> Brief -> Run agent -> Verify -> Review -> Ship -> Remembe
 | `FUNCTIONAL_SPECIFICATIONS.md` | **FSD**. What the app does. Every feature, in points. | Before building any feature |
 | `TDD-tech-design-doc.md` | **TDD**. How the app is built. Parts, data, flows, APIs. | Before writing code |
 | `TECH_STACK.md` | Languages, libraries, tools. Python vs Go vs Rust decision. | Before setup or adding a library |
-| `MILESTONES.md` | Build plan. Milestones M0 to M9 with "done when" checks. | Planning the next session |
+| `MILESTONES.md` | Build plan. Milestones M0 to M10 with "done when" checks. | Planning the next session |
 | `quick-prompts.md` | Ready prompts to give Claude / Codex while building Saarthi. | Every session |
 
 ## Sub-folders
 
 | Folder | What goes inside |
 |---|---|
-| `milestones/` | One sub-folder per milestone (M0-M9), each with its own FSD and TDD. Start at `milestones/README.md`. |
+| `milestones/` | One sub-folder per milestone (M0-M10), each with its own FSD and TDD. Start at `milestones/README.md`. |
 | `memory/` | `project_memory.md` - big wins, hard bugs (Problem -> Root cause -> Fix -> Result). One file per module later (`agent_runner_memory.md` etc.). |
 | `learnings/` | Patterns, mistakes, "do this, not that" rules. |
 | `decisions/` | One file per big decision (ADR). Example: `ADR-001-backend-language.md`. |

@@ -26,10 +26,11 @@
 | UI state | **Zustand + TanStack Query** | Simple client state + server cache. |
 | Terminal in UI | **xterm.js** | The standard web terminal. |
 | Code / diff view | **CodeMirror 6 + @codemirror/merge** | Light. Read-only view and diff. (Not Monaco - we are not making VS Code.) |
-| Markdown | **react-markdown** + **Milkdown** (editor, later) | View and edit briefs and core_docs. |
+| Markdown | **react-markdown** + **remark-gfm** + **Milkdown** (editor, later) | View and edit briefs and core_docs. `react-markdown` + `remark-gfm` also show the Docs tab (read-only). |
 | Agents | **Claude Code CLI** + **Codex CLI** | Use my existing logins and subscriptions. |
 | Git | **system `git`** (called as a subprocess) | Most reliable. Worktrees fully supported. |
 | GitHub | **`gh` CLI** | PRs, CI status. Already logged in. |
+| Jira (M10) | **`httpx`** (already a dependency) + own small ADF converter | Jira Cloud REST API v3. No new library. If the ADF code grows past ~300 lines, switch to `atlas-doc-parser`. |
 | Search | **ripgrep (`rg`)** | Fast code search. |
 | Sandbox (later) | **bubblewrap (`bwrap`)** | Linux sandbox. Already installed. |
 | Notifications | **Tauri notification plugin** (fallback `notify-send`) | Native desktop alerts. |

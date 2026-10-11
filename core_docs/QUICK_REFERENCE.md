@@ -15,7 +15,7 @@
 | **Backend** | Python 3.12 daemon (FastAPI, SQLite) |
 | **Frontend** | Tauri 2 + React + TypeScript |
 | **Agents** | Claude Code CLI, Codex CLI |
-| **v1 time** | ~15 weeks side-project time (M0-M9) |
+| **v1 time** | ~17 weeks side-project time (M0-M10) |
 
 ---
 
@@ -46,6 +46,8 @@ Inbox -> Research -> Ready -> Running -> Verifying -> Review -> Shipped
 7. **Race Mode** - same brief to both agents, pick the winner.
 8. **Self-updating memory** - core_docs memory / learnings / timeline updated after every ship.
 
+Also: a **Docs tab** in every Task Room (plans, changed .md files, pinned docs), and **Jira** tickets (M10): start a task from a ticket, move its status after my OK.
+
 ---
 
 ## PARTS
@@ -60,6 +62,8 @@ Inbox -> Research -> Ready -> Running -> Verifying -> Review -> Shipped
 | Check Runner | Runs tests / lint / build -> Proof Card. |
 | Review Builder | Change Story + risk flags. |
 | Memory | Reads / updates core_docs, builds Context Pack. |
+| Docs Finder | Lists plans, changed .md files, pinned docs of a task. |
+| Ticket Provider | Jira Cloud tickets and write back (M10). |
 
 ---
 
@@ -68,6 +72,7 @@ Inbox -> Research -> Ready -> Running -> Verifying -> Review -> Shipped
 | M0 Spike | M1 Core+CLI | M2 Agents+Worktrees | M3 UI | M4 Proof |
 |---|---|---|---|---|
 | **M5 Review+Ship** | **M6 Research+Memory** | **M7 Race** | **M8 Safety+Rewind** | **M9 Package v1.0** |
+| **M10 Jira tickets** (needs M1-M6) | | | | |
 
 ---
 

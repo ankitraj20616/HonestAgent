@@ -25,9 +25,12 @@
 | M7 | Race Mode + parallel polish | Claude vs Codex side by side | 1 week |
 | M8 | Safety + cost + rewind | Sandbox, permission profiles, cost meter, checkpoints UI | 1.5 weeks |
 | M9 | Polish + package (v1.0) | AppImage / .deb, systemd service, docs | 1 week |
+| M10 | Jira tickets | Tickets panel, start task from ticket, write back | 2 weeks |
 | Later | Phone glance, voice capture, more agents, team mode | - | - |
 
-Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 months).
+Total for v1: about **17 weeks** of side-project time (plus buffer: plan for ~4 months).
+
+> M10 needs M1-M6. Build it after M6 (it may come before M7).
 
 ---
 
@@ -98,6 +101,7 @@ Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 
 - [ ] "Needs You" flow: detect, set stage, accept answer.
 - [ ] Daemon restart -> mark runs `interrupted` + resume.
 - [ ] Simple Context Pack v0: brief only -> `.saarthi/context/TASK.md`.
+- [ ] Plan run saves its plan as a doc (F22.2) + docs list/show API and CLI (F22.3, F22.4).
 - [ ] Notifier using `notify-send`.
 - [ ] CLI: `run <task> --agent --mode`, `run watch <run>` (pretty live stream with Rich), `run say <run> "text"`, `run stop`, `run resume`.
 
@@ -105,6 +109,7 @@ Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 
 - `saarthi run T-0002 --agent claude --mode build` creates a worktree, runs Claude, and streams clean events in the terminal.
 - Two tasks run at the same time (one Claude, one Codex) without touching each other's files.
 - Killing the daemon mid-run and restarting it shows the run as `interrupted`; `saarthi run resume` continues it.
+- `saarthi docs show T-0002 1` prints the plan of the last plan run.
 - At least **3 real Saarthi tasks** were done using this CLI.
 
 ---
@@ -127,6 +132,7 @@ Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 
   - [ ] Terminal tab: xterm.js (PTY adapter).
   - [ ] Message box: send follow-up, answer "Needs You", stop.
   - [ ] Timeline tab (simple list of events).
+  - [ ] Docs tab: plans, changed .md files, pinned docs, outline (F22.1).
 - [ ] Code Peek: file tree + CodeMirror read-only + "open in my editor".
 - [ ] Settings + Health page.
 - [ ] Light / dark theme.
@@ -190,6 +196,7 @@ Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 
 - [ ] Context Pack v1: brief + research + matched memory files (ripgrep) + playbook. Preview button.
 - [ ] Memory update on ship: drafts for memory / learnings / timeline, approve each.
 - [ ] Playbooks: library screen, built-in 5 playbooks, variables, global + project scope.
+- [ ] Research findings in Docs; latest plan in the Context Pack (F22.5).
 - [ ] Import my current `quick-prompts.md` files from client projects as playbooks.
 
 **Done when:**
@@ -253,12 +260,40 @@ Total for v1: about **15 weeks** of side-project time (plus buffer: plan for ~4 
 
 ---
 
+## M10 - Jira tickets
+
+**Goal:** Start a client task from a Jira ticket, and keep the Jira status in step.
+
+> Build order: M10 needs M1-M6. Build it after M6 (it may come before M7). M7-M9 keep their numbers.
+
+**Build:**
+- [ ] `TicketProvider` protocol + `FakeTicketProvider` + recorded JSON in `tests/fixtures/jira/` (F23).
+- [ ] `JiraCloudProvider` with `httpx`: myself, search (POST, `nextPageToken`), issue, transitions, comment, remote link. Retry on 429.
+- [ ] ADF -> markdown and markdown -> ADF (`adf.py`) with golden tests. Unknown nodes are kept.
+- [ ] Jira site setup: token file `chmod 600`, `saarthi jira login`, `saarthi jira status` (F23.1).
+- [ ] Migration: `tickets` cache, `ticket_actions`, `tasks.ticket_key`.
+- [ ] Ticket cache + views (Mine, Sprint, saved JQL) + stale refresh + offline view (F23.2, F23.6).
+- [ ] Start a task from a ticket: brief draft, comments as research, branch and PR name (F3.3, F23.3).
+- [ ] Link an existing task: `saarthi task edit T-0012 --ticket ACME-142`.
+- [ ] Write back: stage mapping, pending actions, send / skip, `auto_send` (F23.5).
+- [ ] API: `/jira/sites`, tickets, start, link, ticket-actions.
+- [ ] CLI: `tickets list|show|start`, `ticket actions|send|skip`.
+- [ ] UI: Tickets panel, start dialog, ticket chip on Task Room and Board cards, confirm card, Settings -> Jira (F23.4).
+- [ ] Events: `ticket.*`.
+
+**Done when:**
+- I start a real client task from a Jira ticket, and its Jira status moves to In Review after my OK.
+- A 401 shows the fix command.
+- No test calls the real Jira.
+
+---
+
 ## Later (after v1)
 
 - **Phone glance:** read-only web page on the phone (LAN + token) to see status and answer "Needs You".
 - **Voice capture:** speak a task, it goes to the Inbox.
 - **More agents:** Gemini CLI, Aider, local models.
-- **Ticket sync:** pull from Jira / GitHub Issues into briefs; push status back.
+- **GitHub Issues** and other ticket providers (Jira is M10).
 - **PR status:** CI and review comments from GitHub inside the Task Room.
 - **Evidence:** headless browser screenshots + API recordings in the Proof Card.
 - **Smart memory:** search memory by meaning (embeddings).

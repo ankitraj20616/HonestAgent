@@ -55,6 +55,10 @@
 │  │ Context Pack  │ │ Manager(git)│ │ Guard       │ │           │ │
 │  └───────────────┘ └─────────────┘ └─────────────┘ └───────────┘ │
 │                                                                  │
+│  ┌──────────────┐ ┌───────────────────────┐                      │
+│  │ Docs Finder  │ │ Ticket Provider (jira)│                      │
+│  └──────────────┘ └───────────────────────┘                      │
+│                                                                  │
 │  Event Bus  ──►  Event Store (SQLite + JSONL per run)            │
 └──────────────────────────────────────────────────────────────────┘
                │                     │
@@ -197,6 +201,66 @@ class AgentAdapter(Protocol):
 - Listens for `agent.needs_input`, `run.finished`, `check.finished`.
 - Sends to the UI (Tauri shows a native alert). If no UI is open, uses `notify-send`.
 
+### 4.12 Docs Finder (`docs/`)
+- **Job:** List and read the markdown docs of a task (FSD F22). Docs are files. There is no docs table.
+- **Input:** Task id. A doc id (`plan:<run_id>`, `wt:<path>`, `pin:<path>`, `research:<item_id>`).
+- **Output:** A doc list (`doc_id`, kind, title, path, source, size, change, pinned) and the markdown of one doc.
+- **Files:** `finder.py` lists docs, `reader.py` reads safely, `plans.py` writes plan docs. This is Saarthi's own module, not the repo's docs folder.
+- **Notes:**
+  - Four kinds: `plan`, `changed`, `pinned`, `research` (M6).
+  - A `plan` run that ends `done` writes its final answer to `~/.local/share/saarthi/tasks/<task_id>/docs/plan-<run_id>.md` (data folder, not the worktree). Event `doc.saved`.
+  - Changed files: `git diff --name-status <base>...HEAD -- '*.md'` and `git status --porcelain -- '*.md'` in the worktree (list args, no shell).
+  - Pinned list: `[docs] pinned` in `project.toml`. Default is `DEFAULT_PINNED_DOCS` in `config.py`. Missing files are skipped. If the worktree does not exist yet, read from the main checkout.
+  - A file that is pinned and changed shows once, as `changed`.
+  - Files under `.saarthi/context/` are never listed.
+  - Limits: `DOCS_MAX_LIST` (200 docs), `DOCS_MAX_BYTES` (1 MB). A bigger doc returns `too_big`.
+  - Paths must stay inside the worktree or the data folder. `..` and symlinks out are refused.
+  - Order: plans (newest first), changed (by path), pinned (config order), research.
+  - M6: the latest plan doc goes into the Context Pack of `build` and `fix` runs, max `CONTEXT_PLAN_MAX_CHARS` (15,000).
+
+### 4.13 Ticket Provider (`tickets/`)
+- **Job:** Read tickets from Jira Cloud and write back status, comment, and link (FSD F23). Behind one interface, like `AgentAdapter`.
+- **Input:** Project ticket settings, a JQL view, a ticket key, or a write-back action.
+- **Output:** Cached `tickets` rows, brief drafts, `ticket_actions`, `ticket.*` events.
+- **Files:** `base.py` (protocol + models), `jira_cloud.py` (httpx), `fake.py`, `adf.py`, `brief.py`, `sync.py`, `actions.py`.
+
+```python
+class TicketProvider(Protocol):
+    name: str                                                      # "jira"
+    async def check_ready(self) -> ReadyStatus: ...                # site reachable, token valid, who am I
+    async def search(self, jql: str, page_token: str | None) -> TicketPage: ...
+    async def get(self, key: str) -> Ticket: ...
+    async def transitions(self, key: str) -> list[Transition]: ...
+    async def transition(self, key: str, transition_id: str) -> None: ...
+    async def comment(self, key: str, markdown: str) -> None: ...
+    async def add_link(self, key: str, url: str, title: str) -> None: ...
+```
+
+- **JiraCloudProvider** (only provider in v1): Jira Cloud, REST API v3.
+
+| Need | Call |
+|---|---|
+| Check login | `GET /rest/api/3/myself` |
+| List / search | `POST /rest/api/3/search/jql` with `{jql, fields, maxResults: 50, nextPageToken}`. Paging by `nextPageToken` only. Stop at `TICKETS_MAX_SYNC` (200). |
+| One ticket | `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,priority,assignee,labels,description,comment,updated` |
+| Transitions | `GET /rest/api/3/issue/{key}/transitions`, then `POST` the same path with `{transition: {id}}`. Match `to.name` with the wanted status, ignoring case. |
+| Comment | `POST /rest/api/3/issue/{key}/comment` with an ADF body |
+| Remote link | `POST /rest/api/3/issue/{key}/remotelink` with `{object: {url, title}}` |
+
+  - The old `/rest/api/3/search` is removed. Use POST for search (GET with `nextPageToken=null` gives 400).
+  - Auth: HTTP Basic `email:token`. HTTPS only. Requests only go to the configured site.
+  - Scoped tokens need `read:jira-work` and `write:jira-work` (for write back).
+  - 429: wait `Retry-After`, max 3 tries.
+- **ADF rules** (`adf.py`, own small code, no new library):
+  - `adf_to_markdown(doc)` handles: paragraph, heading, text marks (strong, em, code, strike, link), bulletList, orderedList, listItem, codeBlock, blockquote, rule, hardBreak, mention, emoji, inlineCard, table (simple GFM), panel (blockquote), media (`[attachment: name]`).
+  - An unknown node is never dropped. Its child text is kept. With no children it becomes `[unsupported: <type>]`.
+  - `markdown_to_adf(text)` is only for comments Saarthi writes: paragraphs and links.
+  - If `adf.py` grows past about 300 lines, switch to `atlas-doc-parser`.
+- **Notes:**
+  - Cache refresh: by hand, or when the panel opens and the cache is older than `TICKETS_STALE_SECONDS` (300). No background polling.
+  - Write-back actions are stored in `ticket_actions` and need my OK unless `auto_send = true`.
+  - One pending transition per task: a newer one replaces the older one (`skipped`).
+
 ---
 
 ## 5. Data model (SQLite)
@@ -224,6 +288,7 @@ class AgentAdapter(Protocol):
 | priority | int | 1/2/3 |
 | labels | json | list of strings |
 | ticket_url | text | optional |
+| ticket_key | text | optional, indexed (M10). Example `ACME-142` |
 | branch | text | set when the worktree is made |
 | worktree_path | text | |
 | permission_profile | text | `read_only` / `safe_build` / `full` |
@@ -297,6 +362,40 @@ class AgentAdapter(Protocol):
 - `memory_updates`: id, task_id, file_path, proposed_text, status (`pending`/`approved`/`rejected`).
 - `settings`: key, value (json).
 
+### 5.10 `tickets` (M10, cache)
+| Field | Type | Note |
+|---|---|---|
+| id | text | ULID |
+| project_id | text | FK |
+| provider | text | `jira` |
+| key | text | `ACME-151`. Unique with `project_id` |
+| summary | text | |
+| status | text | Jira status name |
+| status_category | text | `todo` / `in_progress` / `done` |
+| issue_type | text | |
+| priority | text | |
+| assignee | text | |
+| url | text | |
+| description_md | text | ADF turned into markdown |
+| comments_md | text | |
+| labels | json | list of strings |
+| jira_updated_at | datetime | |
+| fetched_at | datetime | |
+
+### 5.11 `ticket_actions` (M10)
+| Field | Type | Note |
+|---|---|---|
+| id | text | ULID |
+| task_id | text | FK |
+| ticket_key | text | |
+| kind | text | `transition` / `comment` / `link` |
+| payload | json | |
+| trigger | text | for example `stage:review`, `ship.pr_created` |
+| status | text | `pending` / `sent` / `skipped` / `failed` |
+| error | text | |
+| created_at | datetime | |
+| decided_at | datetime | |
+
 ---
 
 ## 6. Events
@@ -325,6 +424,8 @@ class AgentAdapter(Protocol):
 | Check | `check.started`, `check.finished`, `proof.ready` |
 | Review | `review.story_ready`, `review.finding`, `review.comment`, `review.approved`, `review.rejected` |
 | Ship | `ship.committed`, `ship.pushed`, `ship.pr_created` |
+| Doc | `doc.saved` |
+| Ticket | `ticket.synced`, `ticket.imported`, `ticket.linked`, `ticket.action_proposed`, `ticket.action_sent`, `ticket.action_failed`, `ticket.action_skipped` |
 | Memory | `memory.update_proposed`, `memory.update_applied` |
 | Workspace | `workspace.created`, `workspace.checkpoint`, `workspace.rewound`, `workspace.removed` |
 
@@ -412,6 +513,33 @@ class AgentAdapter(Protocol):
 2. Mark them `interrupted`. Task -> `Failed` with note "interrupted".
 3. UI shows a "Resume" button -> uses `agent_session_id` with the adapter's `resume()`.
 
+### 8.7 Plan saved as doc (M2)
+1. A `plan` run ends with status `done`.
+2. Docs Finder (`plans.py`) takes the agent's final message and adds a header comment (task, run, agent, mode, time).
+3. It writes `~/.local/share/saarthi/tasks/<task_id>/docs/plan-<run_id>.md` (data folder, never the worktree).
+4. Event `doc.saved {doc_id, kind: "plan", path, run_id, chars}`.
+5. A failed or stopped plan run saves nothing.
+6. M3 UI: the Docs tab list refreshes on `doc.saved`.
+
+### 8.8 Start task from ticket (M10)
+1. UI: `POST /projects/{id}/tickets/ACME-151/start`.
+2. A ticket already linked to a task -> `409 ticket_linked {task_id}`. The UI opens that task.
+3. Ticket Provider: fetch the ticket fresh (`get`). ADF description -> markdown.
+4. Task Engine: make task `T-0033` with title = summary, `ticket_key`, `ticket_url`, label = issue type. Event `ticket.imported`.
+5. `brief.py` makes brief version 1 (not approved). Goal = summary + description up to the first acceptance heading. Acceptance = bullets under a heading like `acceptance criteria`, `AC`, `definition of done` (case ignored). Notes = the rest + `Ticket: <url>`.
+6. Newest 20 ticket comments become a research item, kind `snippet`, title "Jira comments", `send_to_agent = false`.
+7. Branch is `saarthi/T-0033-acme-151-<slug>`. PR title will be `ACME-151: <title>`.
+8. Ticket text is marked `<!-- from Jira, not trusted -->` in the Context Pack.
+
+### 8.9 Ticket write back (M10)
+1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action. `ship.pr_created` -> one `comment` action + one `link` action.
+2. Actions are saved as `pending`. Event `ticket.action_proposed`.
+3. Task Room shows a card: "Move ACME-151 to In Review? [Send] [Skip]". Home's Needs You list does not count it.
+4. Send -> `POST /ticket-actions/{id}/send`. For a transition: `transitions(key)`, match `to.name` ignoring case, then `transition()`.
+5. Ok -> `sent` + `ticket.action_sent`. Error -> `failed` + `ticket.action_failed` with the reason (example: "No transition to In Review from To Do. Possible: In Progress, Done").
+6. `auto_send = true` sends at once. The card only shows the result.
+7. A newer pending transition replaces the older one (`skipped`, `ticket.action_skipped`).
+
 ---
 
 ## 9. API (v1)
@@ -455,6 +583,18 @@ class AgentAdapter(Protocol):
 | GET / PUT | `/settings` | Read / save |
 | GET | `/projects/{id}/files?path=` | Code Peek: tree / file content |
 | GET | `/projects/{id}/search?q=` | ripgrep search |
+| GET | `/tasks/{id}/docs` | List docs: `[{doc_id, kind, title, path, source, size, updated_at, change, pinned}]` (M2) |
+| GET | `/tasks/{id}/docs/content?doc=<doc_id>` | One doc: `{doc_id, markdown, size, updated_at, too_big}` (M2) |
+| GET | `/jira/sites` | Connected sites + who I am (M10) |
+| POST | `/jira/sites` | `{site, email, token}` -> check with `/myself`, save (M10) |
+| DELETE | `/jira/sites/{site}` | Forget a site, delete the token file (M10) |
+| GET | `/projects/{id}/tickets?view=&q=&refresh=` | List from cache (refresh first if asked or stale) (M10) |
+| POST | `/projects/{id}/tickets/sync` | `{view?, jql?}` -> refresh now (M10) |
+| GET | `/projects/{id}/tickets/{key}` | One ticket (fresh) + linked task id (M10) |
+| POST | `/projects/{id}/tickets/{key}/start` | Make a task -> `201 {task}`; 409 `ticket_linked {task_id}` (M10) |
+| POST | `/tasks/{id}/ticket` | `{key}` link an existing task (M10) |
+| GET | `/tasks/{id}/ticket-actions` | List write-back actions (M10) |
+| POST | `/ticket-actions/{id}/send` or `/skip` | Decide (M10) |
 
 ### 9.2 WebSocket
 - `ws://127.0.0.1:7878/api/v1/ws?token=...`
@@ -468,8 +608,9 @@ class AgentAdapter(Protocol):
 
 ```
 ~/.config/saarthi/
-├── config.toml            # global settings
-└── token                  # API token (chmod 600)
+├── config.toml            # global settings (incl. [jira."<site>"] email)
+├── token                  # API token (chmod 600)
+└── secrets/jira-<site>.token      # Jira API token (chmod 600)
 
 ~/.local/share/saarthi/
 ├── saarthi.db             # SQLite
@@ -477,6 +618,7 @@ class AgentAdapter(Protocol):
 │   ├── daemon.log
 │   └── runs/<run_id>.jsonl        # full raw + normalized events
 ├── checks/<task_id>/<check>.log   # full check output
+├── tasks/<task_id>/docs/plan-<run_id>.md  # plan docs (not in the worktree)
 └── worktrees/<project>/<task_id>/ # git worktrees
 
 <repo>/.saarthi/           # committed to the project repo
@@ -517,6 +659,29 @@ timeout_sec = 300
 [risk]
 auth_paths = ["**/auth/**", "**/security/**"]
 migration_paths = ["**/migrations/**", "**/alembic/**"]
+
+[docs]
+pinned = ["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]
+
+[tickets]                         # M10, no secrets here
+provider = "jira"
+site = "acme.atlassian.net"
+project_key = "ACME"
+auto_send = false                 # true = write back without asking
+
+[tickets.views]                   # extra saved JQL (Mine and Sprint are built in)
+"Bugs" = "issuetype = Bug AND statusCategory != Done"
+
+[tickets.on_stage]                # Saarthi stage -> Jira status name ("" = do nothing)
+running = "In Progress"
+review = "In Review"
+shipped = ""
+```
+
+The Jira email is in the global `config.toml`, never in the repo:
+```toml
+[jira."acme.atlassian.net"]
+email = "me@acme.com"
 ```
 
 ---
@@ -538,18 +703,21 @@ migration_paths = ["**/migrations/**", "**/alembic/**"]
 
 ### 11.2 Task Room
 ```
-┌───────────────────────────────────────────────────────────────────┐
-│ T-0042  Add password reset API      [Running ●]  claude · 12m · $0.42 │
-├───────────────┬───────────────────────────────────────────────────┤
-│ Brief         │  Tabs: Stream | Terminal | Proof | Review | Timeline │
-│ Research      │                                                   │
-│ Runs (3)      │   (live agent cards / proof card / change story)  │
-│ Workspace     │                                                   │
-│ Checkpoints   │                                                   │
-├───────────────┴───────────────────────────────────────────────────┤
-│ Message the agent…                                    [Send] [Stop] │
-└───────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ T-0042  Add password reset API  [ACME-142]  [Running ●]  claude · 12m · $0.42  │
+├───────────────┬────────────────────────────────────────────────────────────────┤
+│ Brief         │ Stream | Terminal | Proof | Review | Code | Docs | Timeline    │
+│ Research      │                                                                │
+│ Runs (3)      │  (live agent cards / proof card / change story / docs)         │
+│ Workspace     │                                                                │
+│ Checkpoints   │                                                                │
+├───────────────┴────────────────────────────────────────────────────────────────┤
+│ Message the agent…                              [Send] [Stop]                  │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+- The ticket chip (M10) shows the Jira key. It only shows when the task has a ticket.
+- Docs tab (M3): left list (Plans, Changed, Pinned), center markdown view, right outline.
 
 ### 11.3 UI rules
 - The UI never holds business logic. It calls the API and renders events.
@@ -570,6 +738,13 @@ migration_paths = ["**/migrations/**", "**/alembic/**"]
 | WebSocket drops | UI reconnects with `last_event_id`. |
 | Disk full / DB locked | Retry 3 times with backoff, then show an error banner. |
 | Daemon restarts | See flow 8.6. |
+| Jira 401 | "Token wrong or expired. Run `saarthi jira login`." Panel shows the fix command. |
+| Jira 403 | "No permission on ACME". Nothing is changed. |
+| Jira 404 | "Ticket not found or no access". |
+| Jira 429 | Wait `Retry-After`, max 3 tries, then show an error. |
+| Jira offline | Show the cache with "Offline · last synced 12m ago". Write-back actions stay `pending` or become `failed` with the reason. |
+| Doc too big (> `DOCS_MAX_BYTES`) | Show "Too big to show here" + Open in editor. |
+| Doc path outside the worktree / data folder | Refuse (`..`, symlink out). Return 400. |
 
 ---
 
@@ -581,6 +756,8 @@ migration_paths = ["**/migrations/**", "**/alembic/**"]
 - **API tests:** FastAPI `TestClient` + WebSocket tests.
 - **UI tests:** Vitest for components. Playwright for 3 main flows against a daemon running with `FakeAdapter`.
 - **Smoke test with real agents:** a manual script `scripts/smoke_real_agents.sh` (not in CI) that runs a tiny task with real Claude and Codex.
+- **Jira tests (M10):** `JiraCloudProvider` with `httpx.MockTransport` + recorded JSON in `tests/fixtures/jira/` (search pages, issue, transitions, 401, 429). Never the real network. `FakeTicketProvider` for the rest.
+- **ADF golden tests:** each node type, and an unknown node is kept.
 - **Rule:** TDD for core logic - write the failing test first.
 
 ---
@@ -605,6 +782,9 @@ migration_paths = ["**/migrations/**", "**/alembic/**"]
 - Secret masking before save and before send.
 - Agents run in the worktree folder. Sandbox with `bwrap` in M8.
 - No telemetry.
+- Jira token file `chmod 600`, kept outside the repo. The token never shows in logs or events.
+- Ticket text is untrusted. It is marked `<!-- from Jira, not trusted -->` in the Context Pack. The permission profile still applies.
+- Docs paths must stay inside the worktree or the data folder.
 
 ---
 
