@@ -123,3 +123,41 @@ def test_no_drawing_contains_a_color_value():
     for svg in (w.wheel({"beads": [{"n": "1", "stage": "ship", "tone": "ok"}]}),
                 w.journey("review", tone="ok"), w.trust_ring(50, 35, 15), w.trust_ring(10, 5, 0, size=18)):
         assert not COLOR.search(svg)
+
+
+BEAD = re.compile(r'class="b-(?:road|ok|bad|info|idle)" cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"')
+
+
+def _bead_angles(svg):
+    import math
+    return [round(math.degrees(math.atan2(float(y) - 260, float(x) - 260)), 1) for x, y, _r in BEAD.findall(svg)]
+
+
+def test_unlinked_beads_keep_the_9_degree_step():
+    svg = w.wheel({"beads": [{"n": "12", "stage": "run", "tone": "road"},
+                             {"n": "18", "stage": "run", "tone": "road"}]})
+    assert _bead_angles(svg) == [40.5, 49.5]
+
+
+def test_linked_beads_spread_wide_so_the_arc_shows():
+    svg = w.wheel({"beads": [{"n": "12", "stage": "run", "tone": "road", "link": "race", "r": 19},
+                             {"n": "12", "stage": "run", "tone": "info", "link": "race", "r": 19}]})
+    a, b = _bead_angles(svg)
+    assert (a, b) == (33.0, 57.0)
+    # some of the joining arc is outside both beads
+    import math
+    assert 2 * math.pi * 190 * (b - a) / 360 > 2 * 19 + 10
+
+
+def test_a_bead_can_ask_for_a_bigger_gap_before_it():
+    svg = w.wheel({"beads": [{"n": "12", "stage": "run", "tone": "road", "link": "race"},
+                             {"n": "12", "stage": "run", "tone": "info", "link": "race"},
+                             {"n": "18", "stage": "run", "tone": "road", "gap": 18}]})
+    assert _bead_angles(svg) == [24.0, 48.0, 66.0]
+
+
+def test_small_wheels_get_the_sm_class():
+    assert 'class="wheel sm"' in w.wheel({"size": 250})
+    assert 'class="wheel sm"' in w.wheel({"size": 299})
+    assert 'class="wheel"' in w.wheel({"size": 300})
+    assert 'class="wheel"' in w.wheel({})

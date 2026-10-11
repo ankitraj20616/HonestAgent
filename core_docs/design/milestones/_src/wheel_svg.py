@@ -17,6 +17,8 @@ _C = _VIEW / 2
 _RIM = 190.0
 _LABEL_R = 232.0
 _BEAD_STEP = 9.0  # degrees between beads that share a spoke
+_LINK_STEP = 24.0  # degrees between linked beads (a race), so the joining arc shows
+_SMALL = 300  # a Wheel drawn smaller than this gets class "sm" (bigger text, see base.css)
 
 
 def _e(value: object) -> str:
@@ -38,6 +40,20 @@ def point(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
 def spread(n: int, step: float = _BEAD_STEP) -> list[float]:
     """Centered angle offsets for n beads on one spoke."""
     return [round((i - (n - 1) / 2) * step, 2) for i in range(n)]
+
+
+def _offsets(group: list[dict]) -> list[float]:
+    """Centered angle offsets for the beads on one spoke.
+
+    Neighbours that share a link are _LINK_STEP apart, others _BEAD_STEP.
+    A bead may set "gap" (degrees before it) to stand further off.
+    """
+    pos = [0.0]
+    for prev, bead in zip(group, group[1:]):
+        linked = bead.get("link") and bead.get("link") == prev.get("link")
+        pos.append(pos[-1] + float(bead.get("gap", _LINK_STEP if linked else _BEAD_STEP)))
+    mid = (pos[0] + pos[-1]) / 2
+    return [round(x - mid, 2) for x in pos]
 
 
 def trust_tone(total: float) -> str:
@@ -79,7 +95,7 @@ def _beads(beads: list[dict]) -> list[str]:
     for stage, group in by_stage.items():
         base = stage_angle(stage)
         placed = []
-        for bead, offset in zip(group, spread(len(group))):
+        for bead, offset in zip(group, _offsets(group)):
             deg = base + offset
             x, y = point(_C, _C, _RIM, deg)
             placed.append((bead, x, y, deg))
@@ -111,7 +127,7 @@ def wheel(data: dict) -> str:
     size = int(data.get("size", _VIEW))
     c = _C
     out = [
-        f'<svg class="wheel" width="{size}" height="{size}" viewBox="0 0 {_VIEW} {_VIEW}" '
+        f'<svg class="wheel{" sm" if size < _SMALL else ""}" width="{size}" height="{size}" viewBox="0 0 {_VIEW} {_VIEW}" '
         f'role="img" aria-label="The Wheel">',
         f'<circle class="w-ring" cx="{c}" cy="{c}" r="238"/>',
         f'<circle class="w-rim" cx="{c}" cy="{c}" r="{_RIM}"/>',

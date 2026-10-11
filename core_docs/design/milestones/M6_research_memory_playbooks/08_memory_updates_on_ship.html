@@ -346,6 +346,15 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .wheel .b-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; fill: var(--on-road); }
 .wheel .b-txt-idle { fill: var(--muted); }
 .wheel .b-txt-info { fill: var(--codex-ink); }
+/* small Wheels (size < 300, class "sm" from wheel_svg.py): bigger text so it stays readable */
+.wheel.sm { overflow: visible; }
+.wheel.sm .w-lbl { font-size: 24px; letter-spacing: 1px; }
+.wheel.sm .w-n { font-size: 22px; }
+.wheel.sm .w-big { font-size: 52px; }
+.wheel.sm .w-sub { font-size: 24px; letter-spacing: 2px; }
+.wheel.sm .b-txt { font-size: 19px; }
+.wheel.sm .b-plus-t { font-size: 20px; }
+.wheel.sm .b-link { stroke-width: 9; opacity: .8; }
 .wheel-wrap { position: relative; display: grid; place-items: center; min-height: 0; }
 .wheel-cap { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--faint); font-size: 12px; }
 

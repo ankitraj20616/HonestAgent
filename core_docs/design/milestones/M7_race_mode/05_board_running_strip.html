@@ -346,6 +346,15 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .wheel .b-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; fill: var(--on-road); }
 .wheel .b-txt-idle { fill: var(--muted); }
 .wheel .b-txt-info { fill: var(--codex-ink); }
+/* small Wheels (size < 300, class "sm" from wheel_svg.py): bigger text so it stays readable */
+.wheel.sm { overflow: visible; }
+.wheel.sm .w-lbl { font-size: 24px; letter-spacing: 1px; }
+.wheel.sm .w-n { font-size: 22px; }
+.wheel.sm .w-big { font-size: 52px; }
+.wheel.sm .w-sub { font-size: 24px; letter-spacing: 2px; }
+.wheel.sm .b-txt { font-size: 19px; }
+.wheel.sm .b-plus-t { font-size: 20px; }
+.wheel.sm .b-link { stroke-width: 9; opacity: .8; }
 .wheel-wrap { position: relative; display: grid; place-items: center; min-height: 0; }
 .wheel-cap { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: var(--faint); font-size: 12px; }
 
@@ -613,11 +622,6 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 
 /* small Wheel that shows the two lanes as two beads on the Run spoke */
 .race-wheel { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.race-wheel .wheel .w-lbl { font-size: 19px; letter-spacing: 1px; }
-.race-wheel .wheel .b-txt { font-size: 15px; }
-.race-wheel .wheel .w-big { font-size: 44px; }
-.race-wheel .wheel .w-sub { font-size: 15px; }
-.race-wheel .wheel .b-link { stroke-width: 9; opacity: .8; }
 .race-wheel .cap { font-size: 11.5px; color: var(--faint); text-align: center; text-wrap: pretty; }
 
 /* Compare tab */
@@ -688,7 +692,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 
   <div class="run-band">
     <div class="race-wheel">
-      <svg class="wheel" width="236" height="236" viewBox="0 0 520 520" role="img" aria-label="The Wheel"><circle class="w-ring" cx="260.0" cy="260.0" r="238"/><circle class="w-rim" cx="260.0" cy="260.0" r="190.0"/><line class="w-spoke" x1="260.0" y1="70.0" x2="260.0" y2="450.0"/><line class="w-spoke" x1="394.4" y1="125.6" x2="125.6" y2="394.4"/><line class="w-spoke" x1="450.0" y1="260.0" x2="70.0" y2="260.0"/><line class="w-spoke" x1="394.4" y1="394.4" x2="125.6" y2="125.6"/><circle class="w-hubglow" cx="260.0" cy="260.0" r="96"/><circle class="w-hub" cx="260.0" cy="260.0" r="70"/><text class="w-big" x="260.0" y="256.0" text-anchor="middle">3</text><text class="w-sub" x="260.0" y="279.0" text-anchor="middle">RUNNING</text><text class="w-lbl" x="260.0" y="32.0" text-anchor="middle">CAPTURE</text><text class="w-lbl" x="424.0" y="100.0" text-anchor="middle">RESEARCH</text><text class="w-lbl" x="492.0" y="264.0" text-anchor="middle">BRIEF</text><text class="w-lbl" x="424.0" y="428.0" text-anchor="middle">RUN</text><text class="w-lbl" x="260.0" y="496.0" text-anchor="middle">VERIFY</text><text class="w-lbl" x="96.0" y="428.0" text-anchor="middle">REVIEW</text><text class="w-lbl" x="28.0" y="264.0" text-anchor="middle">SHIP</text><text class="w-lbl" x="96.0" y="100.0" text-anchor="middle">REMEMBER</text><circle class="b-link" cx="260.0" cy="260.0" r="190.0" stroke-dasharray="59.7 1134.1" transform="rotate(27.0 260.0 260.0)"/><circle class="b-road" cx="429.3" cy="346.3" r="22.0"/><text class="b-txt b-txt-road" x="429.3" y="349.8" text-anchor="middle">12</text><circle class="b-idle" cx="413.7" cy="371.7" r="14.0" opacity="0.0"/><circle class="b-halo" cx="394.4" cy="394.4" r="31.0"/><circle class="b-info" cx="394.4" cy="394.4" r="22.0"/><text class="b-txt b-txt-info" x="394.4" y="397.9" text-anchor="middle">12</text><circle class="b-idle" cx="371.7" cy="413.7" r="14.0" opacity="0.0"/><circle class="b-road" cx="346.3" cy="429.3" r="20.0" opacity="0.6"/><text class="b-txt b-txt-road" x="346.3" y="432.8" text-anchor="middle" opacity="0.6">18</text></svg>
+      <svg class="wheel sm" width="236" height="236" viewBox="0 0 520 520" role="img" aria-label="The Wheel"><circle class="w-ring" cx="260.0" cy="260.0" r="238"/><circle class="w-rim" cx="260.0" cy="260.0" r="190.0"/><line class="w-spoke" x1="260.0" y1="70.0" x2="260.0" y2="450.0"/><line class="w-spoke" x1="394.4" y1="125.6" x2="125.6" y2="394.4"/><line class="w-spoke" x1="450.0" y1="260.0" x2="70.0" y2="260.0"/><line class="w-spoke" x1="394.4" y1="394.4" x2="125.6" y2="125.6"/><circle class="w-hubglow" cx="260.0" cy="260.0" r="96"/><circle class="w-hub" cx="260.0" cy="260.0" r="70"/><text class="w-big" x="260.0" y="256.0" text-anchor="middle">3</text><text class="w-sub" x="260.0" y="279.0" text-anchor="middle">RUNNING</text><text class="w-lbl" x="260.0" y="32.0" text-anchor="middle">CAPTURE</text><text class="w-lbl" x="424.0" y="100.0" text-anchor="middle">RESEARCH</text><text class="w-lbl" x="492.0" y="264.0" text-anchor="middle">BRIEF</text><text class="w-lbl" x="424.0" y="428.0" text-anchor="middle">RUN</text><text class="w-lbl" x="260.0" y="496.0" text-anchor="middle">VERIFY</text><text class="w-lbl" x="96.0" y="428.0" text-anchor="middle">REVIEW</text><text class="w-lbl" x="28.0" y="264.0" text-anchor="middle">SHIP</text><text class="w-lbl" x="96.0" y="100.0" text-anchor="middle">REMEMBER</text><circle class="b-link" cx="260.0" cy="260.0" r="190.0" stroke-dasharray="79.6 1114.2" transform="rotate(24.0 260.0 260.0)"/><circle class="b-road" cx="433.6" cy="337.3" r="22.0"/><text class="b-txt b-txt-road" x="433.6" y="340.8" text-anchor="middle">12</text><circle class="b-halo" cx="387.1" cy="401.2" r="31.0"/><circle class="b-info" cx="387.1" cy="401.2" r="22.0"/><text class="b-txt b-txt-info" x="387.1" y="404.7" text-anchor="middle">12</text><circle class="b-road" cx="337.3" cy="433.6" r="20.0" opacity="0.6"/><text class="b-txt b-txt-road" x="337.3" y="437.1" text-anchor="middle" opacity="0.6">18</text></svg>
     </div>
     <div class="strip-side">
       <div class="row">
