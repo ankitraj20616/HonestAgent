@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M3 · Settings and Health</title>
-<meta name="description" content="Settings saved in the daemon: theme, editor / terminal / folder commands, max parallel runs, worktree root, agent CLI paths, quick capture shortcut. Health: daemon, live connection, git, rg, claude, codex, gh login, and UI event delay p50/p95 over the last 200 events. F21.1, F21.2, F2.2">
+<meta name="description" content="Settings saved in the daemon: theme (dark only), editor / terminal / folder commands, max parallel runs, worktree root, agent CLI paths, quick capture shortcut. Health: daemon, live connection, git, rg, claude, codex, gh login, and UI event delay p50/p95 over the last 200 events. F21.1, F21.2, F2.2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -619,36 +619,36 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a>Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>2 need you</button>
+  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear on" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra wait" title="T-0012 · needs you"><span class="agent cl">CL</span><i class="ra-dot tone-bg-road"></i></div><small>12</small><div class="ra" title="T-0027 · crashed"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
   .set-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 14px; align-items: start; padding: 11px 0; border-top: 1px solid var(--line); }
   .set-row:first-of-type { border-top: none; }
   .set-row > .k { font-size: 13px; padding-top: 6px; }
   .set-row .input { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
-  .stepper { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .stepper button { width: 30px; height: 30px; border: none; background: var(--surface-2); }
+  .stepper { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .stepper button { width: 30px; height: 30px; border: none; background: var(--surface2); }
   .stepper span { min-width: 40px; text-align: center; font-family: 'JetBrains Mono', monospace; }
   .h-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
   .h-row .v { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); text-align: right; }
   .lat { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .lat > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .lat > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
   .bars { display: flex; align-items: flex-end; gap: 2px; height: 46px; position: relative; padding-top: 4px; }
-  .bars span { flex: 1; background: var(--green); opacity: .75; border-radius: 1px 1px 0 0; }
-  .bars span.slow { background: var(--accent); opacity: 1; }
-  .bars .target { position: absolute; left: 0; right: 0; top: 4px; border-top: 1px dashed var(--red); }
-  .bars .target b { position: absolute; right: 0; top: -15px; font-size: 10.5px; font-weight: 500; color: var(--red); }
+  .bars span { flex: 1; background: var(--ok); opacity: .75; border-radius: 1px 1px 0 0; }
+  .bars span.slow { background: var(--road); opacity: 1; }
+  .bars .target { position: absolute; left: 0; right: 0; top: 4px; border-top: 1px dashed var(--bad); }
+  .bars .target b { position: absolute; right: 0; top: -15px; font-size: 10.5px; font-weight: 500; color: var(--bad); }
 </style>
 <div class="page" style="max-width:1180px;gap:18px;padding-top:24px">
   <div class="page-head">
-    <div><h1 class="title" style="font-size:24px">Settings and Health</h1>
+    <div><h1 class="h-title" style="font-size:24px">Settings and Health</h1>
       <div class="muted small" style="margin-top:2px">Settings live in the daemon. Same as <span class="mono">saarthi settings set &lt;key&gt; &lt;value&gt;</span>.</div></div>
   </div>
 
@@ -656,7 +656,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
     <section class="card">
       <div class="card-head"><h2>Settings</h2><span class="xs faint">saved 2 min ago</span></div>
       <div class="set-row"><span class="k">Theme</span>
-        <div class="row"><div class="seg"><button>Light</button><button>Dark</button><button class="on">System</button></div><span class="xs faint">Also the terminal and code viewer</span></div></div>
+        <div class="row"><div class="seg"><button class="on">Dark</button></div><span class="xs faint">One dark theme, also for the terminal and code view.</span></div></div>
       <div class="set-row"><span class="k">Editor command</span>
         <div class="field"><input class="input" value="code --goto {path}:{line}"><span class="hint"><span class="mono">{path}</span> and <span class="mono">{line}</span> are filled in. Default: <span class="mono">xdg-open {path}</span></span></div></div>
       <div class="set-row"><span class="k">Terminal command</span>
@@ -706,7 +706,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <span style="height:13%"></span><span style="height:12%"></span><span style="height:11%"></span><span style="height:14%"></span><span style="height:16%"></span><span style="height:13%"></span><span style="height:12%"></span><span style="height:31%" class="slow"></span><span style="height:14%"></span><span style="height:13%"></span>
           <span style="height:12%"></span><span style="height:15%"></span><span style="height:14%"></span><span style="height:12%"></span><span style="height:13%"></span><span style="height:17%"></span><span style="height:12%"></span><span style="height:14%"></span><span style="height:13%"></span><span style="height:15%"></span>
         </div>
-        <div class="row between xs faint mt-4"><span>older</span><span>Each bar: 5 events. Amber: a batch over 100 ms.</span><span>now</span></div>
+        <div class="row between xs faint mt-4"><span>older</span><span>Each bar: 5 events. Gold bar: a batch over 100 ms.</span><span>now</span></div>
       </section>
     </div>
   </div>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Saarthi M3 · Command Bar (Ctrl+K)</title>
-<meta name="description" content="Ctrl+K over the board: search tasks by ID or title, projects, and actions (New task, Start run, Open in editor, Go to, Toggle theme). F18.1">
+<meta name="description" content="Ctrl+K over the Board: search tasks by ID or title, projects, and actions (New task, Start run, Open in editor, Go to Home / Board / Settings). F18.1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -619,165 +619,76 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>2 need you</button>
+  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.12</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra wait" title="T-0012 · needs you"><span class="agent cl">CL</span><i class="ra-dot tone-bg-road"></i></div><small>12</small><div class="ra" title="T-0027 · crashed"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .bd-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; padding: 14px 20px 18px; }
-  .bd { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; min-height: 100%; }
-  .bd .lane { padding: 8px; min-height: 0; gap: 8px; }
-  .bd .lane.dim { opacity: .5; }
-  .bd .lane-head .name { font-weight: 600; font-size: 13px; }
-  .bd .lane-head .count { font-size: 12px; color: var(--faint); }
-  .bd .tcard { padding: 9px 10px; gap: 7px; }
-  .bd .tcard .title { font-size: 13px; }
-  .bd .tcard .meta { gap: 6px; }
-  .bd .tcard .foot { gap: 6px; }
-  .bd .prio { padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; }
-  .sq-inbox { background: var(--faint) !important; }
-  .sq-research, .sq-verifying { background: var(--blue) !important; }
-  .sq-ready { background: var(--muted) !important; }
-  .sq-running { background: var(--accent) !important; }
-  .sq-review, .sq-shipped { background: var(--green) !important; }
-  .drop-hint {
-    margin-top: 2px; padding: 14px 8px; border: 1.5px dashed var(--accent); border-radius: 8px;
-    text-align: center; font-size: 12px; color: var(--accent-text); line-height: 1.4;
-  }
-  .no-hint {
-    padding: 12px 10px; border: 1.5px dashed var(--red); border-radius: 8px; font-size: 12px;
-    color: var(--red); line-height: 1.4; background: var(--surface);
-  }
-  .lane-note { font-size: 11px; color: var(--faint); padding: 0 4px; }
-  .floating {
-    position: absolute; left: 49.6%; top: 236px; width: 150px; transform: rotate(-2.5deg);
-    box-shadow: var(--shadow); border-color: var(--accent); background: var(--surface-2); z-index: 5;
-  }
-  .select-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px;
-    border: 1px solid var(--line); background: var(--surface); font-size: 12.5px; color: var(--muted); }
-  .select-chip b { color: var(--text); font-weight: 500; }
-  .toast.err { border-color: var(--red); }
-
   .cmdk { width: min(640px, calc(100vw - 32px)); overflow: hidden; }
   .cmdk .cmd-input { font-size: 16px; }
   .cmdk .cursor { animation: none; }
   .cmdk .q { flex: 1; display: flex; align-items: center; gap: 2px; }
   .cmdk .kind { width: 64px; font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; }
-  .cmdk .cmd-item { border-radius: 6px; margin: 0 6px; padding: 8px 10px; }
+  .cmdk .cmd-item { border-radius: 9px; margin: 0 6px; padding: 8px 10px; }
   .cmdk .cmd-item .lbl { flex: 1; min-width: 0; }
   .cmdk .cmd-item .hint { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--faint); white-space: nowrap; }
   .cmdk .cmd-group { padding: 10px 16px 4px; }
-  .cmdk mark { background: transparent; color: var(--accent-text); font-weight: 600; }
+  .cmdk mark { background: transparent; color: var(--road-text); font-weight: 600; }
+  .cmdk .stage { font-size: 10.5px; padding: 0 7px; }
+  .cmdk .stage::before { width: 5px; height: 5px; }
+  .cmdk .bead { width: 20px; height: 20px; font-size: 9px; }
   .cmdk-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--faint); background: var(--panel); }
 </style>
 <div class="fill">
-  <div class="toolbar">
-    <h1>Task Board</h1>
-    <input class="input" style="width:220px" placeholder="Filter by title, ID or label">
-    <span class="select-chip">Stage <b>All</b> ▾</span>
-    <span class="select-chip">Label <b>Any</b> ▾</span>
-    <span class="chip on">All agents</span>
-    <span class="chip"><span class="agent sm cl">CL</span>Claude</span>
-    <span class="chip"><span class="agent sm cx">CX</span>Codex</span>
-    <div class="grow"></div>
-    <span class="small faint">Drag cards between stages. The daemon checks every move.</span>
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
   </div>
-
-  <div class="bd-wrap">
-    <div class="bd">
-      <!-- Inbox -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-inbox"></span><span class="name">Inbox</span><span class="count">2</span></div>
-        <div class="tcard">
-          <div class="title">Dark mode for the settings page</div>
-          <div class="meta"><span class="mono faint nowrap">T-0014</span><span class="prio">P3</span><span class="ellipsis">ui</span></div>
-        </div>
-        <div class="tcard">
-          <div class="title">Add audit log for admin actions</div>
-          <div class="meta"><span class="mono faint nowrap">T-0016</span><span class="prio">P2</span><span class="ellipsis">security</span></div>
-        </div>
-      </div>
-
-      <!-- Research -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-research"></span><span class="name">Research</span><span class="count">1</span></div>
-        <div class="tcard">
-          <div class="title">Investigate slow dashboard query</div>
-          <div class="meta"><span class="mono faint nowrap">T-0015</span><span class="prio">P2</span><span class="ellipsis">perf</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">5m</span><span class="mono">$0.09</span></div>
-        </div>
-      </div>
-
-      <!-- Ready (drag source) -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-ready"></span><span class="name">Ready</span><span class="count">1</span></div>
-        <div class="tcard">
-          <div class="title">Export invoices as CSV</div>
-          <div class="meta"><span class="mono faint nowrap">T-0013</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-        </div>
-      </div>
-
-      <!-- Running (valid target) -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-running"></span><span class="name">Running</span><span class="count">3</span></div>
-        <div class="tcard needs">
-          <div class="flag amber"><span class="dot amber pulse" style="width:6px;height:6px"></span>Needs you</div>
-          <div class="title">Add password reset API</div>
-          <div class="meta"><span class="mono faint nowrap">T-0012</span><span class="prio">P1</span><span class="ellipsis">auth · api</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">18m</span><span class="mono">$0.62</span></div>
-        </div>
-        <div class="tcard">
-          <div class="title">Invoice PDF export with line-item totals</div>
-          <div class="meta"><span class="mono faint nowrap">T-0018</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">12m</span><span class="mono">$0.48</span><span class="grow"></span><span class="dot amber pulse"></span></div>
-        </div>
-        <div class="tcard failed">
-          <div class="flag red">Failed · run crashed</div>
-          <div class="title">Move to uv workspaces</div>
-          <div class="meta"><span class="mono faint nowrap">T-0007</span><span class="prio">P3</span><span class="ellipsis">build</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">25m</span><span class="mono">$0.55</span></div>
-        </div>
-      </div>
-
-      <!-- Verifying -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-verifying"></span><span class="name">Verifying</span><span class="count">1</span></div>
-        <div class="tcard">
-          <div class="title">Refactor Stripe webhook handlers</div>
-          <div class="meta"><span class="mono faint nowrap">T-0010</span><span class="prio">P2</span><span class="ellipsis">billing</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">38m</span><span class="mono">$1.08</span></div>
-        </div>
-      </div>
-
-      <!-- Review (hovered, not allowed) -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-review"></span><span class="name">Review</span><span class="count">1</span></div>
-        <div class="tcard">
-          <div class="title">Rate-limit the login endpoint</div>
-          <div class="meta"><span class="mono faint nowrap">T-0009</span><span class="prio">P1</span><span class="ellipsis">auth · security</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">30m</span><span class="mono">$0.77</span></div>
-        </div>
-      </div>
-
-      <!-- Shipped -->
-      <div class="lane">
-        <div class="lane-head"><span class="sq sq-shipped"></span><span class="name">Shipped</span><span class="count">2</span></div>
-        <div class="tcard">
-          <div class="title">Upgrade FastAPI to 0.115</div>
-          <div class="meta"><span class="mono faint nowrap">T-0008</span><span class="prio">P2</span><span class="ellipsis">deps</span></div>
-          <div class="foot"><span class="agent sm cl">CL</span><span class="mono">33m</span><span class="mono">$0.71</span></div>
-        </div>
-        <div class="tcard">
-          <div class="title">Add pagination to /invoices</div>
-          <div class="meta"><span class="mono faint nowrap">T-0006</span><span class="prio">P3</span><span class="ellipsis">api</span></div>
-          <div class="foot"><span class="agent sm cx">CX</span><span class="mono">22m</span><span class="mono">$0.38</span></div>
-        </div>
-      </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>2</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8 bad"><b>VERIFY</b><span>1</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>3</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">15</span><span class="ti">Cache tax rates per region</span></div><div class="ft"><span>P3</span><span class="r">3d</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">19</span><span class="ti">Retry webhook on 5xx</span></div><div class="ft"><span>P2</span><span class="r">1d</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead info">31</span><span class="ti">Upgrade Alembic to 1.14</span></div><div class="ft"><span class="agent cx sm">CX</span><span>research</span><span class="r">done</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead idle">24</span><span class="ti">Show task cost on cards</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v1</span><span class="r">P2</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.38</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">27</span><span class="ti">Event replay after reconnect</span></div><div class="ft"><span class="agent cx sm">CX</span><span>4m</span><span class="r">$0.11</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cl sm">CL</span><span class="r">2h</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Fix invoice rounding</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Add audit log table</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead road dim">06</span><span class="ti">2 memory notes to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div>
     </div>
   </div>
 </div>
@@ -785,14 +696,14 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <div class="modal cmdk">
     <div class="cmd-input">
       <span class="faint">⌕</span>
-      <span class="q"><span class="cursor" style="height:18px;width:2px;background:var(--accent)"></span><span class="faint">Search tasks and projects, or type an action</span></span>
+      <span class="q"><span class="cursor" style="height:18px;width:2px"></span><span class="faint">Search tasks and projects, or type an action</span></span>
       <span class="kbd">Esc</span>
     </div>
     <div style="padding:2px 0 8px">
       <div class="cmd-group upper">Recent tasks</div>
-      <div class="cmd-item on"><span class="kind">Task</span><span class="lbl ellipsis">Add password reset API</span><span class="stage needs" style="font-size:10.5px;padding:0 7px">Needs You</span><span class="hint">T-0012 · acme-billing</span></div>
-      <div class="cmd-item"><span class="kind">Task</span><span class="lbl ellipsis">Invoice PDF export with line-item totals</span><span class="stage running" style="font-size:10.5px;padding:0 7px">Running</span><span class="hint">T-0018 · acme-billing</span></div>
-      <div class="cmd-item"><span class="kind">Task</span><span class="lbl ellipsis">Event replay after WebSocket reconnect</span><span class="hint">T-0027 · saarthi</span></div>
+      <div class="cmd-item on"><span class="kind">Task</span><span class="bead road">12</span><span class="lbl ellipsis">Add password reset API</span><span class="stage needs">Needs you</span><span class="hint">T-0012 · acme-billing</span></div>
+      <div class="cmd-item"><span class="kind">Task</span><span class="bead road dim">18</span><span class="lbl ellipsis">Invoice PDF export with line-item totals</span><span class="stage run">Run</span><span class="hint">T-0018 · acme-billing</span></div>
+      <div class="cmd-item"><span class="kind">Task</span><span class="bead bad">27</span><span class="lbl ellipsis">Event replay after reconnect</span><span class="stage failed">Run crashed</span><span class="hint">T-0027 · acme-billing</span></div>
 
       <div class="cmd-group upper">Projects</div>
       <div class="cmd-item"><span class="kind">Project</span><span class="lbl mono" style="font-size:13px">saarthi</span><span class="hint">4 open · 1 running</span></div>
@@ -802,9 +713,9 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
       <div class="cmd-item"><span class="kind">Action</span><span class="lbl">New task</span><span class="kbd">Ctrl Alt N</span></div>
       <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Start run on T-0012</span><span class="kbd">R</span></div>
       <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Open T-0012 in my editor</span><span class="kbd">E</span></div>
-      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Command Deck</span><span class="kbd">D</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Home</span><span class="kbd">G H</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Board</span><span class="kbd">G B</span></div>
       <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Settings</span><span class="kbd">,</span></div>
-      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Toggle theme (light / dark)</span><span class="hint">now: system</span></div>
     </div>
     <div class="cmdk-foot"><span>↑↓ move</span><span>Enter open</span><span>Esc close</span><span class="grow"></span><span>Type a task ID like <span class="mono">T-0012</span> to jump to it</span></div>
   </div>

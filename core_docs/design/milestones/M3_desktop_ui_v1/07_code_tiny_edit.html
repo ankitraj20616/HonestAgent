@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M3 · Code Peek - tiny edit</title>
+<title>Saarthi M3 · Code Peek · tiny edit</title>
 <meta name="description" content="No run is active, so a tiny edit is allowed in the worktree (never the main repo). Save sends the file hash; if the file changed on disk it is refused. F17.3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -619,28 +619,17 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.33</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0027 · crashed"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .room-side .crit { font-size: 12.5px; }
-  .focus-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-  .run-pick { font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); background: var(--surface); }
-
-  .peek { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); margin: 14px 20px 16px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .peek { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); margin: 14px 22px 16px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
   .peek-left { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--bg-side); }
   .peek-search { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
   .peek-search .seg { align-self: flex-start; }
@@ -650,91 +639,53 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   .res-hit { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; padding: 3px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
   .res-hit .n { color: var(--faint); text-align: right; }
   .res-hit .p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .res-hit.on { background: var(--surface-3); }
-  .hit { background: var(--accent-soft); color: inherit; border-bottom: 1.5px solid var(--accent); border-radius: 2px; }
+  .res-hit.on { background: var(--surface3); }
+  .hit { background: var(--road-soft); color: inherit; border-bottom: 1.5px solid var(--road); border-radius: 2px; }
   .tree { flex: 1; min-height: 0; overflow: auto; padding: 6px 6px 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
   .tree .it { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
-  .tree .it.on { background: var(--surface-3); }
+  .tree .it.on { background: var(--surface3); }
   .tree .dir { color: var(--muted); }
   .tree .st { width: 10px; font-size: 11px; font-weight: 600; }
-  .tree .st.a { color: var(--green); } .tree .st.m { color: var(--accent-text); }
+  .tree .st.a { color: var(--ok); } .tree .st.m { color: var(--road-text); }
   .peek-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg); }
   .peek-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
   .peek-main .code { flex: 1; border: none; border-radius: 0; background: var(--bg); padding: 8px 0; line-height: 1.65; }
   .peek-status { white-space: nowrap; display: flex; align-items: center; gap: 12px; padding: 5px 12px; border-top: 1px solid var(--line); background: var(--surface); font-size: 11.5px; color: var(--faint); }
   .rule-note { margin: 10px 12px 0; }
-  .ed-cursor { display: inline-block; width: 2px; height: 15px; background: var(--accent); vertical-align: text-bottom; margin-left: 1px; }
+  .ed-cursor { display: inline-block; width: 2px; height: 15px; background: var(--road); vertical-align: text-bottom; margin-left: 1px; }
   .rules { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
-  .rules .ok::before { content: '✓ '; color: var(--green); font-weight: 700; }
+  .rules .ok::before { content: '✓ '; color: var(--ok); font-weight: 700; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage verifying">Verifying</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">25m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.92</span></span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage verify">Verify</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 5 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="59.7 59.7" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-info" cx="23.0" cy="42.0" r="5"/></svg>
+      <div class="lbl"><b>Verify · 5 of 8</b>Build run done · no run active</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>25m</b></span><span class="room-meta">Cost <b>$0.92</b></span>
     <button class="btn primary">Run agent</button>
   </div>
-
   <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-
-        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+    <div class="room-side">
+      <div class="col"><h3>Brief · v3</h3>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-        <div class="row wrap gap-4 mt-4"><span class="lbl" style="margin-right:4px">Focus</span><span class="focus-chip">app/auth/</span><span class="focus-chip">app/mail.py</span><span class="focus-chip">tests/auth/</span></div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>5 ahead</div>
-          <div><div class="k">Changed</div>6 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0027</span></div>
-        </div>
-        <div class="row" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab on">Code <span class="n">6</span></button>
-        <button class="tab">Timeline</button>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
       </div>
-
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>5</b> ahead</span><span><b>6</b> files</span><span>checkpoint <b class="mono">#27</b></span></div>
+          <div class="row" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0027 · build · 21m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 4m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab on">Code <span class="n">6</span></span><span class="tab">Timeline</span></div>
       <div class="peek">
         <div class="peek-left">
           <div class="peek-search">
@@ -742,7 +693,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
             <input class="input mono" style="font-size:12.5px" placeholder="Find a file by name">
           </div>
           <div class="tree">
-            <div class="upper" style="padding:4px 8px 6px;font-family:'IBM Plex Sans',sans-serif">Worktree · T-0012</div>
+            <div class="upper" style="padding:4px 8px 6px">Worktree · T-0012</div>
             <div class="it dir">▾ app/</div>
             <div class="it dir" style="padding-left:22px">▾ auth/</div>
             <div class="it" style="padding-left:36px"><span class="st"></span>__init__.py</div>
@@ -811,12 +762,12 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
           <div class="peek-status"><span>Python</span><span>UTF-8 · LF</span><span class="nowrap">Ln 20, Col 59</span><span class="grow"></span><span class="nowrap">Opened at sha256 <span class="mono">3f9a…c21e</span></span></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M3 7/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 7/11 · Code Peek - tiny edit</span><span class="sep">|</span><a href="06_code_peek.html">&larr; prev</a><a href="08_start_run_dialog.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M3 7/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 7/11 · Code Peek · tiny edit</span><span class="sep">|</span><a href="06_code_peek.html">&larr; prev</a><a href="08_start_run_dialog.html">next &rarr;</a></span></div>
 </body>
 </html>

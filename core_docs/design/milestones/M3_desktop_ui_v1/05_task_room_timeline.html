@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Saarthi M3 · Task Room - Timeline tab</title>
+<title>Saarthi M3 · Task Room · Timeline</title>
 <meta name="description" content="Every event of T-0012 after its build run ended, newest first, grouped by run, with filter chips Task / Runs / Agent / Workspace. F14.1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -619,107 +619,57 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
   <button class="proj-pick"><span class="mono">acme-billing</span><span class="faint">▾</span></button>
   <nav class="navs"><a>Home</a><a class="on">Board</a><a>Memory</a><a>Playbooks</a></nav>
   <div class="grow"></div>
-  <button class="needs-pill"><span class="dot road pulse"></span>1 needs you</button>
+  <button class="needs-pill zero">0 need you</button>
   <button class="search-btn"><span class="ellipsis">Search or run a command…</span><span class="kbd">Ctrl K</span></button>
   <button class="gear" title="Settings">⚙</button>
   <div class="cost-box"><span class="mono">$4.33</span><small>today</small></div>
 </header>
 <div class="after-top"></div>
 <div class="frame rail">
-<aside class="rail"><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-muted"></i></div><small>18</small><div class="ra" title="T-0027 · running"><span class="agent cx">CX</span><i class="ra-dot tone-bg-muted"></i></div><small>27</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
+<aside class="rail"><div class="ra" title="T-0027 · crashed"><span class="agent cx">CX</span><i class="ra-dot tone-bg-bad"></i></div><small>27</small><div class="ra" title="T-0018 · writing tests"><span class="agent cl">CL</span><i class="ra-dot tone-bg-ok"></i></div><small>18</small><div class="ra free">+</div><div class="ra free">+</div><div class="grow"></div><div class="daemon mini" title="saarthid running"><span class="dot green"></span></div></aside>
 <div class="content">
 <style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .room-side .crit { font-size: 12.5px; }
-  .focus-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-  .run-pick { font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); background: var(--surface); }
-
-  .tl { display: flex; flex-direction: column; gap: 14px; max-width: 860px; }
-  .tl-group { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
-  .tl-gh { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 12.5px; }
-  .tl-gh .ttl { font-weight: 600; font-size: 13px; }
-  .tl-row { display: grid; grid-template-columns: 48px 12px 82px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 13px; }
-  .tl-row:first-of-type { border-top: none; }
-  .tl-row .t { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--faint); }
-  .tl-row .dot { align-self: center; }
-  .tl-row .ty { font-size: 12px; color: var(--muted); }
-  .tl-row .by { font-size: 11.5px; color: var(--faint); white-space: nowrap; }
+  .subbar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); padding: 10px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
   .chip .n { font-size: 11px; color: var(--faint); }
+  .tl-grp { display: flex; align-items: center; gap: 10px; max-width: 960px; padding: 0 0 8px 56px; font-size: 12.5px; }
+  .tl-grp b { font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: 13.5px; }
+  .tl-grp .when { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); }
+  .tl + .tl-grp { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .ev-k { display: inline-block; width: 82px; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 10.5px; letter-spacing: .04em; color: var(--faint); }
+  .ev-by { float: right; font-size: 11.5px; color: var(--faint); }
+  .tl-ev .stage { padding: 0 8px; font-size: 11px; vertical-align: 1px; }
+  .tl-ev .stage::before { width: 5px; height: 5px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0012</span>
-    <h1>Add password reset API</h1>
-    <span class="stage verifying">Verifying</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">25m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.92</span></span>
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage verify">Verify</span>
+    <div class="journey-box"><svg class="journey" width="46" height="46" viewBox="0 0 46 46" role="img" aria-label="Stage 5 of 8"><circle class="j-rim" cx="23" cy="23" r="19"/><circle class="j-done" cx="23" cy="23" r="19" stroke-dasharray="59.7 59.7" transform="rotate(-90.0 23 23)"/><line class="j-spoke" x1="23.0" y1="4.0" x2="23.0" y2="42.0"/><line class="j-spoke" x1="36.4" y1="9.6" x2="9.6" y2="36.4"/><line class="j-spoke" x1="42.0" y1="23.0" x2="4.0" y2="23.0"/><line class="j-spoke" x1="36.4" y1="36.4" x2="9.6" y2="9.6"/><circle class="j-hub" cx="23" cy="23" r="3.5"/><circle class="j-now j-now-info" cx="23.0" cy="42.0" r="5"/></svg>
+      <div class="lbl"><b>Verify · 5 of 8</b>Build run done · R-0027 · 21m</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>25m</b></span><span class="room-meta">Cost <b>$0.92</b></span>
     <button class="btn primary">Run agent</button>
   </div>
-
   <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v3 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-
-        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+    <div class="room-side">
+      <div class="col"><h3>Brief · v3</h3>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends a single-use link</span></div>
         <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
         <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
-        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
-        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use the existing mailer. No new infra (no Redis). Follow OWASP guidance.</div>
-        <div class="row wrap gap-4 mt-4"><span class="lbl" style="margin-right:4px">Focus</span><span class="focus-chip">app/auth/</span><span class="focus-chip">app/mail.py</span><span class="focus-chip">tests/auth/</span></div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0012-add-password-reset-api</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>5 ahead</div>
-          <div><div class="k">Changed</div>6 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0027</span></div>
-        </div>
-        <div class="row" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0027</span> · Build</div><div class="faint" style="font-size:11.5px">10:41 · 21m · $0.84</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-        <div class="run-row">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0026</span> · Research</div><div class="faint" style="font-size:11.5px">10:22 · 4m · $0.08</div></div>
-          <span class="green strong" style="font-size:11.5px">Done</span>
-        </div>
-      </section>
-    </aside>
-
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab">Terminal</button>
-        <button class="tab">Code <span class="n">6</span></button>
-        <button class="tab on">Timeline</button>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202</span></div>
       </div>
-
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>5</b> ahead</span><span><b>6</b> files</span><span>checkpoint <b class="mono">#27</b></span></div>
+          <div class="row" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0027 · build · 21m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 4m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Code <span class="n">6</span></span><span class="tab on">Timeline</span></div>
       <div class="subbar">
         <span class="chip on">All <span class="n">33</span></span>
         <span class="chip">Task <span class="n">8</span></span>
@@ -730,48 +680,42 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
         <span class="faint">Newest first · grouped by run</span>
       </div>
       <div class="tab-body">
+        <div class="tl-grp"><span class="agent cl">CL</span><b>R-0027 · build</b><span class="when">10:41 – 11:02 · 21m · $0.84</span><span class="grow"></span><span class="small ok-t strong">done</span></div>
         <div class="tl">
-          <div class="tl-group">
-            <div class="tl-gh"><span class="agent sm cl">CL</span><span class="ttl"><span class="mono">R-0027</span> · Build</span><span class="faint">10:41 – 11:02 · 21m · $0.84</span><span class="grow"></span><span class="green small strong">Done</span></div>
-            <div class="tl-row"><span class="t">11:02</span><span class="dot green"></span><span class="ty">Workspace</span><span>Checkpoint <span class="mono">ck-0027</span> saved</span><span class="by">6 files</span></div>
-            <div class="tl-row"><span class="t">11:02</span><span class="dot blue"></span><span class="ty">Task</span><span>Stage moved Running → Verifying</span><span class="by">system · run ended</span></div>
-            <div class="tl-row"><span class="t">11:02</span><span class="dot green"></span><span class="ty">Runs</span><span>Run R-0027 finished · 21m 40s · $0.84</span><span class="by"></span></div>
-            <div class="tl-row"><span class="t">10:58</span><span class="dot blue"></span><span class="ty">Agent</span><span>Added <span class="mono">migrations/versions/0042_password_reset_tokens.py</span> (+19)</span><span class="by">file changed</span></div>
-            <div class="tl-row"><span class="t">10:55</span><span class="dot amber"></span><span class="ty">Task</span><span>Stage moved Needs You → Running</span><span class="by">system · you answered</span></div>
-            <div class="tl-row"><span class="t">10:55</span><span class="dot"></span><span class="ty">Agent</span><span>You answered: “New table”</span><span class="by">by you</span></div>
-            <div class="tl-row"><span class="t">10:52</span><span class="dot amber"></span><span class="ty">Task</span><span>Stage moved Running → Needs You</span><span class="by">system</span></div>
-            <div class="tl-row"><span class="t">10:52</span><span class="dot amber"></span><span class="ty">Agent</span><span>Needs You: new table <span class="mono">password_reset_tokens</span> or Redis?</span><span class="by">question</span></div>
-            <div class="tl-row"><span class="t">10:49</span><span class="dot blue"></span><span class="ty">Agent</span><span>Added <span class="mono">app/auth/reset.py</span> (+42)</span><span class="by">file changed</span></div>
-            <div class="tl-row"><span class="t">10:47</span><span class="dot"></span><span class="ty">Agent</span><span><span class="mono">uv run pytest tests/auth -q</span> · 4 passed</span><span class="by">command</span></div>
-            <div class="tl-row"><span class="t">10:41</span><span class="dot amber"></span><span class="ty">Task</span><span>Stage moved Ready → Running</span><span class="by">system · a run starts</span></div>
-            <div class="tl-row"><span class="t">10:41</span><span class="dot amber"></span><span class="ty">Runs</span><span>Run R-0027 started · Claude · Build</span><span class="by">by you</span></div>
-          </div>
-
-          <div class="tl-group">
-            <div class="tl-gh"><span class="ttl">Brief and stage</span><span class="faint">10:38 – 10:39</span></div>
-            <div class="tl-row"><span class="t">10:39</span><span class="dot"></span><span class="ty">Task</span><span>Stage moved Research → Ready</span><span class="by">by you</span></div>
-            <div class="tl-row"><span class="t">10:38</span><span class="dot"></span><span class="ty">Task</span><span>Brief saved · v3</span><span class="by">by you</span></div>
-          </div>
-
-          <div class="tl-group">
-            <div class="tl-gh"><span class="agent sm cl">CL</span><span class="ttl"><span class="mono">R-0026</span> · Research</span><span class="faint">10:22 – 10:26 · 4m · $0.08</span><span class="grow"></span><span class="green small strong">Done</span></div>
-            <div class="tl-row"><span class="t">10:26</span><span class="dot green"></span><span class="ty">Runs</span><span>Run R-0026 finished · findings saved</span><span class="by"></span></div>
-            <div class="tl-row"><span class="t">10:22</span><span class="dot blue"></span><span class="ty">Workspace</span><span>Worktree created · <span class="mono">saarthi/T-0012-add-password-reset-api</span></span><span class="by">from main @ 8c41e2a</span></div>
-          </div>
-
-          <div class="tl-group">
-            <div class="tl-gh"><span class="ttl">Created</span><span class="faint">10:20 – 10:21</span></div>
-            <div class="tl-row"><span class="t">10:21</span><span class="dot"></span><span class="ty">Task</span><span>Stage moved Inbox → Research</span><span class="by">by you</span></div>
-            <div class="tl-row"><span class="t">10:20</span><span class="dot"></span><span class="ty">Task</span><span>Task created from Quick capture</span><span class="by">by you</span></div>
-          </div>
+          <div class="tl-ev"><span class="tm">11:02</span><span class="node ok"></span><div class="bx"><span class="ev-k">WORKSPACE</span>Checkpoint <span class="mono">#27</span> saved<span class="ev-by">6 files</span></div></div>
+          <div class="tl-ev"><span class="tm">11:02</span><span class="node info"></span><div class="bx"><span class="ev-k">TASK</span>Stage moved <span class="stage run">Run</span> → <span class="stage verify">Verify</span><span class="ev-by">system · run ended</span></div></div>
+          <div class="tl-ev"><span class="tm">11:02</span><span class="node ok"></span><div class="bx"><span class="ev-k">RUNS</span>Run R-0027 finished · 21m 40s · $0.84</div></div>
+          <div class="tl-ev"><span class="tm">10:58</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">EDIT</span><span class="mono ellipsis">migrations/versions/0042_password_reset_tokens.py</span><span class="r ok-t">+19 −0</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:55</span><span class="node road"></span><div class="bx"><span class="ev-k">TASK</span>Stage moved <span class="stage needs">Needs you</span> → <span class="stage run">Run</span><span class="ev-by">system · you answered</span></div></div>
+          <div class="tl-ev"><span class="tm">10:55</span><span class="node"></span><div class="bx"><span class="ev-k">AGENT</span>You answered: “New table”<span class="ev-by">by you</span></div></div>
+          <div class="tl-ev"><span class="tm">10:52</span><span class="node road"></span><div class="bx"><span class="ev-k">AGENT</span>Needs you: new table <span class="mono">password_reset_tokens</span> or Redis?<span class="ev-by">question</span></div></div>
+          <div class="tl-ev"><span class="tm">10:49</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">EDIT</span><span class="mono ellipsis">app/auth/reset.py</span><span class="r ok-t">+42 −0</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:47</span><span class="node ok"></span><div class="bx"><div class="tool-row"><span class="k">RUN</span><span class="mono ellipsis">uv run pytest tests/auth -q</span><span class="r ok-t">4 passed · 1.8s</span></div></div></div>
+          <div class="tl-ev"><span class="tm">10:41</span><span class="node road"></span><div class="bx"><span class="ev-k">TASK</span>Stage moved <span class="stage brief">Brief</span> → <span class="stage run">Run</span><span class="ev-by">system · a run starts</span></div></div>
+          <div class="tl-ev"><span class="tm">10:41</span><span class="node road"></span><div class="bx"><span class="ev-k">RUNS</span>Run R-0027 started · <b>Claude</b> · build<span class="ev-by">by you</span></div></div>
+        </div>
+        <div class="tl-grp"><b>Brief and stage</b><span class="when">10:38 – 10:39</span></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:39</span><span class="node"></span><div class="bx"><span class="ev-k">TASK</span>Stage moved <span class="stage research">Research</span> → <span class="stage brief">Brief</span><span class="ev-by">by you</span></div></div>
+          <div class="tl-ev"><span class="tm">10:38</span><span class="node"></span><div class="bx"><span class="ev-k">TASK</span>Brief saved · v3<span class="ev-by">by you</span></div></div>
+        </div>
+        <div class="tl-grp"><span class="agent cl">CL</span><b>R-0026 · research</b><span class="when">10:22 – 10:26 · 4m · $0.08</span><span class="grow"></span><span class="small ok-t strong">done</span></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:26</span><span class="node ok"></span><div class="bx"><span class="ev-k">RUNS</span>Run R-0026 finished · findings saved</div></div>
+          <div class="tl-ev"><span class="tm">10:22</span><span class="node info"></span><div class="bx"><span class="ev-k">WORKSPACE</span>Worktree created · <span class="mono">saarthi/T-0012-add-password-reset-api</span><span class="ev-by">from main @ 8c41e2a</span></div></div>
+        </div>
+        <div class="tl-grp"><b>Created</b><span class="when">10:20 – 10:21</span></div>
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">10:21</span><span class="node"></span><div class="bx"><span class="ev-k">TASK</span>Stage moved <span class="stage capture">Capture</span> → <span class="stage research">Research</span><span class="ev-by">by you</span></div></div>
+          <div class="tl-ev"><span class="tm">10:20</span><span class="node"></span><div class="bx"><span class="ev-k">TASK</span>Task created from Quick capture<span class="ev-by">by you</span></div></div>
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 </div>
 </div>
 </div>
-<div class="proto-nav"><span class="handle" title="Design navigator">M3 5/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 5/11 · Task Room - Timeline tab</span><span class="sep">|</span><a href="04_task_room_terminal.html">&larr; prev</a><a href="06_code_peek.html">next &rarr;</a></span></div>
+<div class="proto-nav"><span class="handle" title="Design navigator">M3 5/11</span><span class="more"><a href="../index.html">All screens</a><span class="sep">|</span><span>M3 · 5/11 · Task Room · Timeline</span><span class="sep">|</span><a href="04_task_room_terminal.html">&larr; prev</a><a href="06_code_peek.html">next &rarr;</a></span></div>
 </body>
 </html>

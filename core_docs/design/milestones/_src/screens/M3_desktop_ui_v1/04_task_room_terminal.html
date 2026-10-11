@@ -1,92 +1,50 @@
-<!-- {"shell": "app", "nav": "room", "crumb": "T-0018 · Invoice PDF export with line-item totals", "needs": 2, "cost": "$4.12", "slots": "2 of 4", "title": "Task Room - Terminal tab", "note": "T-0018 runs Claude in an interactive terminal (R-0030, PTY, xterm.js). Keys and resize go to the agent's terminal live; scrollback loads first. F5.5, F5.9"} -->
+<!-- {"title": "Task Room · Terminal", "note": "T-0018 runs Claude in an interactive terminal (R-0030, PTY, xterm.js). Keys and resize go to the agent's terminal live; scrollback loads first. F5.5, F5.9", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "crashed", "tone": "bad", "line": "build · 4m", "cost": "$0.11"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "terminal", "tone": "ok", "line": "build · 12m", "cost": "$0.48"}]} -->
 <style>
-  .side-sec { display: flex; flex-direction: column; gap: 9px; }
-  .side-sec .lbl { font-size: 11.5px; color: var(--faint); }
-  .room-side { gap: 18px; }
-  .kv3 { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 6px; font-size: 12px; }
-  .kv3 > div { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; white-space: nowrap; }
-  .kv3 .k { color: var(--faint); font-size: 10.5px; }
-  .room-side .crit { font-size: 12.5px; }
-  .focus-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 10px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-  .run-pick { font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); background: var(--surface); }
-
-  .term-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 16px; }
+  .subbar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); padding: 9px 22px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .run-pick { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; padding: 3px 9px; border: 1px solid var(--line2); border-radius: 8px; color: var(--text); background: var(--surface); }
+  .term-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 22px 12px; }
   .term-wrap .term { flex: 1; }
-  .term-body { font-size: 12.5px; line-height: 1.18; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
-  .term-body > pre { font: inherit; margin: 0; white-space: pre; }
-  .term-body .hl { background: var(--surface-3); }
-  .term .acc { color: var(--accent-text); }
-  .term .cursor { animation: none; }
+  .term-wrap .term-body { font-size: 12.5px; line-height: 1.18; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+  .term-wrap .term-body > pre { font: inherit; margin: 0; white-space: pre; }
+  .term-wrap .acc { color: var(--road-text); }
+  .term-wrap .cursor { animation: none; }
   .xterm-foot { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--faint); }
-  .dock { border-top: 1px solid var(--line); padding: 12px 16px; background: var(--panel); flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
-  .send { padding: 9px 16px; border-radius: 7px; border: none; background: var(--text); color: var(--bg); font-weight: 600; font-size: 13px; }
-  .stop { padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 13px; }
 </style>
 <div class="fill">
   <div class="room-head">
-    <span class="mono faint" style="font-size:13px">T-0018</span>
-    <h1>Invoice PDF export with line-item totals</h1>
-    <span class="stage running">Running</span>
-    <div class="grow"></div>
-    <span class="muted" style="font-size:12.5px">Time <span class="mono" style="color:var(--text)">12m</span></span>
-    <span class="muted" style="font-size:12.5px">Cost <span class="mono" style="color:var(--text)">$0.48</span></span>
+    <span class="id">T-0018</span><h1>Invoice PDF export with line-item totals</h1><span class="stage run">Run</span>
+    <div class="journey-box"><x-journey stage="run" tone="road"></x-journey>
+      <div class="lbl"><b>Run · 4 of 8</b>Capture → Research → Brief → <span class="road">Run</span></div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>12m</b></span><span class="room-meta">Cost <b>$0.48</b></span>
     <button class="btn primary disabled" title="One active run per task. R-0030 is running.">Run agent</button>
   </div>
-
   <div class="room">
-    <aside class="room-side">
-      <section class="side-sec">
-        <div class="row between"><h3>Brief</h3><span class="row gap-4"><span class="xs faint">v2 · saved</span><button class="btn xs ghost">Edit</button></span></div>
-        <div class="lbl">Goal</div>
-        <div class="pretty" style="font-size:13.5px;line-height:1.5">Customers can download an invoice as a PDF. Each line item shows quantity, unit price and line total.</div>
-        <div class="lbl mt-4">Acceptance criteria</div>
-
+    <div class="room-side">
+      <div class="col"><h3>Brief · v2</h3>
+        <div class="goal">Customers can download an invoice as a PDF. Each line item shows quantity, unit price and line total.</div>
         <div class="crit"><span class="box"></span><span>GET /invoices/{id}/pdf returns a PDF file</span></div>
         <div class="crit"><span class="box"></span><span>Each line shows qty, unit price and line total</span></div>
         <div class="crit"><span class="box"></span><span>Totals match the invoice API to the cent</span></div>
         <div class="crit"><span class="box"></span><span>Tests cover rounding and an empty invoice</span></div>
-        <div class="lbl mt-4">Notes</div>
-        <div class="small muted pretty" style="font-size:13px">Use WeasyPrint (already in deps). Money is Decimal, never float.</div>
-        <div class="row wrap gap-4 mt-4"><span class="lbl" style="margin-right:4px">Focus</span><span class="focus-chip">app/invoices/</span><span class="focus-chip">templates/pdf/</span></div>
-      </section>
-
-      <section class="side-sec" style="gap:8px">
-        <h3>Workspace</h3>
-        <div class="mono accent" style="font-size:12px;word-break:break-all">saarthi/T-0018-invoice-pdf-export-with-line-item-totals</div>
-        <div class="mono faint" style="font-size:11.5px;word-break:break-all">~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0018</div>
-        <div class="kv3">
-          <div><div class="k">vs main</div>2 ahead</div>
-          <div><div class="k">Changed</div>3 files</div>
-          <div><div class="k">Checkpoint</div><span class="mono" style="font-size:11.5px">ck-0029</span></div>
-        </div>
-        <div class="row" style="gap:5px">
-          <button class="btn xs">Open folder</button>
-          <button class="btn xs">Terminal here</button>
-          <button class="btn xs">Open in my editor</button>
-        </div>
-      </section>
-
-      <section class="side-sec" style="gap:6px">
-        <h3 style="margin-bottom:4px">Runs</h3>
-        <div class="run-row on">
-          <span class="agent sm cl">CL</span>
-          <div style="min-width:0"><div><span class="mono">R-0030</span> · Build · terminal</div><div class="faint" style="font-size:11.5px">10:53 · 12m · $0.48</div></div>
-          <span class="accent strong" style="font-size:11.5px">Running</span>
-        </div>
-      </section>
-    </aside>
-
-    <section class="room-main">
-      <div class="tabs">
-        <button class="tab">Stream</button>
-        <button class="tab on">Terminal <span class="dot amber pulse" style="width:6px;height:6px"></span></button>
-        <button class="tab">Code <span class="n">3</span></button>
-        <button class="tab">Timeline</button>
       </div>
-
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0018-invoice-pdf-export-with-line-item-totals</span>
+          <div class="kvs"><span><b>2</b> ahead</span><span><b>3</b> files</span><span>checkpoint <b class="mono">#29</b></span></div>
+          <div class="row" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row on"><span class="agent cl">CL</span><span>R-0030 · build · terminal · 12m</span><span class="small road strong">live</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab">Stream</span><span class="tab on">Terminal <span class="dot road pulse"></span></span><span class="tab">Code <span class="n">3</span></span><span class="tab">Timeline</span></div>
       <div class="subbar">
-        <span>Interactive session for</span><span class="run-pick">R-0030 · Build · terminal ▾</span>
+        <span>Interactive session for</span><span class="run-pick">R-0030 · build · terminal ▾</span>
         <span class="faint">What you type goes straight to the agent's terminal.</span>
         <span class="grow"></span>
         <span class="tag green">live</span>
@@ -141,11 +99,7 @@
           <span>Click the terminal and type. <span class="kbd">Ctrl Shift C</span> copy</span>
         </div>
       </div>
-      <div class="dock">
-        <input class="input" style="flex:1;padding:9px 12px;border-radius:7px;font-size:13.5px" placeholder="Or send one line to the terminal (same as saarthi run say)…">
-        <button class="send">Send</button>
-        <button class="stop">Stop</button>
-      </div>
-    </section>
+      <div class="composer"><span class="box">Or send one line to the terminal (same as saarthi run say)…</span><button class="btn primary">Send</button><button class="btn">Stop</button></div>
+    </div>
   </div>
 </div>
