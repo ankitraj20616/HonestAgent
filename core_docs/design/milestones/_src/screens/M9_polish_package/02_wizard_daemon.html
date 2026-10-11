@@ -1,21 +1,5 @@
 <!-- {"title": "First run 1/3 - Daemon not found", "note": "Wizard step 1: the app could not reach saarthid. Shows what it tried (health, systemd unit, saarthi on PATH), the install command and install-service, and Retry. Continue is blocked. FSD M9 5.3 step 1, 5.1; TDD Decision 4", "shell": "bare"} -->
 <style>
-  .wiz { width: min(1160px, 100%); border: 1px solid var(--line2); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); display: grid; grid-template-columns: 250px minmax(0, 1fr); }
-  .wiz-side { border-right: 1px solid var(--line); background: var(--panel); border-radius: 14px 0 0 14px; padding: 22px 20px; display: flex; flex-direction: column; gap: 18px; }
-  .wiz-side .brand-row { display: flex; align-items: center; gap: 10px; }
-  .wiz-side .wheel-box { display: grid; place-items: center; padding: 4px 0; }
-  .vsteps { display: flex; flex-direction: column; gap: 4px; }
-  .step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; color: var(--muted); }
-  .step b { display: block; font-size: 13px; font-weight: 500; }
-  .step small { display: block; font-size: 11px; color: var(--faint); }
-  .step .n { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line2); display: grid; place-items: center; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--faint); }
-  .step.on { color: var(--text); background: var(--surface2); box-shadow: inset 2px 0 0 var(--road); }
-  .step.on b { font-weight: 600; }
-  .step.on .n { background: var(--road); border-color: transparent; color: var(--on-road); }
-  .step.done .n { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
-  .wiz-main { display: flex; flex-direction: column; min-width: 0; }
-  .wiz-body { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
-  .wiz-foot { display: flex; align-items: center; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--line); background: var(--panel); border-radius: 0 0 14px 0; margin-top: auto; }
   .cmd { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--term-text); }
   .cmd .pr { color: var(--faint); }
   .try { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }

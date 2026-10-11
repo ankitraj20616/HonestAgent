@@ -353,6 +353,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .bcard.failed { border-color: var(--bad); }
 .bcard.ghost { opacity: .4; border-style: dashed; }
 .bcard.lifted { transform: rotate(-2deg); box-shadow: var(--shadow); border-color: var(--road); }
+.bcard.override { border-color: var(--road); }
 .bead { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: var(--on-road); background: var(--line2); }
 .bead.road { background: var(--road); } .bead.ok { background: var(--ok); } .bead.bad { background: var(--bad); }
 .bead.info { background: var(--info); color: var(--codex-ink); }
@@ -456,6 +457,7 @@ h1.title { font-size: 28px; font-weight: 600; margin-top: 2px; }
 .proof-r .ck-row .cmd { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 11.5px; }
 .proof-r .ck-row .req { font-size: 10.5px; color: var(--faint); border: 1px solid var(--line2); border-radius: 4px; padding: 0 5px; }
 .proof-r .ck-row .tm { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--ok); }
+.proof-r .ck-row .tm.bad { color: var(--bad); }
 .crit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--text2); }
 .crit-row:last-child { border-bottom: none; }
 
