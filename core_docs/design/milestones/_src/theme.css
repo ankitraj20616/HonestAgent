@@ -1,109 +1,68 @@
-/* Saarthi design tokens.
-   Dark values are taken 1:1 from "Saarthi Prototype.html".
-   Light values are the same roles on warm paper. Screens use ONLY these variables. */
+/* Saarthi design tokens: "The Wheel", dark only.
+   Spec: core_docs/design/2026-10-11-wheel-ui-design.md section 4.1.
+   The old token names (accent, green, panel, ...) stay as aliases so older screens re-skin by themselves. */
 
-/*@dark*/
 :root {
-  --bg: #121110;
-  --bg-side: #161513;
-  --bg-header: #141311;
-  --panel: #151412;
-  --surface: #191816;
-  --surface-2: #211F1C;
-  --surface-3: #24221F;
-  --surface-hover: #262420;
-  --chip-on: #2A2723;
+  /* --- Wheel tokens --- */
+  --bg: #0B0A09;
+  --glow: #1D1813;
+  --surface: #14110E;
+  --surface2: #1B1713;
+  --surface3: #221D18;
+  --line: #2A241E;
+  --line2: #3A3229;
+  --text: #EDE6DA;
+  --text2: #D2C8B8;
+  --muted: #9A8F80;
+  --faint: #6B6257;
+  --road: #E9A23B;
+  --road-text: #F0B055;
+  --road-soft: rgba(233, 162, 59, 0.10);
+  --on-road: #140F08;
+  --claude: #E9A23B;
+  --codex: #6FB7FF;
+  --codex-ink: #071422;
+  --ok: #5ED39C;
+  --bad: #FF7A6B;
+  --info: #6FB7FF;
+  --ok-soft: rgba(94, 211, 156, 0.09);
+  --bad-soft: rgba(255, 122, 107, 0.09);
+  --info-soft: rgba(111, 183, 255, 0.08);
 
-  --line: #2D2A26;
-  --line-strong: #3A3631;
-  --line-hover: #4A463F;
-
-  --text: #ECE8E1;
-  --text-2: #D9D3C9;
-  --muted: #A39D93;
-  --faint: #6F6A62;
-
-  --accent: oklch(0.78 0.13 70);
-  --accent-text: oklch(0.78 0.13 70);
-  --on-accent: #1A1408;
-  --accent-soft: rgba(232, 170, 80, 0.08);
-  --accent-faint: rgba(232, 170, 80, 0.03);
-  --accent-line: rgba(232, 170, 80, 0.18);
-  --accent-glow: 0 0 22px -6px oklch(0.78 0.13 70);
-
-  --green: oklch(0.76 0.13 150);
-  --red: oklch(0.72 0.14 25);
-  --blue: oklch(0.74 0.11 245);
-  --green-soft: rgba(120, 200, 140, 0.08);
-  --red-soft: rgba(230, 120, 100, 0.08);
-  --blue-soft: rgba(120, 160, 230, 0.08);
-  --diff-add: #BFE3C6;
-  --diff-del: #E8B4A8;
-
-  --agent-claude: oklch(0.78 0.13 70);
-  --agent-codex: oklch(0.74 0.11 245);
-  --agent-ink: #14120F;
-
-  --term-bg: #0C0B0A;
-  --term-text: #D9D3C9;
-  --term-bar: #1A1917;
-
-  --overlay: rgba(8, 7, 6, 0.66);
-  --shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  /* --- old names (aliases) --- */
+  --bg-side: #0E0C0A;
+  --bg-header: #0D0B0A;
+  --panel: #100E0C;
+  --surface-2: var(--surface2);
+  --surface-3: var(--surface3);
+  --surface-hover: #262019;
+  --chip-on: var(--surface3);
+  --line-strong: var(--line2);
+  --line-hover: #4A4036;
+  --text-2: var(--text2);
+  --accent: var(--road);
+  --accent-text: var(--road-text);
+  --on-accent: var(--on-road);
+  --accent-soft: var(--road-soft);
+  --accent-faint: rgba(233, 162, 59, 0.03);
+  --accent-line: rgba(233, 162, 59, 0.20);
+  --accent-glow: 0 0 0 3px rgba(233, 162, 59, 0.10), 0 0 26px -10px #E9A23B;
+  --green: var(--ok);
+  --red: var(--bad);
+  --blue: var(--info);
+  --green-soft: var(--ok-soft);
+  --red-soft: var(--bad-soft);
+  --blue-soft: var(--info-soft);
+  --diff-add: #BDE9D2;
+  --diff-del: #F2B8AE;
+  --agent-claude: var(--claude);
+  --agent-codex: var(--codex);
+  --agent-ink: var(--on-road);
+  --term-bg: #080706;
+  --term-text: #D2C8B8;
+  --term-bar: #12100D;
+  --overlay: rgba(6, 5, 4, 0.72);
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
   --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
-/*@end*/
-
-/*@light*/
-:root {
-  --bg: #F7F5F1;
-  --bg-side: #F0EDE7;
-  --bg-header: #FBFAF7;
-  --panel: #FAF8F4;
-  --surface: #FFFFFF;
-  --surface-2: #F4F1EC;
-  --surface-3: #ECE7DF;
-  --surface-hover: #EFEBE4;
-  --chip-on: #E8E3DA;
-
-  --line: #E3DDD3;
-  --line-strong: #D3CCC0;
-  --line-hover: #B9B1A4;
-
-  --text: #1F1C18;
-  --text-2: #37322C;
-  --muted: #6B645A;
-  --faint: #948D82;
-
-  --accent: oklch(0.78 0.13 70);
-  --accent-text: oklch(0.54 0.13 60);
-  --on-accent: #1A1408;
-  --accent-soft: rgba(205, 135, 35, 0.09);
-  --accent-faint: rgba(205, 135, 35, 0.03);
-  --accent-line: rgba(205, 135, 35, 0.28);
-  --accent-glow: 0 0 0 3px rgba(205, 135, 35, 0.16);
-
-  --green: oklch(0.56 0.13 150);
-  --red: oklch(0.55 0.17 28);
-  --blue: oklch(0.54 0.12 250);
-  --green-soft: rgba(40, 150, 80, 0.09);
-  --red-soft: rgba(200, 60, 40, 0.08);
-  --blue-soft: rgba(50, 100, 200, 0.08);
-  --diff-add: #1C6B33;
-  --diff-del: #9A2E1E;
-
-  --agent-claude: oklch(0.82 0.12 72);
-  --agent-codex: oklch(0.82 0.08 245);
-  --agent-ink: #14120F;
-
-  --term-bg: #FBFAF7;
-  --term-text: #2A2622;
-  --term-bar: #EEEAE3;
-
-  --overlay: rgba(40, 34, 26, 0.32);
-  --shadow: 0 24px 64px rgba(60, 45, 20, 0.18);
-  --shadow-sm: 0 4px 16px rgba(60, 45, 20, 0.12);
-  color-scheme: light;
-}
-/*@end*/
