@@ -42,6 +42,7 @@ M6, M7, M8, M9 = "M6_research_memory_playbooks", "M7_race_mode", "M8_safety_cost
 VIEWS: dict[str, tuple[str, str]] = {
     "home": (M3, "01_home"),
     "board": (M3, "02_task_board"),
+    "board-drag": (M3, "02a_board_drag"),  # drag demo, not in the main flow
     "room": (M3, "03_task_room_stream"),
     "room-terminal": (M3, "04_task_room_terminal"),
     "room-timeline": (M3, "05_task_room_timeline"),
@@ -136,12 +137,15 @@ CLICKS: dict[str, list[Rule]] = {
         Rule(".wheel", "board"),
     ],
     "board": [
-        Rule(".bcard.lifted", "start-run"),
+        Rule(".bcard", "start-run", "Export invoices as CSV"),
         Rule(".bcard.failed", "proof-failed"),
         Rule(".bcard", "review", "Rate-limit the login endpoint"),
         Rule(".bcard", "research", "Upgrade Alembic"),
         Rule(".bcard", "memory-updates", "memory notes"),
         Rule(".bcard", "room"),
+    ],
+    "board-drag": [  # drag demo: dropping the lifted card in Run opens Start run
+        Rule(".bcard.lifted", "start-run"),
     ],
     "room": [
         Rule(".qa .btn", "proof"),  # answer the agent -> it finishes -> Proof Card
@@ -282,7 +286,7 @@ SELFTEST: list[dict] = [
     {"key": ["?"], "expect": "shortcuts"},
     {"key": ["Escape"], "expect": "cmdk"},
     {"click": [".cmd-item", "Go to Board"], "expect": "board"},
-    {"click": [".bcard.lifted", ""], "expect": "start-run"},
+    {"click": [".bcard", "Export invoices as CSV"], "expect": "start-run"},
     {"hash": "rewind", "expect": "rewind"},
     {"chip_back": True, "expect": "start-run"},
 ]

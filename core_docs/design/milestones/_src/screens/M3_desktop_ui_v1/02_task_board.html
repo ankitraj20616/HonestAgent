@@ -1,4 +1,4 @@
-<!-- {"title": "Board", "note": "The Wheel unrolled: rim strip with counts, 8 stage columns, bead cards, drag shows the allowed column and a refused one. F2.4, F2.5, F2.7", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
+<!-- {"title": "Board", "note": "Board in normal state: rim strip with counts, 8 stage columns, bead cards. F2.4, F2.7", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
  "agents": [
   {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
   {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "crashed", "tone": "bad", "line": "build · 4m", "cost": "$0.11"},
@@ -21,37 +21,33 @@
     <div class="seg8"><b>REMEMBER</b><span>1</span></div>
   </div>
   <div class="cols8" style="flex:1;padding:0 18px 16px">
-    <div class="col8 dim">
+    <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead idle">15</span><span class="ti">Cache tax rates per region</span></div><div class="ft"><span>P3</span><span class="r">3d</span></div></div>
       <div class="bcard"><div class="tt"><span class="bead idle">19</span><span class="ti">Retry webhook on 5xx</span></div><div class="ft"><span>P2</span><span class="r">1d</span></div></div>
     </div>
-    <div class="col8 dim">
+    <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead info">31</span><span class="ti">Upgrade Alembic to 1.14</span></div><div class="ft"><span class="agent cx sm">CX</span><span>research</span><span class="r">done</span></div></div>
     </div>
     <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead idle">24</span><span class="ti">Show task cost on cards</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
-      <div class="bcard ghost"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>moving…</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v1</span><span class="r">P1</span></div></div>
     </div>
-    <div class="col8 drop">
-      <div class="flag road" style="padding:2px 2px 0">Drop to start a run</div>
+    <div class="col8">
       <div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div>
       <div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.38</span></div></div>
-      <div class="bcard lifted"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>opens Start run</span></div></div>
     </div>
     <div class="col8">
       <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">27</span><span class="ti">Event replay after reconnect</span></div><div class="ft"><span class="agent cx sm">CX</span><span>4m</span><span class="r">$0.11</span></div></div>
     </div>
-    <div class="col8 blocked">
-      <div class="flag bad" style="padding:2px 2px 0">Can't move here</div>
+    <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cl sm">CL</span><span class="r">2h</span></div></div>
     </div>
-    <div class="col8 dim">
+    <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Fix invoice rounding</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
       <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Add audit log table</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
     </div>
-    <div class="col8 dim">
+    <div class="col8">
       <div class="bcard"><div class="tt"><span class="bead road dim">06</span><span class="ti">2 memory notes to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div>
     </div>
   </div>
 </div>
-<div class="toast"><span class="dot bad"></span><span><b>Move refused.</b> Brief → Review is not allowed. <span class="faint">Ready needs a run first.</span></span></div>
