@@ -1,0 +1,126 @@
+<!-- {"title": "Draft brief", "note": "The agent drafted a brief from the title, brief v2 and the 5 research items sent to the agent. It fills the editor; nothing is saved until I click Save, which makes v3. F3.2, F4.6", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.23", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
+<style>
+  .bf { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+  .crit-in { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  .crit-in .grip { color: var(--faint); font-size: 11px; letter-spacing: -2px; text-align: center; }
+  .crit-in .input { padding: 6px 9px; }
+  .x { border: none; background: none; color: var(--faint); font-size: 14px; padding: 0 4px; }
+  .pathchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line);
+              background: var(--surface-2); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .src-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .src-row .k { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding-top: 2px; }
+  .src-row.off { color: var(--faint); text-decoration: line-through; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief</span>
+    <div class="journey-box"><x-journey stage="brief" tone="road"></x-journey>
+      <div class="lbl"><b>Brief · 3 of 8</b>Capture → Research → <span class="road">Brief</span> · draft not saved</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>5m</b></span><span class="room-meta">Cost <b>$0.11</b></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v2</h3><span class="xs faint">saved</span></div>
+        <div class="goal">Add password reset API</div>
+        <div class="small muted" style="padding:10px;border:1px dashed var(--line2);border-radius:10px">No acceptance criteria yet.</div>
+        <div class="row small road" style="gap:6px"><span class="dot road"></span>Unsaved draft open in the Brief tab</div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>0</b> ahead</span><span><b>0</b> behind</span><span><b>0</b> files</span></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 3m 52s</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab on">Brief <span class="dot amber" style="width:6px;height:6px"></span></button>
+        <button class="tab">Research <span class="n">7</span></button>
+        <button class="tab">Proof</button>
+        <button class="tab">Review</button>
+        <button class="tab">Code</button>
+        <button class="tab">Docs <span class="n">8</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="col gap-12">
+          <div class="row between">
+            <div class="seg"><button class="on">Edit</button><button>Versions <span class="faint">2</span></button></div>
+            <span class="small muted">Latest saved: <span class="text2">v2</span> · 10:12</span>
+          </div>
+
+          <div class="banner warn">
+            <span class="dot amber"></span>
+            <div class="grow"><b>Draft from Claude</b> · 34 s · $0.03 · <b>not saved</b>. Edit it, then Save. If you leave, nothing is saved and v2 stays the latest.</div>
+          </div>
+
+          <div class="bf">
+            <div class="col gap-16">
+              <div class="field">
+                <label>Goal</label>
+                <textarea class="textarea" style="min-height:58px">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</textarea>
+              </div>
+
+              <div class="field">
+                <div class="row between"><label class="small muted">Acceptance criteria</label><span class="xs faint">5 items · drag to reorder</span></div>
+                <div class="crit-in"><span class="grip">⋮⋮</span><input class="input" value="POST /auth/password-reset sends an email with a single-use link"><button class="x">×</button></div>
+                <div class="crit-in"><span class="grip">⋮⋮</span><input class="input focus" value="The link expires after 30 minutes (RESET_TOKEN_TTL_MINUTES)"><button class="x">×</button></div>
+                <div class="crit-in"><span class="grip">⋮⋮</span><input class="input" value="A used or expired token returns 410"><button class="x">×</button></div>
+                <div class="crit-in"><span class="grip">⋮⋮</span><input class="input" value="Unknown email still returns 202 (no user enumeration)"><button class="x">×</button></div>
+                <div class="crit-in"><span class="grip">⋮⋮</span><input class="input" value="Tests cover all of the above"><button class="x">×</button></div>
+                <div><button class="btn xs ghost">+ Add criterion</button></div>
+              </div>
+
+              <div class="field">
+                <label>Notes</label>
+                <textarea class="textarea" style="min-height:84px">Use the existing mailer (app/mail.send_mail). No Redis: the client does not want new infra. Hash tokens before saving and compare with hmac.compare_digest. Use timezone-aware UTC datetimes.</textarea>
+              </div>
+
+              <div class="field">
+                <label>Focus paths</label>
+                <div class="row wrap" style="gap:6px">
+                  <span class="pathchip">app/auth/routes.py <span class="faint">×</span></span>
+                  <span class="pathchip">app/auth/security.py <span class="faint">×</span></span>
+                  <span class="pathchip">app/mail.py <span class="faint">×</span></span>
+                  <span class="pathchip">app/models/user.py <span class="faint">×</span></span>
+                  <span class="pathchip">tests/auth/ <span class="faint">×</span></span>
+                  <button class="btn xs ghost">+ Add path</button>
+                </div>
+              </div>
+
+              <div class="row" style="padding-top:12px;border-top:1px solid var(--line)">
+                <span class="small muted grow">Save makes brief <b class="text2">v3</b>. v1 and v2 are kept.</span>
+                <button class="btn ghost">Discard draft</button>
+                <button class="btn primary">Save as v3</button>
+              </div>
+            </div>
+
+            <aside class="card" style="padding:14px 14px 8px;background:var(--panel)">
+              <div class="upper" style="margin-bottom:8px">Made from</div>
+              <div class="src-row"><span class="k muted">Task</span><span>Add password reset API</span></div>
+              <div class="src-row"><span class="k muted">Brief</span><span>v2 · 1 line</span></div>
+              <div class="src-row"><span class="k blue">Finding</span><span>Agent finding (claude) 10:26</span></div>
+              <div class="src-row"><span class="k muted">Note</span><span>Client request (ticket #4821)</span></div>
+              <div class="src-row"><span class="k accent">Link</span><span>OWASP Forgot Password</span></div>
+              <div class="src-row"><span class="k accent">Link</span><span>Python <span class="mono">secrets</span> docs</span></div>
+              <div class="src-row"><span class="k green">Snippet</span><span>Staging log: /auth/forgot</span></div>
+              <div class="src-row off"><span class="k">Note</span><span>Ask client about SMS</span></div>
+              <div class="src-row off"><span class="k">Snippet</span><span>Full staging log, 10 Oct</span></div>
+              <div class="xs faint" style="padding:8px 0 4px;border-top:1px solid var(--line)">Struck-out items have "send to agent" off. Read-only helper call, mode <span class="mono">brief_draft</span>.</div>
+              <div class="mono xs muted" style="padding:6px 0">$ saarthi brief draft T-0012</div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

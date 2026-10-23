@@ -1,15 +1,17 @@
-# FSD — M6: Research Desk + Memory + Playbooks
+# FSD — M6: Just research + Lessons and notes + Saved instructions
 
 **Document type:** Functional Specification Document (FSD)
 **Milestone:** M6 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
-**Estimated effort:** 20 hours (2 rough weeks at ~10 h/week)
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`): new screen names and labels (Just research, Lessons and notes, Saved instructions, What Claude reads, Lessons learned card on Done)
+**Estimated effort:** 21 hours (2 rough weeks at ~10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M6_research_memory_playbooks.md`, `../../FUNCTIONAL_SPECIFICATIONS.md` (F3, F4, F5.3, F12, F13), `../../TDD-tech-design-doc.md` (4.8, 5.4, 5.9, 8.5), `../M5_review_ship/FSD_M5_review_ship.md` (before), `../M7_race_mode/FSD_M7_race_mode.md` (after)
+**Screens:** prototype views `research`, `planReview`, `contextPack`, `notes`, `noteEdit`, `playbooks`, `playbookEdit`, `done` (Lessons learned card) in `core_docs/design/Saarthi Prototype.html#<id>` (full list in `core_docs/design/README.md`).
 
 ---
 
@@ -19,12 +21,15 @@ M6 adds the **thinking around a task**: the research before it, the memory after
 
 It covers these F-numbers (from `../README.md`, ownership map):
 
-- **F3.2** Brief from research ("Draft brief"), **F3.4** brief versions view.
+- **F3.2** Brief from research ("Make a goal from this"; CLI `saarthi brief draft`), **F3.4** brief versions view (Goal history).
 - **F4.1** notes, **F4.2** links, **F4.3** snippets, **F4.4** "Research this", **F4.6** "send to agent" toggle.
 - **F5.3** Context Pack **v1** (replaces the brief-only v0 from M2).
-- **F12.1** Memory screen, **F12.2** smart context, **F12.3** memory update on ship.
-- **F13.1-F13.4** Playbooks: library, 5 built-ins, variables, global + project scope.
+- **F12.1** Lessons and notes screen (was "Memory screen"), **F12.2** smart context, **F12.3** memory update on ship (the "Lessons learned" card).
+- **F13.1-F13.4** Playbooks, shown as **Saved instructions**: library, 5 built-ins, variables, global + project scope.
 - Import of existing `quick-prompts.md` files as playbooks (MILESTONES.md M6 list).
+- **F22.5** Research findings show in Docs (Task page → More → Docs); the latest plan goes into the Context Pack of the next build / fix run.
+
+**Words on screen.** The engine, API and CLI keep their names (`brief`, `research`, `context-pack`, `memory_updates`, `playbooks`, `saarthi playbook`). The screens use the Simple UI words (spec section 5): Brief → **Goal**, Research Desk → New task → More options → **Just research**, Context Pack → **What Claude reads**, Memory → **Lessons and notes**, memory updates → **Lessons learned**, Playbook → **Saved instructions**. "Claude" in a label means the agent that runs the task.
 
 ## 2. The goal in plain words
 
@@ -33,32 +38,33 @@ Today the research for a task lives in browser tabs. What we learn after shippin
 At the end of M6 I can:
 
 1. Collect notes, links and error logs on a task, and let an agent explore the code for me.
-2. Turn that research into a brief with one click, then edit it.
-3. See every old version of a brief.
-4. Read and fix my `core_docs/` from inside Saarthi.
-5. Start a run with a playbook, and see the exact Context Pack the agent will get.
-6. After shipping, approve small updates to `project_memory.md`, `learnings/` and `timeline.md`. They go into the same PR.
+2. Turn that research into a goal with one click ("Make a goal from this"), then edit it.
+3. See every old version of a goal.
+4. Read and fix my `core_docs/` from inside Saarthi (Lessons and notes).
+5. Start with saved instructions, and see exactly what the agent will read (What Claude reads).
+6. After shipping, keep or skip small updates to `project_memory.md`, `learnings/` and `timeline.md` (the Lessons learned card on Done). They go into the same PR.
 
 ## 3. Where this milestone sits
 
-- **Before (already built):** M1 saves research items and brief versions (data only). M2 runs agents and writes a brief-only `TASK.md`. M3 has the Task Room. M4 has Proof Cards. M5 has Change Story and the ship flow (commit, push, PR).
+- **Before (already built):** M1 saves research items and brief versions (data only). M2 runs agents and writes a brief-only `TASK.md`. M3 has the Task page. M4 has tests and checks (Proof Card). M5 has Check and ship: What changed and the ship flow (commit, push, PR).
 - **M6 adds:** the screens and logic that use that data, plus playbooks and memory.
-- **Unlocks next:** M7 Race Mode gives one Context Pack (with a playbook) to two agents. Smart memory by meaning (embeddings) and ADR suggestions (F12.4) stay **Later**.
+- **Unlocks next:** M7 Side by side gives one Context Pack (with saved instructions) to two agents. Smart memory by meaning (embeddings) and ADR suggestions (F12.4) stay **Later**.
 
 ## 4. Easy glossary
 
-| Word | Simple meaning |
-|---|---|
-| **Research item** | One thing saved on a task: a note, a link, a snippet, or an agent finding. |
-| **Agent finding** | The written result of a "Research this" run, saved as a research item. |
-| **Send to agent** | A yes/no switch on each research item. "Yes" means it goes into the Context Pack. |
-| **Context Pack** | The file `.saarthi/context/TASK.md` that the agent reads first. |
-| **Memory match** | A `core_docs/` file picked for the Context Pack because it shares words with the brief. |
-| **Always-include list** | Files every run should know about (FSD, TDD, CLAUDE.md). Listed by path in the pack. |
-| **Memory update** | A short text the agent proposes to add to a memory file after shipping. You approve or reject it. |
-| **Playbook** | A saved prompt recipe, stored as a markdown file. |
-| **Variable** | A slot like `{{task.title}}` in a playbook that Saarthi fills in before the run. |
-| **Scope** | Where a playbook lives: built-in, global (all projects) or project (`.saarthi/playbooks/`). |
+| Word | Simple meaning | On screen |
+|---|---|---|
+| **Research item** | One thing saved on a task: a note, a link, a snippet, or an agent finding. | a note, link or snippet on the task page |
+| **Agent finding** | The written result of a research run ("Just research"), saved as a research item. | the finding of a "Just research" task (shown in Activity and Docs) |
+| **Plan doc** | The saved result of a `plan` run (M2). In M6 the latest one goes into the Context Pack of build and fix runs. | a plan in Docs; checked on `planReview` |
+| **Send to agent** | A yes/no switch on each research item. "Yes" means it goes into the Context Pack. | "Send to Claude" switch |
+| **Context Pack** | The file `.saarthi/context/TASK.md` that the agent reads first. | What Claude reads (More → Details) |
+| **Memory match** | A `core_docs/` file picked for the Context Pack because it shares words with the brief. | a file in What Claude reads |
+| **Always-include list** | Files every run should know about (FSD, TDD, CLAUDE.md). Listed by path in the pack. | listed in What Claude reads |
+| **Memory update** | A short text the agent proposes to add to a memory file after shipping. You approve or reject it. | a lesson in the Lessons learned card |
+| **Playbook** | A saved prompt recipe, stored as a markdown file. | Saved instructions |
+| **Variable** | A slot like `{{task.title}}` in a playbook that Saarthi fills in before the run. | same |
+| **Scope** | Where a playbook lives: built-in, global (all projects) or project (`.saarthi/playbooks/`). | same |
 
 ## 5. Features
 
@@ -71,9 +77,9 @@ At the end of M6 I can:
   $ saarthi research add T-0042 --note "Reset tokens must expire in 30 minutes. Ask client about SMS."
   Added note 01JC4M7Q2X to T-0042 (send to agent: yes)
   ```
-- **Rules:** Body is markdown. Title is optional (first line is used if empty). Edit and delete are allowed.
+- **Rules:** Body is markdown. Title is optional (first line is used if empty). Edit and delete are allowed. Notes and agent findings also show in Docs (F22.5, see 5.4).
 - **Acceptance criteria:**
-  - A note added from the CLI shows in the Research tab of the Task Room without a refresh.
+  - A note added from the CLI shows in the research list on the Task page without a refresh.
   - Editing a note keeps its id. A `research.updated` event is saved.
 
 ### 5.2 F4.2 Links
@@ -110,7 +116,7 @@ At the end of M6 I can:
 
 ### 5.4 F4.4 "Research this"
 
-- **What:** A button (and a CLI command) that starts a **read-only** agent run. The agent explores the code and writes findings with four fixed headings: **Related files**, **How the current code works**, **Risks**, **Suggested approach**. The findings are saved as an `agent_finding` research item.
+- **What:** A choice in the UI (and a CLI command) that starts a **read-only** agent run. The agent explores the code and writes findings with four fixed headings: **Related files**, **How the current code works**, **Risks**, **Suggested approach**. The findings are saved as an `agent_finding` research item.
 - **Why:** The first 20 minutes of every task is "where is this in the code?". An agent can do that while I read the ticket.
 - **Example:**
   ```
@@ -119,29 +125,32 @@ At the end of M6 I can:
   ... (live stream, same as `saarthi run watch`)
   Finding saved: 01JC4MF7ZQ "Agent finding (claude) - 2026-10-11 10:42"
   ```
+  In the UI: New task → More options → **Just research, no code** → Start. The Task page shows the `research` view: Activity while the agent works, then the finding with **Make a goal from this** (5.6). For a task that already exists, the same "how to work" choice is on its To do Task page.
 - **Rules:**
   - The run uses mode `research` and read-only agent flags. It cannot change files.
-  - It does **not** move the task stage. I can click it in Inbox, Research, Ready, Failed or Review.
+  - It does **not** move the task stage. I can start it when the task is in Inbox, Research, Ready, Failed or Review.
   - It uses the current Context Pack (brief if any, research items set to "send to agent").
   - If the agent gives no usable text, nothing is saved and the run shows "No finding text found".
   - The finding is a normal research item: I can edit it, delete it, or switch "send to agent" off.
+  - Items of kind `agent_finding` and `note` also show in Docs (Task page → More → Docs, and `saarthi docs list`) in a "Research" group, as docs of kind `research`. They are read-only there; I edit them in the research list on the Task page.
 - **Acceptance criteria:**
   - After a research run ends, one new `agent_finding` item exists, linked to that run.
   - `git status` in the task worktree is clean after the run.
   - The task stage is the same before and after the run.
+  - The finding shows in `saarthi docs list T-0042` as kind `research`, and in Docs under "Research".
 
 ### 5.5 F4.6 "Send to agent" toggle
 
 - **What:** Each research item has a switch. Only items set to "yes" go into the Context Pack.
 - **Why:** Some notes are for me only ("ask client"), and big logs can waste the agent's attention.
 - **Example:** `saarthi research toggle 01JC4MB3RW --no-send` -> `Snippet "pytest failure on main": send to agent = no`
-- **Rules:** New items default to "yes". The switch is shown on every item in the Research tab.
+- **Rules:** New items default to "yes". The switch ("Send to Claude") is shown on every item in the research list.
 - **Acceptance criteria:** Switching an item off removes it from the next Context Pack preview. Switching it on adds it back.
 
-### 5.6 F3.2 Brief from research ("Draft brief")
+### 5.6 F3.2 Brief from research (on screen: "Make a goal from this")
 
-- **What:** The agent reads the task title, the current brief (if any) and the research items set to "send to agent", then writes a brief draft: goal, acceptance criteria, notes, focus files. I edit it and save.
-- **Why:** Writing the brief is the slowest step. The research already has the facts.
+- **What:** The agent reads the task title, the current brief (if any) and the research items set to "send to agent", then writes a brief draft: goal, acceptance criteria ("What done looks like"), notes, focus files. I edit it and save. On screen the brief is the **Goal**.
+- **Why:** Writing the goal is the slowest step. The research already has the facts.
 - **Example:**
   ```
   $ saarthi brief draft T-0042
@@ -149,7 +158,7 @@ At the end of M6 I can:
   Opening draft in $EDITOR ...
   Saved brief version 3 for T-0042
   ```
-  In the UI: Task Room -> Brief -> **Draft brief** -> the draft fills the editor (not saved yet) -> I edit -> **Save**.
+  In the UI: Task page (`research` view) -> **Make a goal from this** -> the draft fills the Goal editor (not saved yet) -> I edit -> **Save**. The same button sits on the Goal card of any task that has research.
 - **Rules:**
   - The draft is **never saved by itself**. Only my Save makes a new brief version.
   - If the agent returns broken output, the raw text is put into the Notes section so nothing is lost, and a warning is shown.
@@ -159,10 +168,10 @@ At the end of M6 I can:
   - Closing the editor without saving creates no new version.
   - A broken agent answer still opens the editor, with the raw text under Notes.
 
-### 5.7 F3.4 Brief versions view
+### 5.7 F3.4 Brief versions view (Goal history)
 
-- **What:** A list of all brief versions (number, date, first line of the goal). I can open an old one, compare it with the current one, and restore it.
-- **Why:** M1 already saves every version. Now I can see them.
+- **What:** A list of all brief (goal) versions (number, date, first line of the goal). I can open an old one, compare it with the current one, and restore it.
+- **Why:** M1 already saves every version. Now I can see them. In the UI: Task page -> Goal card -> **Edit** -> **History**.
 - **Example:**
   ```
   $ saarthi brief versions T-0042
@@ -182,16 +191,18 @@ At the end of M6 I can:
   1. Task header (id, title, mode, agent).
   2. Playbook text, with variables filled in (if a playbook was picked).
   3. The latest brief.
-  4. Research items set to "send to agent".
-  5. Project rules and the always-include list, **by path only** (the agent reads them itself).
-  6. Up to 5 matched memory files, inlined, at most ~20,000 characters in total.
+  4. **Plan** (F22.5): for `build` and `fix` runs only, the latest plan doc of the task (the saved result of a `plan` run), at most 15,000 characters.
+  5. Research items set to "send to agent".
+  6. Project rules and the always-include list, **by path only** (the agent reads them itself).
+  7. Up to 5 matched memory files, inlined, at most ~20,000 characters in total.
 - **Why:** The agent should start with the same picture I have. One file means I can see exactly what it got.
 - **Example:**
   ```
   $ saarthi context T-0042 --mode build --playbook plan-then-build
-  Context Pack for T-0042 (build, claude) - 27,410 chars
+  Context Pack for T-0042 (build, claude) - 33,530 chars
     playbook   plan-then-build (builtin)                 1,120
     brief      version 3                                 1,480
+    plan       plan-01JC5...md                      full   6,120
     research   3 of 4 items (1 switched off)             4,210
     listed     CLAUDE.md, AGENTS.md, core_docs/FUNCTIONAL_SPECIFICATIONS.md, core_docs/TDD-tech-design-doc.md
     memory     core_docs/memory/project_memory.md   score 14   full   9,880
@@ -199,7 +210,13 @@ At the end of M6 I can:
                core_docs/plans/m2_tokens.md         score 4    cut    8,390
   Use --show to print the full TASK.md.
   ```
-  In the UI: the run dialog has a **Preview** button that shows the same file and the same table.
+  In the UI: Task page -> More ▾ -> Details -> **What Claude reads** (`contextPack`) shows the same file and the same table. It works before the first start too.
+- **Rules (plan, F22.5):**
+  - Only `build` and `fix` runs get the Plan section. `research` and `plan` runs do not.
+  - The plan is the newest plan doc of the task. With no plan doc, the section is left out.
+  - It is put in whole, with the header comment removed. Over 15,000 characters it is cut, with a line telling the agent where to read the rest (the path of the plan file).
+  - The plan is my own saved plan, so it is trusted like the brief.
+  - The plan I check on the Task page (`planReview`) is the same text that goes into the pack.
 - **Rules (F12.2, simple keyword match):**
   - Keywords come from the task title, the brief goal and the acceptance criteria. Short words (under 3 letters) and common words ("the", "and", "should", ...) are dropped. At most 20 keywords.
   - Each `.md` file in the memory folder gets a score: for each keyword, the number of lines that contain it, counted at most 5 times. Add up all keywords.
@@ -212,12 +229,14 @@ At the end of M6 I can:
   - No more than 5 memory files and no more than 20,000 memory characters are inlined.
   - The preview and the file the agent gets are exactly the same text.
   - A project with no memory folder still gets a pack (brief + research), with a note "no memory folder".
+  - A build run on a task with a saved plan has a Plan section with the plan text. A research run on the same task has none.
+  - A plan over 15,000 characters is cut, and the preview shows `cut` for the plan line.
 
-### 5.9 F12.1 Memory screen
+### 5.9 F12.1 Lessons and notes screen (was "Memory screen")
 
-- **What:** A screen (left nav **Mem**) with the project's `core_docs/` tree, a markdown view, and a simple editor.
+- **What:** A **Lessons and notes** screen (project menu -> Lessons and notes, `notes`) with the project's `core_docs/` tree, a markdown view, and a simple editor (`noteEdit`).
 - **Why:** I keep core_docs for every project. I should not need another app to read or fix them.
-- **Example:** Mem -> `core_docs/memory/project_memory.md` -> **Edit** -> fix a line -> **Save**. CLI: `saarthi memory tree`, `saarthi memory show memory/project_memory.md`, `saarthi memory edit memory/project_memory.md` (opens `$EDITOR`).
+- **Example:** Project menu -> Lessons and notes -> `core_docs/memory/project_memory.md` -> **Edit** -> fix a line -> **Save**. CLI: `saarthi memory tree`, `saarthi memory show memory/project_memory.md`, `saarthi memory edit memory/project_memory.md` (opens `$EDITOR`).
 - **Rules:**
   - Shows the files in the **main checkout** of the repo (not a task worktree).
   - Only `.md` files under the memory folder can be edited. Max 1 MB.
@@ -236,6 +255,8 @@ At the end of M6 I can:
   - `timeline/timeline.md`: one row with the date, task id, title and PR link.
 
   I approve, edit or reject each one. When none is left pending, all approved texts are written **on the task branch** in one commit and pushed, so they are part of the PR.
+
+  In the UI: the Done screen shows an optional **Lessons learned** card ("Claude suggests remembering these for future tasks in this project"). **Save all** approves every draft. **Edit first** opens each draft to edit, keep or drop. **Skip** rejects them all ("Skipped. Nothing was saved."). After saving, the card links to Lessons and notes.
 - **Why:** FSD success criterion: after 1 month, memory is updated by the app, not by hand.
 - **Example:**
   ```
@@ -261,9 +282,9 @@ At the end of M6 I can:
   - Approve 2, reject 1 -> one commit on the task branch with exactly the 2 approved texts; `main` is unchanged.
   - The PR on GitHub shows the memory commit.
 
-### 5.11 F13.1 Playbook library
+### 5.11 F13.1 Playbook library (on screen: Saved instructions)
 
-- **What:** A **Playbooks** screen and `saarthi playbook ...` commands. Each playbook has: name, description, prompt text, default agent, default mode.
+- **What:** A **Saved instructions** screen (project menu -> Saved instructions, `playbooks`; edit in `playbookEdit`) and `saarthi playbook ...` commands. Each playbook has: name, description, prompt text, default agent, default mode.
 - **Why:** My best prompts should be one click away, not copy-pasted.
 - **Example:**
   ```
@@ -275,8 +296,8 @@ At the end of M6 I can:
   ...
   $ saarthi run T-0042 --playbook fix-bug-tdd
   ```
-- **Rules:** A playbook is a markdown file with a small settings block at the top (TDD Decision 10). The run dialog has a playbook picker. If the playbook has a default agent or mode, they are pre-filled; I can change them. The Command Bar (`Ctrl+K`) also finds playbooks.
-- **Acceptance criteria:** I can create, edit and delete a project playbook from the CLI and the screen. A run started with a playbook shows its name in the runs list.
+- **Rules:** A playbook is a markdown file with a small settings block at the top (TDD Decision 10). New task -> More options has a **Saved instructions** picker (the To do Task page has the same picker next to Start). If the playbook has a default agent or mode, they are pre-filled; I can change them. Search or jump (`Ctrl K`) also finds saved instructions.
+- **Acceptance criteria:** I can create, edit and delete a project playbook from the CLI and the Saved instructions screen. A run started with a playbook shows its name in the runs list.
 
 ### 5.12 F13.2 Built-in playbooks
 
@@ -300,7 +321,7 @@ At the end of M6 I can:
 - **Why:** The same recipe must work on every task.
 - **Example:** `saarthi playbook render fix-bug-tdd --task T-0042` prints the filled text.
 - **Rules:** An empty value becomes `(none)`. An unknown variable is left as is and the preview shows a warning. There is no logic (no `if`, no loops).
-- **Acceptance criteria:** `{{failing_checks}}` shows the names and last output lines of the failing required checks from the latest Proof Card. A typo like `{{task.titel}}` shows a warning and stays in the text.
+- **Acceptance criteria:** `{{failing_checks}}` shows the names and last output lines of the failing required checks from the latest Proof Card (tests and checks). A typo like `{{task.titel}}` shows a warning and stays in the text.
 
 ### 5.14 F13.4 Scope
 
@@ -338,28 +359,29 @@ At the end of M6 I can:
 
 ## 6. Main user flows
 
-### 6.1 From idea to brief in under 5 minutes
-1. Quick capture "Add password reset API". Open the task, move it to Research.
+### 6.1 From idea to goal in under 5 minutes
+1. New task (`Ctrl Alt N`) "Add password reset API". More options -> **Just research, no code**.
 2. Paste the client's message as a note. Add one doc link.
-3. Click **Research this** (Claude). Watch or wait about 2 minutes.
+3. Click **Start** (Claude). Watch Activity or wait about 2 minutes.
 4. Read the finding. Switch off one snippet I do not need.
-5. Click **Draft brief**. Edit two lines. Save. Move to Ready.
+5. Click **Make a goal from this**. Edit two lines. Save. The task is now To do with a goal.
 
-### 6.2 Run with a playbook
-1. Click **Run**. Pick playbook "Fix bug with TDD". Agent and mode are pre-filled.
-2. Click **Preview**. Check that the right memory files are in. Start.
+### 6.2 Start with saved instructions
+1. On the To do Task page (or New task -> More options), pick saved instructions "Fix bug with TDD". Agent and mode are pre-filled.
+2. More ▾ -> Details -> **What Claude reads**. Check that the right memory files are in. Start.
 
 ### 6.3 Ship and remember
-1. Ship the task (M5). Task moves to Shipped.
-2. The Task Room shows "3 memory updates to review".
-3. Approve the timeline row, edit and approve the memory text, reject the learning.
-4. Saarthi commits and pushes. The PR now has the memory commit. Delete the worktree (before or after step 3, both work).
+1. Approve and create pull request (M5). Task moves to Done (Shipped).
+2. The Done screen shows the **Lessons learned** card with 3 drafts.
+3. **Edit first**: keep the timeline row, edit and keep the memory text, drop the learning.
+4. Saarthi commits and pushes. The PR now has the memory commit. The copy of the repo can be cleaned up before or after step 3; both work.
 
 ## 7. Done when
 
-- [ ] On a real task, "Research this" + "Draft brief" + my edits give a saved brief in under 5 minutes (timed once, written in `timeline.md`).
+- [ ] On a real task, "Just research" + "Make a goal from this" + my edits give a saved goal in under 5 minutes (timed once, written in `timeline.md`).
 - [ ] After shipping a real task, `core_docs/memory/project_memory.md` and `core_docs/timeline/timeline.md` are updated **only** after my approval, and the change is in the PR.
 - [ ] `saarthi context T-xxxx --show` prints the same text the agent read.
+- [ ] A task with a saved plan: the build run's pack has the Plan section; a research run's pack does not. A "Just research" finding shows in `saarthi docs list` and in Docs.
 - [ ] All 5 built-in playbooks are listed; my 3 `quick-prompts.md` files are imported.
 - [ ] `uv run pytest`, `uv run ruff check .`, `uv run pyright` pass.
 
@@ -368,17 +390,17 @@ At the end of M6 I can:
 | Item | Owner |
 |---|---|
 | Files and images in research (F4.5) | Later |
-| Brief from a ticket URL (F3.3) | Later |
+| Brief from a Jira ticket (F3.3) | M10 |
 | Search memory by meaning / embeddings | Later |
 | ADR suggestions (F12.4) | Later |
 | Sharing playbooks with a team | Later (team mode) |
 | Secret masking in research, Context Pack and memory drafts (F15.4) | M8 |
-| Race Mode using a playbook on two agents | M7 |
+| Side by side with saved instructions on two agents | M7 |
 | Shortcut sheet for the new screens | M9 |
 
 ## 9. QA checklist
 
-1. `saarthi research add T-1 --note "hello"` -> shows in the UI Research tab within 1 second.
+1. `saarthi research add T-1 --note "hello"` -> shows in the research list on the Task page within 1 second.
 2. Add a link to `https://example.com` -> title becomes "Example Domain".
 3. Add a link to `https://no-such-host.invalid/x` -> saved, title `no-such-host.invalid/x`.
 4. Pipe a 50,000-char log as a snippet -> `saarthi context T-1` shows it as cut.
@@ -386,22 +408,25 @@ At the end of M6 I can:
 6. `saarthi research run T-1` -> new `agent_finding` item; stage unchanged; `git -C <worktree> status` clean.
 7. `saarthi brief draft T-1`, quit the editor without saving -> `saarthi brief versions T-1` shows no new version.
 8. `saarthi brief restore T-1 1` -> a new version equal to version 1.
-9. Mem screen: open, edit and save a file -> `git diff` in the main repo shows the change. Change the file in another editor, then Save in Saarthi -> refused with "file changed, reload".
+9. Lessons and notes screen: open, edit and save a file -> `git diff` in the main repo shows the change. Change the file in another editor, then Save in Saarthi -> refused with "file changed, reload".
 10. Ship a test task (local bare remote) -> 3 pending updates. Approve 2, reject 1 -> one new commit on the task branch, none on `main`.
 11. Delete the worktree first, then approve the pending updates -> the commit is still made on the task branch and pushed.
 12. `saarthi playbook list` -> 5 built-ins. Copy `fix-bug-tdd` to the project, edit it -> the project copy is used.
 13. `saarthi playbook render fix-bug-tdd --task T-1` with a typo variable -> warning shown.
 14. Import the 3 `quick-prompts.md` files with `--dry-run` -> counts 7, 5, 7, nothing written.
+15. Run a plan on T-1, then `saarthi context T-1 --mode build`: the `plan` line shows `full`. With `--mode research`: no `plan` line. Make the plan file over 15,000 characters: `cut`.
+16. After a research run, `saarthi docs list T-1` shows the finding as kind `research`.
+17. Ship a test task, then on the Done screen click **Skip** on the Lessons learned card -> all drafts `rejected`, no memory commit. On another task click **Save all** -> one memory commit.
 
 ## 10. Open questions
 
 1. **Memory updates after Shipped, not before.** Core TDD 8.5 lists memory updates before the task moves to Shipped. M6 drafts them **after** Shipped so that my approval never blocks shipping. If the PR is already merged when I approve, the commit lands on the branch but not in main (Saarthi warns). OK?
 2. **Playbook settings block format.** TDD picks TOML between `+++` lines (no new library). YAML between `---` is more common. Which do I prefer?
-3. **Memory screen edits the main checkout** without a commit. Is that right, or should edits go to a "memory" branch?
+3. **Lessons and notes edits the main checkout** without a commit. Is that right, or should edits go to a "memory" branch?
 4. **Research runs do not move the stage.** Core TDD section 7 has "Running -> Ready: plan / research run ends". M6 treats a research run as a side run. OK?
 5. **Secrets (known gap 2 in `../README.md`).** Snippets often hold logs with tokens. Until M8 they go to the agent unmasked. Accept for now?
-6. Effort is tight for 20 hours. If it runs over, cut first: brief compare view (keep list + restore), then the import `--only` option.
+6. Effort is tight for 21 hours. If it runs over, cut first: goal compare view (keep list + restore), then the import `--only` option.
 
 ## 11. Effort
 
-About **20 hours**. See TDD section 16 for the breakdown.
+About **21 hours**. See TDD section 16 for the breakdown.

@@ -1,0 +1,42 @@
+<!-- {"title": "Empty Home - no tasks yet", "note": "Fresh install when the project step was skipped: Home shows an empty Wheel (0 tasks, no beads) with 'Capture your first task' under it. The right side says Add your first project (opens wizard step 3), Needs You is empty, and the dock shows 4 free slots. FSD M9 5.3 (Skip), 5.5 (Empty); TDD 5.3 Home row", "shell": "app", "nav": "home", "dock": "full", "project": "", "needs": 0, "cost": "$0.00", "slots": 4, "agents": [], "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"}} -->
+<style>
+  .home { display: grid; grid-template-columns: minmax(0, 1fr) 310px; height: 100%; min-height: 0; }
+  .home .wheel-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; }
+  .home .start { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .home .start .btn.primary { padding: 10px 18px; font-size: 14px; }
+  .first { border: 1px solid var(--road); border-radius: 12px; padding: 14px; background: var(--road-soft); display: flex; flex-direction: column; gap: 8px; }
+  .first h2 { font-size: 16px; font-weight: 600; }
+  .keys { display: flex; flex-direction: column; gap: 8px; }
+  .keys > div { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 12.5px; color: var(--text2); }
+  .keys .kbd { justify-self: start; font-size: 11px; padding: 2px 7px; }
+</style>
+<div class="home">
+  <div class="wheel-wrap">
+    <x-wheel data='{"size": 470, "lit": [], "hub": {"big": "0", "sub": "TASKS"}, "beads": []}'></x-wheel>
+    <div class="start">
+      <button class="btn primary">+ Capture your first task</button>
+      <div class="small muted pretty" style="max-width:420px">An idea, a bug or a pasted error log. It lands on the Capture spoke, then moves round the Wheel to Ship.</div>
+    </div>
+  </div>
+  <div class="side-r">
+    <div class="first">
+      <div class="row between"><span class="upper" style="color:var(--road-text)">Start here</span><span class="xs faint">step 3 of setup</span></div>
+      <h2>Add your first project</h2>
+      <div class="small text2 pretty">Saarthi works on git repos. Tasks, agents and checks all live inside a project. Capture asks for one if you skip this.</div>
+      <div class="row wrap" style="gap:6px"><button class="btn primary">Add project</button><button class="btn">Run setup again</button></div>
+      <div class="xs faint">or in a terminal: <span class="mono text2 nowrap">saarthi project add &lt;folder&gt;</span></div>
+    </div>
+    <div class="upper mt-8">Needs you</div>
+    <div class="small muted pretty">Nothing is waiting for you. Agents ask here when they need an answer.</div>
+    <div class="upper mt-8">Ready for review</div>
+    <div class="small muted pretty">Tasks with green checks show here.</div>
+    <div class="mem-note">
+      <div class="keys">
+        <div><span class="kbd">N</span><span>Capture a task</span></div>
+        <div><span class="kbd">Ctrl K</span><span>Command Bar</span></div>
+        <div><span class="kbd">Ctrl Alt N</span><span>Quick capture from any app</span></div>
+        <div><span class="kbd">?</span><span>Every shortcut</span></div>
+      </div>
+    </div>
+  </div>
+</div>

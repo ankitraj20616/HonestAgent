@@ -1,0 +1,85 @@
+<!-- {"title": "Budget alert", "note": "Task over its budget ($3.40 of $3.00): one desktop notification, red meter, banner in the Task Room with what you can do next. The run is not stopped. The day meter is red too: 86% of $10.00 (red from 80%). F16.3", "shell": "app", "nav": "board", "needs": 0, "cost": "$8.60", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "over budget", "tone": "bad", "line": "fix 3 of 3 · 3m", "cost": "$3.40"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 31m", "cost": "$1.92"}]} -->
+<style>
+  .next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  .next > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+  .ev-top { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage running">Running</span>
+    <div class="journey-box"><x-journey stage="run" tone="road"></x-journey>
+      <div class="lbl"><b>Run · 4 of 8</b>Fix round 3 of 3</div></div>
+    <span class="meter">Cost <span class="progress red"><span style="width:100%"></span></span><b style="color:var(--bad)">$3.40</b><span class="faint">/ $3.00</span></span>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>58m 31s</b></span>
+    <button class="btn">Stop run</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col" style="gap:8px">
+        <div class="row between"><h3>Cost</h3><span class="xs faint">task budget $3.00</span></div>
+        <div class="row base" style="gap:8px"><span class="mono bad-t" style="font-size:22px">$3.40</span><span class="small bad-t strong">113% · over</span></div>
+        <div class="progress red"><span style="width:100%"></span></div>
+        <div class="xs faint">Alerted once at 11:52. Next alert only if you raise the limit and it goes over again.</div>
+      </div>
+      <div class="col" style="gap:6px">
+        <div class="row between"><h3>Runs</h3><span class="xs faint">fix loop · round 3</span></div>
+        <div class="run-row on"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JB2K</span> · fix · round 3</div><div class="xs faint">11:49 · running</div></div><span class="mono">$0.49</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JB1F</span> · fix · round 2</div><div class="xs faint">11:38 · 6m 12s</div></div><span class="mono">$0.21</span></div>
+        <div class="run-row"><span class="agent sm cl">CL</span><div style="min-width:0"><div><span class="mono">01JAX3</span> · fix · round 1</div><div class="xs faint">11:20 · 4m 10s</div></div><span class="mono">$0.86</span></div>
+        <div class="run-row"><span class="agent sm cx">CX</span><div style="min-width:0"><div><span class="mono">01JAW9</span> · review</div><div class="xs faint">11:12 · 41k tokens</div></div><span class="mono road">~$0.42</span></div>
+        <div class="xs faint" style="padding:2px 2px 0">+ 3 earlier runs · $1.42</div>
+      </div>
+      <div class="col" style="gap:8px">
+        <div class="row between"><h3>Today</h3><span class="xs faint">day budget $10.00</span></div>
+        <div class="row base" style="gap:8px"><span class="mono bad-t" style="font-size:16px">$8.60</span><span class="small bad-t">86% · red from 80%</span></div>
+        <div class="progress red"><span style="width:86%"></span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot bad"></span></button>
+        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Docs <span class="n">8</span></button><button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body" style="display:flex;flex-direction:column;gap:16px">
+        <div class="banner err" style="display:block;padding:14px 16px">
+          <div class="row gap-12">
+            <span class="dot lg bad"></span>
+            <div class="grow">
+              <div class="strong" style="font-size:15px">Over budget: $3.40 of $3.00</div>
+              <div class="small muted">This task went over its budget during fix round 3. Saarthi only warns: the run keeps going.</div>
+            </div>
+            <button class="btn sm ghost">Dismiss</button>
+          </div>
+          <div class="next">
+            <div><span class="strong small">Park the task</span><span class="xs muted pretty">Stop the run and move it to Parked. Come back later.</span><button class="btn sm" style="align-self:flex-start">Stop and park</button></div>
+            <div><span class="strong small">Raise the limit</span><span class="xs muted pretty">Set a new task budget for T-0012. Going over again gives a new alert.</span><div class="row"><div class="input mono" style="width:84px;padding:4px 8px">$5.00</div><button class="btn sm">Save</button></div></div>
+            <div><span class="strong small">Keep going</span><span class="xs muted pretty">Let round 3 finish. You will not be warned again for this limit.</span><button class="btn sm ghost" style="align-self:flex-start">Keep going</button></div>
+          </div>
+        </div>
+
+        <div class="tl">
+          <div class="tl-ev"><span class="tm">11:38</span><span class="node bad"></span><div class="bx"><div class="tool-row"><span class="agent sm cl">CL</span><span>Fix round 2 ended · tests still red (1)</span><span class="r">$0.21</span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:44</span><span class="node bad"></span><div class="bx">Task cost $2.91 of $3.00 (97%) · meter red, no alert yet</div></div>
+          <div class="tl-div">11:49 · fix round 3 · Claude · safe_build · sandboxed</div>
+          <div class="tl-ev"><span class="tm">11:50</span><span class="node"></span><div class="bx">The 410 test still fails. The token is marked used after the password check, so a second call wins the race. Moving the update into the same transaction.</div></div>
+          <div class="tl-ev"><span class="tm">11:51</span><span class="node"></span><div class="bx"><div class="tool-row"><span class="k">EDIT</span><span class="mono ellipsis">app/auth/reset.py</span><span class="r"><span class="ok-t">+6</span> <span class="bad-t">−3</span></span></div></div></div>
+          <div class="tl-ev"><span class="tm">11:52</span><span class="node bad"></span><div class="bx"><div class="card-ev err"><div class="ev-top"><span class="flag bad"><span class="dot bad"></span>Budget alert</span><span class="mono xs muted ellipsis">cost.budget_exceeded · task T-0012 · limit $3.00</span><span class="runc bad-t">$3.40</span></div></div></div></div>
+          <div class="tl-ev"><span class="tm">11:52</span><span class="node road"></span><div class="bx"><div class="tool-row"><span class="k">RUN</span><span class="mono ellipsis">uv run pytest tests/auth -q</span><span class="r row xs muted"><span class="dot road pulse"></span>running</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notify">
+  <div class="logo">S</div>
+  <div style="min-width:0">
+    <div class="row between"><span class="app-name">Saarthi · 11:52</span><span class="tag red">Over budget</span></div>
+    <div class="strong" style="margin-top:2px">T-0012 is over its budget: $3.40 of $3.00.</div>
+    <div class="small muted">The run was not stopped. Open the task to park it or raise the limit.</div>
+  </div>
+</div>

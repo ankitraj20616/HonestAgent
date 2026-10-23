@@ -1,0 +1,125 @@
+<!-- {"title": "Memory updates on ship", "note": "After T-0012 moved to Shipped, Saarthi drafted 3 append-only updates: project_memory.md, learnings/datetime.md (new file) and a timeline row. Approve, edit or reject each; when none is pending they are written as one commit on the task branch and pushed to the PR. F12.3", "shell": "app", "nav": "board", "needs": 0, "cost": "$5.31", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"}]} -->
+<style>
+  .mu { padding: 0; overflow: hidden; }
+  .mu-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .mu-body { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .mu .code { font-size: 12px; }
+  .mu .code .ln > span:last-child { white-space: pre-wrap; }
+  .st { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .mu.done { border-color: var(--green); }
+  .mu.editing { border-color: var(--accent); box-shadow: var(--accent-glow); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage shipped">Shipped</span>
+    <div class="journey-box"><x-journey stage="remember" tone="road"></x-journey>
+      <div class="lbl"><b>Remember · 8 of 8</b>Shipped · PR #214 · 2 memory updates to approve</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>58m</b></span><span class="room-meta">Cost <b>$1.37</b></span>
+    <button class="btn">Open PR #214</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">5 of 5 met</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="crit"><span class="box met"></span><span>Email with a single-use link</span></div>
+        <div class="crit"><span class="box met"></span><span>Link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box met"></span><span>Used or expired token returns 410</span></div>
+        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202</span></div>
+        <div class="crit"><span class="box met"></span><span>Tests cover all of the above</span></div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="small muted pretty">Worktree deleted after ship. The branch is kept on <span class="mono">origin</span>.</div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0028 · fix · 6m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0027 · build · 21m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 4m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Brief</button>
+        <button class="tab">Research <span class="n">7</span></button>
+        <button class="tab">Proof</button>
+        <button class="tab">Review</button>
+        <button class="tab">Code</button>
+        <button class="tab">Docs <span class="n">8</span></button>
+        <button class="tab">Timeline</button>
+        <button class="tab on">Memory updates <span class="badge">2</span></button>
+      </div>
+      <div class="tab-body">
+        <div class="col gap-12" style="max-width:920px">
+          <div class="row" style="gap:10px;align-items:baseline"><h2 style="font-size:17px">Remember</h2><span class="small muted">Shipped 11:48 · PR #214 is open. Saarthi drafted 3 updates. <b class="text2">Nothing is written until you decide.</b></span><span class="grow"></span><span class="small road nowrap strong">1 approved · 2 pending</span></div>
+          <section class="card mu editing">
+            <div class="mu-head">
+              <span class="mono small accent">core_docs/memory/project_memory.md</span>
+              <span class="tag">append</span>
+              <span class="grow"></span>
+              <span class="st accent">Editing</span>
+            </div>
+            <div class="mu-body">
+              <div class="xs faint">Added at the end of the file, under a new heading. Nothing above it changes.</div>
+              <textarea class="textarea mono input focus" style="min-height:154px;font-size:12px;line-height:1.6">## 2026-10-11 - T-0012 Add password reset API
+- Done: POST /auth/password-reset and /confirm. Single-use tokens, hashed (SHA-256), in a new table password_reset_tokens.
+- Problem: the expiry check failed in CI only.
+- Root cause: naive datetime.utcnow() compared with an aware value from PostgreSQL.
+- Fix: datetime.now(timezone.utc) everywhere in app/auth/.
+- Result: 14 new tests green. Same 202 answer for known and unknown emails.</textarea>
+              <div class="row"><span class="xs faint grow">Your edit is saved as the final text. The agent's draft is kept.</span><button class="btn sm ghost">Cancel edit</button><button class="btn sm danger">Reject</button><button class="btn sm ok">Approve edited text</button></div>
+            </div>
+          </section>
+
+          <section class="card mu">
+            <div class="mu-head">
+              <span class="mono small accent">core_docs/learnings/datetime.md</span>
+              <span class="tag blue">create</span>
+              <span class="xs faint">new file</span>
+              <span class="grow"></span>
+              <span class="st muted">Pending</span>
+            </div>
+            <div class="mu-body">
+              <div class="code" style="padding:4px 0">
+                <div class="ln add"><span>1</span><span>+ # Learnings: datetime</span></div>
+                <div class="ln add"><span>2</span><span>+ - Never use datetime.utcnow(). It is naive. Use datetime.now(timezone.utc).</span></div>
+                <div class="ln add"><span>3</span><span>+ - Store and compare times as timezone-aware UTC, in code and in tests.</span></div>
+              </div>
+              <div class="row"><span class="grow"></span><button class="btn sm danger">Reject</button><button class="btn sm">Edit</button><button class="btn sm ok">Approve</button></div>
+            </div>
+          </section>
+
+          <section class="card mu done">
+            <div class="mu-head">
+              <span class="mono small accent">core_docs/timeline/timeline.md</span>
+              <span class="tag">append</span>
+              <span class="xs faint">row made by Saarthi</span>
+              <span class="grow"></span>
+              <span class="st green">Approved</span>
+              <button class="btn xs ghost">Undo</button>
+            </div>
+            <div class="mu-body">
+              <div class="code" style="padding:4px 0">
+                <div class="ln add"><span>4</span><span>+ - 2026-10-11 · T-0012 Add password reset API · reset by email link · PR #214</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card dashed" style="padding:12px 14px">
+            <div class="row gap-12">
+              <div class="grow">
+                <div class="strong" style="font-size:13.5px">Then: one commit on the task branch, pushed to PR #214</div>
+                <div class="small muted mt-4"><span class="mono text2">docs(memory): T-0012 Add password reset API</span> on <span class="mono">saarthi/T-0012-add-password-reset-api</span>. <span class="mono">main</span> is not touched. The worktree is gone, so Saarthi uses a short-lived one on the same branch.</div>
+              </div>
+              <button class="btn disabled">Write when none pending</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

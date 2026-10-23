@@ -1,0 +1,67 @@
+<!-- {"title": "Board · Trust rings", "note": "Cards in Verify and Review show their latest proof as a mini Trust ring: red for a low score (checks failed), amber in the middle (moved on with an override), green when high; a blue pulsing dot while checks still run. T-0012 sits in Verify as Failed with 25. One notification per check batch. F7.3, F7.6, F7.7, F2.5, F16.2", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.48"},
+  {"tag": "cl", "task": "T-0015", "title": "Slow dashboard", "state": "researching", "tone": "muted", "line": "research · 5m", "cost": "$0.09"},
+  {"tag": "cx", "task": "T-0007", "title": "uv workspaces", "state": "crashed", "tone": "bad", "line": "build · 25m", "cost": "$0.55"}]} -->
+<style>
+  .bcard .ft .tr { display: inline-flex; align-items: center; gap: 4px; }
+  .bcard .ft .tr b { font-weight: 600; }
+  .tr-key { display: inline-flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--muted); }
+  .tr-key > span { display: inline-flex; align-items: center; gap: 4px; }
+  .col8 .empty-col { font-size: 11px; color: var(--faint); text-align: center; padding: 10px 0; }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:200px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span>
+    <span class="tr-key"><b class="faint" style="font-weight:500">Trust</b>
+      <span><x-trust checks="25" criteria="0" second="0" size="18"></x-trust>low</span>
+      <span><x-trust checks="25" criteria="28" second="0" size="18"></x-trust>middle</span>
+      <span><x-trust checks="50" criteria="31" second="0" size="18"></x-trust>high</span>
+      <span><span class="dot info pulse"></span>checks running</span></span>
+  </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>1</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8 bad"><b>VERIFY</b><span>2</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>2</span></div>
+    <div class="seg8"><b>SHIP</b><span>2</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>0</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead idle">14</span><span class="ti">Dark mode for the settings page</span></div><div class="ft"><span>P3</span><span class="r">ui</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">16</span><span class="ti">Add audit log for admin actions</span></div><div class="ft"><span>P2</span><span class="r">security</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead info">15</span><span class="ti">Investigate slow dashboard query</span></div><div class="ft"><span class="agent cl sm">CL</span><span>5m</span><span class="r">$0.09</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead road">18</span><span class="ti">Invoice PDF export with line-item totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.48</span></div></div>
+      <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">07</span><span class="ti">Move to uv workspaces</span></div><div class="ft"><span class="agent cx sm">CX</span><span>25m</span><span class="r">$0.55</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><span class="flag info">Checks 2 of 3</span><div class="tt"><span class="bead info">10</span><span class="ti">Refactor Stripe webhook handlers</span></div><div class="ft"><span class="agent cl sm">CL</span><span>38m</span><span class="r tr"><span class="dot info pulse"></span>running</span></div></div>
+      <div class="bcard failed"><span class="flag bad">Tests failed</span><div class="tt"><span class="bead bad">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>26m</span><span class="r tr"><x-trust checks="25" criteria="0" second="0" size="18"></x-trust><b class="bad-t">25</b></span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cx sm">CX</span><span>30m</span><span class="r tr"><x-trust checks="50" criteria="31" second="0" size="18"></x-trust><b class="ok-t">81</b></span></div></div>
+      <div class="bcard override"><span class="flag road">Override</span><div class="tt"><span class="bead ok">11</span><span class="ti">Fix flaky login test</span></div><div class="ft"><span class="agent cx sm">CX</span><span>12m</span><span class="r tr"><x-trust checks="25" criteria="28" second="0" size="18"></x-trust><b class="road">53</b></span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Upgrade FastAPI to 0.115</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Add pagination to /invoices</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="empty-col">Nothing yet</div>
+    </div>
+  </div>
+</div>
+<div class="toast"><span class="dot bad"></span><span><b>T-0012: checks failed (tests)</b> <span class="faint">· moved to Failed</span></span><button class="btn xs">Open Proof</button></div>

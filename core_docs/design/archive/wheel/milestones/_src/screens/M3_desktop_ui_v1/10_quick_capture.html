@@ -1,0 +1,69 @@
+<!-- {"title": "Quick capture over another app", "note": "Ctrl+Alt+N from any app opens a small Saarthi box on top. One line + Enter = a new task at Capture (Inbox) in the chosen project (last project is remembered). On Wayland, a GNOME custom shortcut runs saarthi-desktop --quick-capture. F2.2", "shell": "bare"} -->
+<style>
+  .desk { position: relative; height: 100vh; overflow: hidden; background: linear-gradient(160deg, var(--surface3), var(--bg-side) 55%, var(--bg)); }
+  .gnome-bar { position: absolute; inset: 0 0 auto 0; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--term-bg); color: var(--text2); font-size: 12.5px; font-weight: 500; border-bottom: 1px solid var(--line); }
+  .browser { position: absolute; left: 90px; top: 64px; width: 1180px; height: 780px; }
+  .browser .window-bar .url { flex: 1; max-width: 560px; margin: 0 auto; padding: 3px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }
+  .page-fake { padding: 28px 40px; display: flex; flex-direction: column; gap: 14px; background: var(--surface); flex: 1; }
+  .page-fake h3 { font-size: 22px; font-weight: 600; }
+  .page-fake .issue-meta { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+  .page-fake .comment { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; max-width: 760px; }
+  .term-mini { position: absolute; right: 70px; bottom: 60px; width: 520px; height: 230px; }
+  .dimmer { position: absolute; inset: 30px 0 0 0; background: var(--overlay); }
+  .cap { position: absolute; left: 50%; top: 190px; transform: translateX(-50%); width: 560px; border-radius: 14px; border: 1px solid var(--line2); background: var(--surface); box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .cap-head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .cap-head .brand-t { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13.5px; color: var(--text); }
+  .proj-pick { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .cap-input { display: flex; align-items: center; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--road); box-shadow: 0 0 0 3px var(--road-soft), 0 0 22px -8px var(--road); background: var(--bg); font-size: 16px; }
+  .cap-input .cursor { width: 2px; height: 20px; background: var(--road); margin-left: 1px; animation: none; }
+  .cap-foot { display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--faint); }
+  .callout { position: absolute; left: calc(50% + 300px); top: 196px; width: 250px; }
+</style>
+<div class="desk">
+  <div class="gnome-bar"><span>Activities</span><span>Sun 11 Oct  10:47</span><span class="row gap-12"><span>EN</span><span>⏻</span></span></div>
+
+  <div class="window browser">
+    <div class="window-bar"><span class="lights"><span></span><span></span><span></span></span><span class="url">github.com/acme/acme-billing/issues/212</span></div>
+    <div class="page-fake">
+      <div class="issue-meta"><span class="tag green">Open</span><span>acme/acme-billing</span><span>·</span><span>#212</span></div>
+      <h3>Login test fails about 1 in 10 runs on CI</h3>
+      <div class="comment">
+        <div class="small muted"><b class="text2">priya-k</b> commented 2 days ago</div>
+        <div class="text2">test_login_rate_limit fails now and then. It passes when I run it again. Looks like a timing problem in the limiter.</div>
+        <div class="skeleton" style="width:72%"></div><div class="skeleton" style="width:54%"></div>
+      </div>
+      <div class="comment">
+        <div class="small muted"><b class="text2">ankit</b> commented yesterday</div>
+        <div class="skeleton" style="width:64%"></div><div class="skeleton" style="width:40%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="term term-mini window">
+    <div class="term-bar"><span class="lights"><span></span><span></span><span></span></span><span class="mono">~/code/acme-billing</span></div>
+<div class="term-body"><span class="p">$</span> git log --oneline -3
+<span class="y">8c41e2a</span> Upgrade FastAPI to 0.115
+<span class="y">51d07bb</span> Add pagination to /invoices
+<span class="y">e2a9c10</span> Fix webhook retry
+<span class="p">$</span> </div>
+  </div>
+
+  <div class="dimmer"></div>
+
+  <div class="cap">
+    <div class="cap-head">
+      <svg class="logo-w" width="20" height="20" viewBox="0 0 34 34" aria-hidden="true"><circle class="lw-rim" cx="17" cy="17" r="14"/><g class="lw-spoke"><line x1="17" y1="3" x2="17" y2="31"/><line x1="3" y1="17" x2="31" y2="17"/><line x1="7.1" y1="7.1" x2="26.9" y2="26.9"/><line x1="26.9" y1="7.1" x2="7.1" y2="26.9"/></g><circle class="lw-hub" cx="17" cy="17" r="4.5"/></svg><span class="brand-t">Saarthi</span>
+      <span>New task at <b class="road">Capture</b> in</span>
+      <span class="proj-pick">acme-billing ▾</span>
+      <span class="grow"></span>
+      <span class="kbd">Ctrl Alt N</span>
+    </div>
+    <div class="cap-input"><span>Fix flaky login test (issue #212)</span><span class="cursor"></span></div>
+    <div class="cap-foot"><span><b class="text2">Enter</b> add to Capture</span><span><b class="text2">Esc</b> close</span><span><b class="text2">Tab</b> change project</span><span class="grow"></span><span>Last project is remembered</span></div>
+  </div>
+
+  <div class="callout col gap-12">
+    <div class="annot" style="background:var(--surface);padding:8px 10px;border-radius:0 8px 8px 0">Small Saarthi window, always on top, no frame. It shows in under 0.5 s when the app is running.</div>
+    <div class="annot" style="background:var(--surface);padding:8px 10px;border-radius:0 8px 8px 0">Wayland: bind a GNOME custom shortcut to <span class="mono">saarthi-desktop --quick-capture</span>.</div>
+  </div>
+</div>

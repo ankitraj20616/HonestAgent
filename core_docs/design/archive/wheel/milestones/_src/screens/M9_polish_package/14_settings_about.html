@@ -1,0 +1,78 @@
+<!-- {"title": "Settings - About + Health", "note": "About Saarthi: app and daemon both 1.0.0 (API 1), service state, data/config paths, logs; Run setup again (wizard) and service commands; Health lists the same tool checks as the wizard and saarthi doctor. FSD M9 5.2 (About shows 1.0.0), 5.3 (Run setup again); TDD Decision 7, 8", "shell": "app", "nav": "settings", "needs": 2, "cost": "$4.12", "slots": 4, "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"},
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "needs you", "tone": "road", "line": "fix · 4m", "cost": "$0.11"}]} -->
+<style>
+  .about-kv { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; font-size: 13px; }
+  .about-kv > span { padding: 8px 0; border-top: 1px solid var(--line); }
+  .about-kv .k { color: var(--faint); }
+  .hrow { display: grid; grid-template-columns: 12px 64px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .hrow .fix { grid-column: 3 / 5; font-size: 12px; color: var(--red); margin-top: -4px; }
+  .hrow .fix.w { color: var(--accent-text); }
+  .setup-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); }
+</style>
+<div class="page" style="max-width:1140px">
+  <div class="page-head">
+    <h1 class="title">Settings</h1>
+    <div class="seg"><button>General</button><button>Agents</button><button>Safety</button><button>Health</button><button class="on">About</button></div>
+  </div>
+
+  <div class="grid-2" style="align-items:start">
+    <div class="col gap-22" style="gap:18px">
+      <section class="card" style="padding:20px">
+        <div class="row gap-16" style="margin-bottom:14px">
+          <svg class="logo-w" width="56" height="56" viewBox="0 0 34 34" aria-hidden="true"><circle class="lw-rim" cx="17" cy="17" r="14"/><g class="lw-spoke"><line x1="17" y1="3" x2="17" y2="31"/><line x1="3" y1="17" x2="31" y2="17"/><line x1="7.1" y1="7.1" x2="26.9" y2="26.9"/><line x1="26.9" y1="7.1" x2="7.1" y2="26.9"/></g><circle class="lw-hub" cx="17" cy="17" r="4.5"/></svg>
+          <div class="grow">
+            <div class="row base"><span style="font-size:20px;font-weight:600">Saarthi</span><span class="mono" style="font-size:15px">1.0.0</span></div>
+            <div class="small muted">Task-first Agentic Development Environment for Linux</div>
+          </div>
+        </div>
+        <div class="about-kv">
+          <span class="k">Desktop app</span><span><span class="mono">1.0.0</span> <span class="muted small">· .deb · API 1</span></span>
+          <span class="k">Daemon</span><span><span class="mono">1.0.0</span> <span class="muted small">· uv tool · API 1</span> <span class="green small">✓ match</span></span>
+          <span class="k">Service</span><span><span class="mono">saarthid.service</span> <span class="green small">active (running)</span> <span class="muted small">· starts at login</span></span>
+          <span class="k">Address</span><span class="mono">127.0.0.1:7878 <span class="faint">· local only</span></span>
+          <span class="k">Data</span><span class="mono">~/.local/share/saarthi</span>
+          <span class="k">Config</span><span class="mono">~/.config/saarthi</span>
+          <span class="k">Logs</span><span class="mono">journalctl --user -u saarthid</span>
+        </div>
+        <div class="row mt-12">
+          <button class="btn sm">Copy versions</button>
+          <button class="btn sm">Open data folder</button>
+          <button class="btn sm ghost">User guide</button>
+        </div>
+      </section>
+
+      <section class="card" style="padding:16px 20px 6px">
+        <div class="card-head"><h2>Setup</h2><span class="small muted">first run and background service</span></div>
+        <div class="setup-row"><div><div class="strong" style="font-size:13.5px">Run setup again</div><div class="small muted">Opens the first-run wizard: daemon, tools, project.</div></div><button class="btn sm">Run setup again</button></div>
+        <div class="setup-row"><div><div class="strong" style="font-size:13.5px">Installed a new tool?</div><div class="small muted">Give the service your current PATH again.</div></div><span class="mono xs text2" style="padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--term-bg)">saarthi daemon install-service --refresh-env</span></div>
+        <div class="setup-row"><div><div class="strong" style="font-size:13.5px">Remove the service</div><div class="small muted">Your data stays in ~/.local/share/saarthi.</div></div><span class="mono xs text2" style="padding:4px 8px;border:1px solid var(--line);border-radius:5px;background:var(--term-bg)">saarthi daemon uninstall-service</span></div>
+      </section>
+    </div>
+
+    <div class="col" style="gap:18px">
+    <section class="card" style="padding:18px 20px 8px">
+      <div class="card-head" style="margin-bottom:10px"><h2>Health</h2><button class="btn sm">Check again</button></div>
+      <div class="hrow" style="border-top:none"><span class="dot green lg"></span><span class="mono strong">daemon</span><span class="small text2">1.0.0 · service active</span><span class="mono xs faint">12d up</span></div>
+      <div class="hrow"><span class="dot green lg"></span><span class="mono strong">git</span><span class="small text2">2.43.0</span><span class="tag amber">required</span></div>
+      <div class="hrow"><span class="dot green lg"></span><span class="mono strong">claude</span><span class="small text2">2.1.12 · logged in</span><span class="tag">agent</span></div>
+      <div class="hrow"><span class="dot amber lg"></span><span class="mono strong">codex</span><span class="small text2">0.46.0 · not logged in</span><span class="tag">agent</span>
+        <span class="fix w">Fix: <span class="mono">codex login</span></span></div>
+      <div class="hrow"><span class="dot green lg"></span><span class="mono strong">gh</span><span class="small text2">2.45.0 · logged in as ankit</span><span class="tag">optional</span></div>
+      <div class="hrow"><span class="dot green lg"></span><span class="mono strong">rg</span><span class="small text2">14.1.0</span><span class="tag">optional</span></div>
+      <div class="hrow"><span class="dot red lg"></span><span class="mono strong">bwrap</span><span class="small text2">user namespaces blocked by AppArmor</span><span class="tag">optional</span>
+        <span class="fix">Fix: see USER_GUIDE.md › Sandbox on Ubuntu 24.04. The <span class="mono">full</span> profile stays off.</span></div>
+      <div class="xs faint" style="padding:10px 0 6px;border-top:1px solid var(--line)">Same checks as <span class="mono">saarthi doctor</span> and the first-run wizard. Checked 10:58.</div>
+    </section>
+    <section class="card" style="padding:16px 20px">
+      <div class="card-head"><h2>Upgrading</h2><span class="small muted">Saarthi does not update itself</span></div>
+      <div class="col" style="gap:8px;font-size:13px">
+        <div class="row top gap-12"><span class="kbd" style="font-size:11px">1</span><span class="text2">Download the new <span class="mono">.deb</span> and run <span class="mono">sudo apt install ./saarthi_x.y.z_amd64.deb</span></span></div>
+        <div class="row top gap-12"><span class="kbd" style="font-size:11px">2</span><span class="text2">Run <span class="mono">uv tool upgrade saarthi</span>. The service restarts.</span></div>
+        <div class="row top gap-12"><span class="kbd" style="font-size:11px">3</span><span class="text2">Open the app. No banner means the versions match.</span></div>
+      </div>
+    </section>
+    </div>
+  </div>
+</div>

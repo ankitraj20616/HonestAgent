@@ -1,0 +1,111 @@
+<!-- {"title": "Board: running now strip", "note": "Board with the running-now strip on top: one live card per active run (lane, agent, status, time, cost, last action, port). Needs-input cards glow and come first. The small Wheel shows the racing task T-0012 as two beads on the Run spoke joined by an arc; on the board it stays one card with a Race badge. F6.7, M7 strip", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.51", "slots": 4,
+ "agents": [
+  {"tag": "cx", "task": "T-0012", "title": "Reset API · codex lane", "state": "needs you", "tone": "road", "line": "race · 6m", "cost": "$0.18"},
+  {"tag": "cl", "task": "T-0012", "title": "Reset API · claude lane", "state": "running", "tone": "muted", "line": "race · 7m", "cost": "$0.21"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.55"}]} -->
+<style>
+  .run-band { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; align-items: center; margin: 0 18px 12px; padding: 4px 16px 4px 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  .strip-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rcard { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+  .rcard.needs { border-color: var(--road); box-shadow: var(--accent-glow); background: var(--road-soft); }
+  .rcard.slot { border-style: dashed; background: transparent; justify-content: center; align-items: center; color: var(--faint); font-size: 12px; }
+  .rcard .last { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rcard .nums { display: flex; gap: 10px; font-size: 11.5px; color: var(--muted); }
+  .rcard .nums b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+  .port { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--faint); }
+  .pair { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .pair i { width: 8px; height: 3px; background: var(--road); opacity: .7; }
+  .lanes-ft { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
+  </div>
+
+  <div class="run-band">
+    <div class="race-wheel">
+      <x-wheel data='{"size": 236, "hub": {"big": "3", "sub": "RUNNING"}, "capture_plus": false,
+        "beads": [
+          {"n": "12", "stage": "run", "tone": "road", "link": "race", "r": 22},
+          {"n": "12", "stage": "run", "tone": "info", "link": "race", "r": 22, "halo": true},
+          {"n": "18", "stage": "run", "tone": "road", "r": 20, "dim": 0.6, "gap": 18}]}'></x-wheel>
+    </div>
+    <div class="strip-side">
+      <div class="row">
+        <span class="dot road pulse"></span><span class="strong" style="font-size:13px">Running now</span>
+        <span class="small muted">3 runs · 3 of 4 slots</span>
+        <span class="grow"></span>
+        <span class="xs faint">T-0012 races: two beads on Run, joined by an arc. Click a card to open its Stream.</span>
+      </div>
+      <div class="strip">
+        <div class="rcard needs">
+          <div class="row"><span class="agent sm cx">CX</span><span class="mono small road">T-0012</span><span class="small muted">· codex lane</span><span class="grow"></span><span class="flag road"><span class="dot road pulse"></span>Needs input</span></div>
+          <div class="last" style="color:var(--road-text)">asks: "New table or users table?"</div>
+          <div class="nums"><span>Time <b>06m 40s</b></span><span>Cost <b>$0.18</b></span><span class="grow"></span><span class="port">:41020</span></div>
+        </div>
+        <div class="rcard">
+          <div class="row"><span class="agent sm cl">CL</span><span class="mono small road">T-0012</span><span class="small muted">· claude lane</span><span class="grow"></span><span class="flag road">Running</span></div>
+          <div class="last">Edit tests/auth/test_password_reset.py</div>
+          <div class="nums"><span>Time <b>06m 58s</b></span><span>Cost <b>$0.21</b></span><span class="grow"></span><span class="port">:41010</span></div>
+        </div>
+        <div class="rcard">
+          <div class="row"><span class="agent sm cl">CL</span><span class="mono small road">T-0018</span><span class="small muted">· build</span><span class="grow"></span><span class="flag road">Running</span></div>
+          <div class="last">Bash: uv run pytest -q</div>
+          <div class="nums"><span>Time <b>12m 40s</b></span><span>Cost <b>$0.55</b></span><span class="grow"></span><span class="port">:41000</span></div>
+        </div>
+        <div class="rcard slot">1 slot free</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>0</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8"><b>VERIFY</b><span>0</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>1</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">14</span><span class="ti">Dark mode for the settings page</span></div><div class="ft"><span>P3</span><span class="r">ui</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">16</span><span class="ti">Add audit log for admin actions</span></div><div class="ft"><span>P2</span><span class="r">security</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead info">15</span><span class="ti">Investigate slow dashboard query</span></div><div class="ft"><span class="agent cl sm">CL</span><span>research</span><span class="r">done</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="small faint" style="padding:4px 2px">Nothing ready.</div>
+    </div>
+    <div class="col8">
+      <div class="bcard needs">
+        <span class="flag road" style="white-space:nowrap"><span class="dot road pulse"></span>Needs you</span>
+        <div class="tt"><span class="pair"><span class="bead road">12</span><i></i><span class="bead info">12</span></span><span class="ti">Add password reset API</span></div>
+        <div class="lanes-ft">
+          <div class="ft"><span class="agent cl sm">CL</span><span>7m</span><span class="r">:41010</span></div>
+          <div class="ft"><span class="agent cx sm">CX</span><span>7m</span><span class="r">:41020</span></div>
+          <div class="ft"><span class="race-tag">Race</span><span class="r">$0.39</span></div>
+        </div>
+      </div>
+      <div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with line-item totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.55</span></div><div class="ft"><span>ports</span><span class="r">41000-41009</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="small faint" style="padding:4px 2px">No checks running.</div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cx sm">CX</span><span>30m</span><span class="r">$0.77</span></div><div class="ft"><span>ports</span><span class="r">41030-41039</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Upgrade FastAPI to 0.115</span></div><div class="ft"><span>PR #110</span><span class="r">ports freed</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead road dim">08</span><span class="ti">1 memory note to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div>
+    </div>
+  </div>
+</div>

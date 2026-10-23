@@ -1,0 +1,97 @@
+<!-- {"title": "Command Bar (Ctrl+K)", "note": "Ctrl+K over the Board: search tasks by ID or title, projects, and actions (New task, Start run, Open in editor, Go to Home / Board / Settings). F18.1", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "crashed", "tone": "bad", "line": "build · 4m", "cost": "$0.11"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"}]} -->
+<style>
+  .cmdk { width: min(640px, calc(100vw - 32px)); overflow: hidden; }
+  .cmdk .cmd-input { font-size: 16px; }
+  .cmdk .cursor { animation: none; }
+  .cmdk .q { flex: 1; display: flex; align-items: center; gap: 2px; }
+  .cmdk .kind { width: 64px; font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; }
+  .cmdk .cmd-item { border-radius: 9px; margin: 0 6px; padding: 8px 10px; }
+  .cmdk .cmd-item .lbl { flex: 1; min-width: 0; }
+  .cmdk .cmd-item .hint { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--faint); white-space: nowrap; }
+  .cmdk .cmd-group { padding: 10px 16px 4px; }
+  .cmdk mark { background: transparent; color: var(--road-text); font-weight: 600; }
+  .cmdk .stage { font-size: 10.5px; padding: 0 7px; }
+  .cmdk .stage::before { width: 5px; height: 5px; }
+  .cmdk .bead { width: 20px; height: 20px; font-size: 9px; }
+  .cmdk-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--faint); background: var(--panel); }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
+  </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>2</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8 bad"><b>VERIFY</b><span>1</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>3</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">15</span><span class="ti">Cache tax rates per region</span></div><div class="ft"><span>P3</span><span class="r">3d</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">19</span><span class="ti">Retry webhook on 5xx</span></div><div class="ft"><span>P2</span><span class="r">1d</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead info">31</span><span class="ti">Upgrade Alembic to 1.14</span></div><div class="ft"><span class="agent cx sm">CX</span><span>research</span><span class="r">done</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead idle">24</span><span class="ti">Show task cost on cards</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v1</span><span class="r">P2</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.38</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">27</span><span class="ti">Event replay after reconnect</span></div><div class="ft"><span class="agent cx sm">CX</span><span>4m</span><span class="r">$0.11</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cl sm">CL</span><span class="r">2h</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Fix invoice rounding</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Add audit log table</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead road dim">06</span><span class="ti">2 memory notes to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div>
+    </div>
+  </div>
+</div>
+<div class="scrim">
+  <div class="modal cmdk">
+    <div class="cmd-input">
+      <span class="faint">⌕</span>
+      <span class="q"><span class="cursor" style="height:18px;width:2px"></span><span class="faint">Search tasks and projects, or type an action</span></span>
+      <span class="kbd">Esc</span>
+    </div>
+    <div style="padding:2px 0 8px">
+      <div class="cmd-group upper">Recent tasks</div>
+      <div class="cmd-item on"><span class="kind">Task</span><span class="bead road">12</span><span class="lbl ellipsis">Add password reset API</span><span class="stage needs">Needs you</span><span class="hint">T-0012 · acme-billing</span></div>
+      <div class="cmd-item"><span class="kind">Task</span><span class="bead road dim">18</span><span class="lbl ellipsis">Invoice PDF export with line-item totals</span><span class="stage run">Run</span><span class="hint">T-0018 · acme-billing</span></div>
+      <div class="cmd-item"><span class="kind">Task</span><span class="bead bad">27</span><span class="lbl ellipsis">Event replay after reconnect</span><span class="stage failed">Run crashed</span><span class="hint">T-0027 · acme-billing</span></div>
+
+      <div class="cmd-group upper">Projects</div>
+      <div class="cmd-item"><span class="kind">Project</span><span class="lbl mono" style="font-size:13px">saarthi</span><span class="hint">4 open · 1 running</span></div>
+      <div class="cmd-item"><span class="kind">Project</span><span class="lbl mono" style="font-size:13px">clinic-portal</span><span class="hint">2 open</span></div>
+
+      <div class="cmd-group upper">Actions</div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">New task</span><span class="kbd">Ctrl Alt N</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Start run on T-0012</span><span class="kbd">R</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Open T-0012 in my editor</span><span class="kbd">E</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Home</span><span class="kbd">G H</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Board</span><span class="kbd">G B</span></div>
+      <div class="cmd-item"><span class="kind">Action</span><span class="lbl">Go to Settings</span><span class="kbd">,</span></div>
+    </div>
+    <div class="cmdk-foot"><span>↑↓ move</span><span>Enter open</span><span>Esc close</span><span class="grow"></span><span>Type a task ID like <span class="mono">T-0012</span> to jump to it</span></div>
+  </div>
+</div>

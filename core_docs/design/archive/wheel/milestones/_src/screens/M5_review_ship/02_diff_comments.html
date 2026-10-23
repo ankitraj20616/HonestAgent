@@ -1,0 +1,105 @@
+<!-- {"title": "Review tab - diff and comments", "note": "Files view of the Change Story with a read-only CodeMirror merge view (unified mode) of app/auth/routes.py. A line comment sits on new line 55; a group comment on Database change. Both are ticked and go to Claude as one fix run with Send comments to agent (2). F10.3, F10.4, F10.6", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.62", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 19m", "cost": "$0.47"}]} -->
+<style>
+.files-view { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 14px; align-items: start; }
+.flist { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.flist .f { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.flist .f.on { background: var(--surface3); box-shadow: inset 2px 0 0 var(--road); }
+.flist .f .st { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+.flist .f .fn { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+.flist .f .dir { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--faint); }
+.flist .f .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; }
+.flist .fh { display: flex; align-items: center; gap: 8px; padding: 9px 12px; }
+.ud { border: 1px solid var(--line2); border-radius: 12px; background: var(--surface); overflow: hidden; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.6; font-variant-ligatures: none; min-width: 0; }
+.ud .fh { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-family: 'Inter', sans-serif; font-size: 12px; }
+.ud .l { display: grid; grid-template-columns: 32px 32px 16px minmax(0, 1fr); }
+.ud .l > .n { color: var(--faint); text-align: right; padding-right: 6px; }
+.ud .l > .s { color: var(--faint); text-align: center; }
+.ud .l > .t { white-space: pre; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; color: var(--text2); }
+.ud .l.a { background: var(--ok-soft); } .ud .l.a > .s { color: var(--ok); }
+.ud .l.d { background: var(--bad-soft); } .ud .l.d > .s { color: var(--bad); } .ud .l.d > .t { color: var(--diff-del); }
+.ud .l.cm > .n:nth-child(2) { color: var(--road-text); font-weight: 600; }
+.ud .hh { padding: 1px 12px; color: var(--info); background: var(--info-soft); }
+.ud .gap { padding: 2px 12px; color: var(--faint); font-family: 'Inter', sans-serif; font-size: 11px; }
+.ud .lc { margin: 4px 12px 6px 80px; padding: 7px 10px; border-left: 3px solid var(--road); border-radius: 8px; background: var(--road-soft); font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text2); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><x-journey stage="review" tone="ok"></x-journey>
+      <div class="lbl"><b>Review · 6 of 8</b>Trust 78 · second opinion not run yet</div></div>
+    <span class="grow"></span>
+    <x-trust checks="50" criteria="28" second="0" size="40"></x-trust>
+    <span class="room-meta">Time <b>28m</b></span><span class="room-meta">Cost <b>$1.08</b></span>
+  </div>
+  <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Docs <span class="n">6</span></span><span class="tab">Timeline</span></div>
+  <div class="review-tab">
+    <div class="review-l">
+      <div class="row" style="gap:10px"><h2 style="font-size:17px">Change Story</h2><span class="small faint">6 files · +171 −4</span><span class="grow"></span>
+        <span class="seg"><span>Story</span><span class="on">Files</span></span>
+        <span class="risk">auth · 3 files</span><span class="risk">migration</span><span class="risk warn">config</span></div>
+      <div class="files-view">
+        <div class="flist">
+          <div class="fh"><span class="upper">Files</span><span class="grow"></span><span class="xs faint">6</span></div>
+          <div class="f"><span class="st ok-t">A</span><div class="ellipsis"><div class="fn ellipsis">reset.py</div><div class="dir">app/auth/</div></div><span class="num ok-t">+42</span></div>
+          <div class="f on"><span class="st road">M</span><div class="ellipsis"><div class="fn ellipsis">routes.py</div><div class="dir">app/auth/</div></div><span class="num"><span class="ok-t">+16</span> <span class="bad-t">−4</span></span></div>
+          <div class="f"><span class="st ok-t">A</span><div class="ellipsis"><div class="fn ellipsis">password_reset.py</div><div class="dir">app/models/</div></div><span class="num ok-t">+12</span></div>
+          <div class="f"><span class="st ok-t">A</span><div class="ellipsis"><div class="fn ellipsis">0042_password_reset_tokens.py</div><div class="dir">migrations/versions/</div></div><span class="num ok-t">+19</span></div>
+          <div class="f"><span class="st ok-t">A</span><div class="ellipsis"><div class="fn ellipsis">test_password_reset.py</div><div class="dir">tests/auth/</div></div><span class="num ok-t">+80</span></div>
+          <div class="f"><span class="st road">M</span><div class="ellipsis"><div class="fn ellipsis">settings.py</div><div class="dir">app/</div></div><span class="num ok-t">+2</span></div>
+        </div>
+        <div class="ud">
+          <div class="fh"><span class="mono">app/auth/routes.py</span><span class="risk sm">auth</span><span class="mono xs"><span class="ok-t">+16</span> <span class="bad-t">−4</span></span><span class="grow"></span><span class="xs faint">read-only</span><span class="seg"><span>Side by side</span><span class="on">Unified</span></span></div>
+          <div class="hh">@@ -2,2 +2,3 @@</div>
+          <div class="l a"><span class="n"></span><span class="n">3</span><span class="s">+</span><span class="t"><span class="tk-k">from</span> app.auth <span class="tk-k">import</span> reset</span></div>
+          <div class="l"><span class="n">3</span><span class="n">4</span><span class="s"></span><span class="t"><span class="tk-k">from</span> app.auth.schemas <span class="tk-k">import</span> LoginRequest, TokenResponse</span></div>
+          <div class="gap">⋯ 34 unchanged lines · show</div>
+          <div class="hh">@@ -38,7 +39,18 @@</div>
+          <div class="l"><span class="n">38</span><span class="n">39</span><span class="s"></span><span class="t">    <span class="tk-k">return</span> login_user(body.email, body.password, db)</span></div>
+          <div class="l"><span class="n">39</span><span class="n">40</span><span class="s"></span><span class="t"></span></div>
+          <div class="l"><span class="n">40</span><span class="n">41</span><span class="s"></span><span class="t"></span></div>
+          <div class="l d"><span class="n">41</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-c"># TODO: real password reset (ticket #4821)</span></span></div>
+          <div class="l d"><span class="n">42</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/forgot-password"</span>)</span></div>
+          <div class="l d"><span class="n">43</span><span class="n"></span><span class="s">-</span><span class="t"><span class="tk-k">def</span> forgot_password():</span></div>
+          <div class="l d"><span class="n">44</span><span class="n"></span><span class="s">-</span><span class="t">    <span class="tk-k">raise</span> HTTPException(<span class="tk-n">501</span>, <span class="tk-s">"Email support to reset your password"</span>)</span></div>
+          <div class="l a"><span class="n"></span><span class="n">42</span><span class="s">+</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/password-reset"</span>, status_code=<span class="tk-n">202</span>)</span></div>
+          <div class="l a"><span class="n"></span><span class="n">43</span><span class="s">+</span><span class="t"><span class="tk-k">def</span> password_reset(body: reset.ResetRequest, db: DbSession):</span></div>
+          <div class="l a"><span class="n"></span><span class="n">44</span><span class="s">+</span><span class="t">    <span class="tk-s">"""Send a reset link. Same answer for unknown emails."""</span></span></div>
+          <div class="l a"><span class="n"></span><span class="n">45</span><span class="s">+</span><span class="t">    reset.request_reset(body.email, db)</span></div>
+          <div class="l a"><span class="n"></span><span class="n">46</span><span class="s">+</span><span class="t">    <span class="tk-k">return</span> {<span class="tk-s">"status"</span>: <span class="tk-s">"ok"</span>}</span></div>
+          <div class="l a"><span class="n"></span><span class="n">47</span><span class="s">+</span><span class="t"></span></div>
+          <div class="l a"><span class="n"></span><span class="n">48</span><span class="s">+</span><span class="t"></span></div>
+          <div class="l a"><span class="n"></span><span class="n">49</span><span class="s">+</span><span class="t"><span class="tk-f">@router.post</span>(<span class="tk-s">"/password-reset/confirm"</span>)</span></div>
+          <div class="l a"><span class="n"></span><span class="n">50</span><span class="s">+</span><span class="t"><span class="tk-k">def</span> password_reset_confirm(body: reset.ResetConfirm, db: DbSession):</span></div>
+          <div class="l a"><span class="n"></span><span class="n">51</span><span class="s">+</span><span class="t">    <span class="tk-s">"""Set a new password with a single-use token."""</span></span></div>
+          <div class="l a"><span class="n"></span><span class="n">52</span><span class="s">+</span><span class="t">    <span class="tk-k">try</span>:</span></div>
+          <div class="l a"><span class="n"></span><span class="n">53</span><span class="s">+</span><span class="t">        reset.confirm_reset(body.token, body.new_password, db)</span></div>
+          <div class="l a"><span class="n"></span><span class="n">54</span><span class="s">+</span><span class="t">    <span class="tk-k">except</span> reset.TokenInvalid:</span></div>
+          <div class="l a cm"><span class="n"></span><span class="n">55</span><span class="s">+</span><span class="t">        <span class="tk-k">raise</span> HTTPException(<span class="tk-n">410</span>, <span class="tk-s">"This reset link is used or expired"</span>)</span></div>
+          <div class="lc"><div class="row"><span class="xs muted"><b class="text2">You</b> · line 55 · open</span><span class="grow"></span><button class="btn xs ghost">Edit</button><button class="btn xs ghost">Delete</button></div>
+            <div class="mt-4">Move this message to <span class="mono">app/messages.py</span> with the other auth texts.</div></div>
+          <div class="l a"><span class="n"></span><span class="n">56</span><span class="s">+</span><span class="t">    <span class="tk-k">return</span> {<span class="tk-s">"status"</span>: <span class="tk-s">"ok"</span>}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="review-r">
+      <div class="so"><div class="hd"><span class="upper">Comments</span><span class="grow"></span>2 open · both ticked</div>
+        <div class="fd mt-8"><span class="check on">✓</span><span>Move this message to app/messages.py with the other auth texts.<span class="loc">app/auth/routes.py:55 · line</span></span></div>
+        <div class="fd"><span class="check on">✓</span><span>Add ON DELETE CASCADE to user_id, so deleting a user also deletes their tokens.<span class="loc">Database change · group</span></span></div>
+        <button class="btn primary mt-8" style="width:100%">Send comments to agent (2)</button>
+        <div class="xs muted mt-8" style="text-align:center">to <span class="agent sm cl">CL</span> Claude · one fix run · Review → Running</div>
+      </div>
+      <div class="so"><div class="hd"><span class="agent cx">CX</span>Second opinion · not run yet</div>
+        <div class="small muted mt-8">Codex can read this diff in a read-only side run and list findings. Until then the Trust score has 0 of 15 for it.</div>
+        <button class="btn sm mt-8">Ask Codex</button>
+      </div>
+      <div class="decide" style="margin-top:auto">
+        <div class="upper">Your decision</div>
+        <div class="small text2">Approve to unlock Ship. Saarthi commits on the task branch, pushes, and opens a PR. It never pushes to <span class="mono">main</span>.</div>
+        <div class="row"><button class="btn ok grow">Approve</button><button class="btn grow">Reject…</button></div>
+        <button class="btn disabled">Ship · after approve</button>
+      </div>
+    </div>
+  </div>
+</div>

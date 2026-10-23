@@ -1,0 +1,88 @@
+<!-- {"title": "Update from main - conflict", "note": "The rebase hit conflicts in 2 files. The task keeps its stage with a Sync conflict banner, Ship is blocked, and the conflict markers are shown. Let agent fix starts a fix run with a Merge conflicts section; Abort restores the before-sync checkpoint exactly. F6.5", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.85", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 23m", "cost": "$0.57"}]} -->
+<style>
+.cf-files { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.cf-files > div { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12.5px; }
+.cf-files > div:first-child { border-top: none; }
+.cfl { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.6; background: var(--term-bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 0; font-variant-ligatures: none; overflow: hidden; }
+.cfl .l { display: grid; grid-template-columns: 40px minmax(0, 1fr); }
+.cfl .l > span:first-child { color: var(--faint); text-align: right; padding-right: 10px; }
+.cfl .l > span:last-child { white-space: pre; color: var(--term-text); overflow: hidden; text-overflow: ellipsis; }
+.cfl .l.mk > span:last-child { color: var(--bad); font-weight: 600; }
+.cfl .l.ours { background: var(--info-soft); }
+.cfl .l.theirs { background: var(--road-soft); }
+.fade { opacity: .45; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><x-journey stage="review" tone="bad"></x-journey>
+      <div class="lbl"><b>Review · 6 of 8</b>Sync conflict · Ship blocked</div></div>
+    <span class="grow"></span>
+    <x-trust checks="50" criteria="28" second="8" size="40"></x-trust>
+    <span class="room-meta">Time <b>32m</b></span><span class="room-meta">Cost <b>$1.29</b></span>
+  </div>
+  <div class="banner err" style="margin:12px 20px;flex-shrink:0">
+    <span class="dot lg bad"></span>
+    <div class="grow"><b>Sync conflict.</b> The rebase stopped on 2 files. T-0012 stays in Review; Ship is blocked until the sync is finished or aborted.</div>
+    <button class="btn sm">Abort sync</button>
+    <button class="btn sm primary">Let agent fix</button>
+  </div>
+  <div class="room" style="border-top:1px solid var(--line)">
+    <div class="room-side">
+      <div class="col"><h3>Brief · v3</h3>
+        <div class="goal">Users can reset a forgotten password by email. Today they must email support (ticket #4821).</div>
+        <div class="crit"><span class="box met"></span><span>POST /auth/password-reset sends a single-use link</span></div>
+        <div class="crit"><span class="box met"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box met"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box met"></span><span>Unknown email still returns 202</span></div>
+        <div class="crit"><span class="box notsure"></span><span>Tests cover all of the above</span></div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span class="bad-t">rebasing</span><span><b class="bad-t">2</b> conflicts</span><b class="mono">ck-0033</b></div>
+          <div class="row wrap" style="gap:6px"><button class="btn sm">Open folder</button><button class="btn sm">Editor</button><button class="btn sm">Terminal</button></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cx">CX</span><span>R-0031 · review · 3m</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0030 · story · 41s</span><span class="small ok-t strong">done</span></div>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0028 · fix · 2m</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab">Proof <span class="dot ok"></span></span><span class="tab on">Review</span><span class="tab">Code <span class="n">6</span></span><span class="tab">Docs <span class="n">6</span></span><span class="tab">Timeline</span></div>
+      <div class="review-l">
+        <div class="card bad">
+          <div class="row wrap" style="gap:10px">
+            <h2 style="font-size:16px;font-weight:600">Merge conflicts</h2>
+            <span class="tag red">phase: rebase</span>
+            <span class="small muted">onto origin/main b72f019 · checkpoint <span class="mono">ck-0033</span> (before-sync)</span>
+          </div>
+          <div class="cf-files mt-12">
+            <div><span class="dot bad"></span><span class="mono small">app/settings.py</span><span class="xs muted">1 conflict</span></div>
+            <div><span class="dot bad"></span><span class="mono small">app/auth/routes.py</span><span class="xs muted">2 conflicts · LoginRequest renamed on main</span></div>
+          </div>
+          <div class="mt-12 small muted mono">app/settings.py</div>
+          <div class="cfl mt-4">
+            <div class="l"><span>12</span><span>class Settings(BaseSettings):</span></div>
+            <div class="l"><span>13</span><span>    SMTP_HOST: str</span></div>
+            <div class="l mk"><span>14</span><span>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD (origin/main)</span></div>
+            <div class="l ours"><span>15</span><span>    SESSION_TTL_MINUTES: int = 60</span></div>
+            <div class="l mk"><span>16</span><span>=======</span></div>
+            <div class="l theirs"><span>17</span><span>    RESET_TOKEN_TTL_MINUTES: int = 30</span></div>
+            <div class="l mk"><span>18</span><span>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 3c8d2e1 (feat(auth): add password reset API)</span></div>
+          </div>
+          <div class="row mt-12" style="gap:12px;align-items:flex-start">
+            <div class="grow small text2 pretty"><b>Let agent fix</b> starts a Claude fix run with a "Merge conflicts" section: fix the markers, <span class="mono">git add</span>, then <span class="mono">git rebase --continue</span>. <b>Abort sync</b> puts the worktree back exactly as before.</div>
+            <button class="btn sm">Open in my editor</button>
+          </div>
+        </div>
+        <div class="fade">
+          <div class="row" style="gap:10px"><h2 style="font-size:17px">Change Story</h2><span class="small faint">Story #1 · out of date</span></div>
+          <div class="small muted mt-4">Story #1 is out of date while the sync is open. A new story is built after checks pass.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

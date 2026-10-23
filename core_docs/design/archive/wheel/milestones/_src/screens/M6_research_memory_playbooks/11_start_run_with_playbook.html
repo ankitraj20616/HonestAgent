@@ -1,0 +1,101 @@
+<!-- {"title": "Start run with a playbook", "note": "The M3 run dialog with the playbook picker now on. Picking plan-then-build pre-fills agent and mode (I can change them). The Context Pack summary shows what goes in; Preview opens the full TASK.md. F13.1, F13.3, F5.3", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.23", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"}]} -->
+<style>
+  .opt { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: transparent; text-align: left; }
+  .opt.on { border-color: var(--accent); background: var(--chip-on); }
+  .opt .t { font-size: 13px; font-weight: 600; }
+  .opt .d { font-size: 11.5px; color: var(--muted); }
+  .picker { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .from { font-size: 10.5px; font-weight: 600; color: var(--accent-text); letter-spacing: .04em; }
+  .cpr { display: grid; grid-template-columns: 90px minmax(0, 1fr) 64px; gap: 10px; padding: 6px 12px; font-size: 12.5px; border-top: 1px solid var(--line); }
+  .cpr .n { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief</span>
+    <div class="journey-box"><x-journey stage="brief" tone="road"></x-journey>
+      <div class="lbl"><b>Brief · 3 of 8</b>Brief v3 saved · ready to run</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>17m</b></span><span class="room-meta">Cost <b>$0.11</b></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved 10:38</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs"><button class="tab on">Stream</button><button class="tab">Terminal</button><button class="tab">Brief</button><button class="tab">Research <span class="n">7</span></button><button class="tab">Docs <span class="n">8</span></button></div>
+      <div class="tab-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim center">
+  <div class="modal" style="width:min(660px, calc(100vw - 32px));max-height:94vh">
+    <div class="modal-head" style="padding-bottom:4px">
+      <div><div class="mono xs faint">T-0012</div><h2>Start a run · Add password reset API</h2></div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Playbook</label>
+        <div class="picker">
+          <div class="grow" style="min-width:0">
+            <div class="row"><span class="strong" style="font-size:13.5px">Plan first, then build</span><span class="mono xs faint">plan-then-build</span><span class="tag">built-in</span></div>
+            <div class="xs muted mt-4">Write a plan, wait for my OK, then build in small steps.</div>
+          </div>
+          <span class="faint">▾</span>
+        </div>
+        <span class="hint">Also: Fix bug with TDD (project), Small steps, one commit each (global), 4 more built-in. <span class="kbd">Ctrl K</span> finds playbooks too.</span>
+      </div>
+
+      <div class="field">
+        <div class="row between"><label class="small muted">Agent</label><span class="from">FROM PLAYBOOK</span></div>
+        <div class="row" style="gap:6px">
+          <button class="opt on" style="flex-direction:row;align-items:center;gap:8px"><span class="agent cl sm">CL</span><span class="t">Claude Code</span></button>
+          <button class="opt" style="flex-direction:row;align-items:center;gap:8px"><span class="agent cx sm">CX</span><span class="t">Codex</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="row between"><label class="small muted">Mode</label><span class="from">FROM PLAYBOOK</span></div>
+        <div class="grid-3" style="grid-template-columns:repeat(4, minmax(0, 1fr));gap:6px">
+          <button class="opt"><span class="t">Plan</span><span class="d">Plan only, no code</span></button>
+          <button class="opt on"><span class="t">Build</span><span class="d">Write code</span></button>
+          <button class="opt"><span class="t">Fix</span><span class="d">Fix failing checks</span></button>
+          <button class="opt"><span class="t">Research</span><span class="d">Read-only</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Extra instruction <span class="faint">(optional, fills {{extra}})</span></label>
+        <input class="input" value="Keep the public API of app/auth/routes.py the same.">
+      </div>
+
+      <div class="row" style="gap:10px"><span class="toggle"></span><span class="small">Interactive terminal</span></div>
+
+      <div class="card pad-0" style="overflow:hidden">
+        <div class="row between" style="padding:8px 12px;background:var(--panel)">
+          <span class="upper">Context Pack</span>
+          <div class="row"><span class="mono small">27,190 chars</span><button class="btn xs">Preview</button></div>
+        </div>
+        <div class="cpr"><span class="muted">Header</span><span>T-0012 · build · claude</span><span class="n">180</span></div>
+        <div class="cpr"><span class="muted">Playbook</span><span>plan-then-build <span class="green xs">· 0 warnings</span></span><span class="n">1,120</span></div>
+        <div class="cpr"><span class="muted">Brief</span><span>version 3</span><span class="n">1,480</span></div>
+        <div class="cpr"><span class="muted">Research</span><span>5 of 7 items (2 switched off)</span><span class="n">4,210</span></div>
+        <div class="cpr"><span class="muted">Listed</span><span class="ellipsis">CLAUDE.md, AGENTS.md, FSD, TDD</span><span class="n">240</span></div>
+        <div class="cpr"><span class="muted">Memory</span><span class="ellipsis">project_memory.md 14 · auth.md 11 · ADR-002 7 (cut)</span><span class="n">19,960</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="xs faint grow">Permission: Safe build · worktree only</span>
+      <button class="btn ghost">Cancel</button>
+      <button class="btn primary">Start run</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+<!-- {"title": "Checkpoints + Rewind confirm", "note": "Checkpoints list in the Task Room (run end, before sync, race lanes), shown as notches on the journey Wheel, and the Rewind dialog: saves the current files first, puts files back, moves Review to Ready, and warns with base_changed because #1 is older than Update from main. F14.3", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.80", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 20m", "cost": "$1.30"}]} -->
+<style>
+  .step { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; font-size: 13px; align-items: start; }
+  .step .k { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line2); display: grid; place-items: center; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><x-journey stage="review" tone="ok" notches="0.33,0.4,0.5,0.57"></x-journey>
+      <div class="lbl"><b>Review · 6 of 8</b>4 checkpoints · notches on the Wheel</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>41m 05s</b></span><span class="room-meta">Cost <b>$2.40</b></span>
+    <button class="btn primary">Ship</button>
+  </div>
+  <div class="room wide-side">
+    <div class="room-side">
+      <div class="col" style="gap:6px">
+        <div class="row between"><h3>Checkpoints</h3><span class="xs faint">4 · newest first</span></div>
+        <div class="cp now"><span class="n">#4</span><div style="min-width:0"><div>end of run 01JAX3 <span class="muted">(claude, fix)</span></div><div class="xs faint">11:24 · <span class="st"><span class="ok-t">+0</span> ~2 <span class="bad-t">−0</span></span> · + 1 edit since</div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp"><span class="n">#3</span><div style="min-width:0"><div>before sync <span class="muted">(Update from main)</span></div><div class="xs faint">11:15 · <span class="st"><span class="ok-t">+0</span> ~1 <span class="bad-t">−0</span></span></div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp"><span class="n">#2</span><div style="min-width:0"><div>end of run 01JC5A1B2C <span class="muted">(claude, race lane)</span></div><div class="xs faint">10:59 · <span class="st"><span class="ok-t">+5</span> ~1 <span class="bad-t">−0</span></span> · winner</div></div><button class="btn xs">Rewind</button></div>
+        <div class="cp sel"><span class="n">#1</span><div style="min-width:0"><div>end of run 01JC5A1B3D <span class="muted">(codex, race lane)</span></div><div class="xs faint">10:53 · <span class="st"><span class="ok-t">+4</span> ~5 <span class="bad-t">−0</span></span> · older base</div></div><button class="btn xs primary">Rewind</button></div>
+        <div class="xs faint pretty" style="padding-top:2px">Rewind changes files only. Not allowed while a run or checks are active.</div>
+      </div>
+      <div class="col" style="gap:8px">
+        <h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api-claude</span></div>
+        <div class="kv"><div><div class="k">vs main</div>0 ahead · 0 behind</div><div><div class="k">Changed files</div>7 · 1 by you</div></div>
+      </div>
+    </div>
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button><button class="tab">Terminal</button><button class="tab">Proof <span class="dot ok"></span></button>
+        <button class="tab">Review</button><button class="tab">Research <span class="n">3</span></button><button class="tab">Code</button><button class="tab">Docs <span class="n">8</span></button><button class="tab on">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="tl">
+          <div class="tl-div">11:02 · race 01JC5A0Z · winner claude</div>
+          <div class="tl-ev"><span class="tm">11:15</span><span class="node info"></span><div class="bx">Checkpoint <b>#3</b> saved · before sync</div></div>
+          <div class="tl-ev"><span class="tm">11:16</span><span class="node ok"></span><div class="bx">Updated from main · rebase · no conflicts</div></div>
+          <div class="tl-ev"><span class="tm">11:24</span><span class="node info"></span><div class="bx">Checkpoint <b>#4</b> saved · end of run 01JAX3</div></div>
+          <div class="tl-ev"><span class="tm">11:28</span><span class="node"></span><div class="bx">You edited <span class="mono">app/auth/routes.py</span> in your editor</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim center" style="justify-content:flex-end;padding-right:40px">
+  <div class="modal" style="width:720px">
+    <div class="modal-head" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <span class="mono xs faint">T-0012 · checkpoint #1 · 10:53</span>
+      <h2>Rewind T-0012 to #1?</h2>
+      <span class="small muted"><span class="mono">end of run 01JC5A1B3D (codex, race lane)</span>. This is how you take the codex lane's work after all.</span>
+    </div>
+    <div class="modal-body">
+      <div class="col gap-12">
+        <div class="step"><span class="k">1</span><div><span class="strong">Save the current files as #5</span> <span class="mono small muted">"before rewind to #1"</span><div class="small muted">You changed 1 file since #4, so a new checkpoint is made. Rewind to #5 to come back. Nothing is lost.</div></div></div>
+        <div class="step"><span class="k">2</span><div><span class="strong">Put the files back to #1</span><div class="small muted">9 files written, 4 deleted (they were added after #1).</div></div></div>
+        <div class="step"><span class="k">3</span><div class="row wrap"><span class="strong">Move the task</span><span class="stage review" style="padding:1px 8px;font-size:11px">Review</span><span class="faint">→</span><span class="stage ready" style="padding:1px 8px;font-size:11px">Ready</span><span class="small muted">The Proof Card no longer matches the files.</span></div></div>
+      </div>
+      <div class="kv" style="grid-template-columns:1fr 1fr">
+        <div><div class="k">Not touched</div>Git-ignored files: <span class="mono">.env</span>, <span class="mono">.venv</span>, <span class="mono">node_modules</span></div>
+        <div><div class="k">Does not move</div>Branch and <span class="mono">HEAD</span>. Rewind only changes files.</div>
+      </div>
+      <div class="banner warn" style="align-items:flex-start;flex-direction:column;gap:8px">
+        <div class="row"><span class="dot road"></span><span class="strong">Base changed since #1</span><span class="mono xs muted">base_changed</span></div>
+        <div class="pretty">#1 was made before <span class="strong">Update from main</span> (11:15). Rewinding also brings back the older versions of files that came from <span class="mono">main</span>.</div>
+        <div class="row"><span class="check on">✓</span><span>I understand. Rewind anyway.</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="mono xs faint grow ellipsis">$ saarthi checkpoint rewind T-0012 1</span>
+      <button class="btn ghost">Cancel</button>
+      <button class="btn primary">Save and rewind to #1</button>
+    </div>
+  </div>
+</div>

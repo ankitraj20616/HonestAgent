@@ -1,0 +1,135 @@
+<!-- {"title": "Brief versions", "note": "All brief versions with date and first line of the goal. Compare v2 with v3 (changed lines). Old versions are read-only; Restore saves a new version (v4) that copies v2. F3.4", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.23", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
+<style>
+  .bv { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .ver { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 8px; padding: 10px 12px; border: 1px solid var(--line);
+         border-radius: 12px; background: var(--surface); font-size: 12.5px; }
+  .ver .n { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px; grid-row: span 2; }
+  .ver.cur { border-color: var(--green); }
+  .ver.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .code .ln > span:first-child { padding-right: 8px; }
+  .code .ln .mk { display: inline-block; width: 16px; color: var(--faint); }
+  .code .ln.add .mk, .code .ln.del .mk { color: inherit; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage brief">Brief</span>
+    <div class="journey-box"><x-journey stage="brief" tone="road"></x-journey>
+      <div class="lbl"><b>Brief · 3 of 8</b>Capture → Research → <span class="road">Brief</span> · v3 saved</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>16m</b></span><span class="room-meta">Cost <b>$0.11</b></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v3</h3><span class="xs faint">saved 10:38</span></div>
+        <div class="goal pretty">Users can reset a forgotten password by email. Today they must email support and wait (ticket #4821).</div>
+        <div class="crit"><span class="box"></span><span>POST /auth/password-reset sends an email with a single-use link</span></div>
+        <div class="crit"><span class="box"></span><span>The link expires after 30 minutes</span></div>
+        <div class="crit"><span class="box"></span><span>A used or expired token returns 410</span></div>
+        <div class="crit"><span class="box"></span><span>Unknown email still returns 202 (no user enumeration)</span></div>
+        <div class="crit"><span class="box"></span><span>Tests cover all of the above</span></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="run-row"><span class="agent cl">CL</span><span>R-0026 · research · 3m 52s</span><span class="small ok-t strong">done</span></div>
+      </div>
+    </div>
+
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab on">Brief</button>
+        <button class="tab">Research <span class="n">7</span></button>
+        <button class="tab">Proof</button>
+        <button class="tab">Review</button>
+        <button class="tab">Code</button>
+        <button class="tab">Docs <span class="n">8</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="col gap-12">
+          <div class="row between">
+            <div class="seg"><button>Edit</button><button class="on">Versions <span class="faint">3</span></button></div>
+            <span class="small muted">Versions only grow. Nothing is ever deleted.</span>
+          </div>
+
+          <div class="bv">
+            <div class="col">
+              <div class="ver cur">
+                <span class="n">v3</span>
+                <div class="row between"><span class="muted">11 Oct · 10:38</span><span class="tag green">current</span></div>
+                <span class="ellipsis text2">Users can reset a forgotten password by email…</span>
+              </div>
+              <div class="ver sel">
+                <span class="n accent">v2</span>
+                <div class="row between"><span class="muted">11 Oct · 10:12</span><span class="tag">read-only</span></div>
+                <span class="ellipsis text2">Add password reset API</span>
+              </div>
+              <div class="ver">
+                <span class="n faint">v1</span>
+                <div class="row between"><span class="muted">10 Oct · 18:03</span><span class="tag">read-only</span></div>
+                <span class="ellipsis faint">(empty)</span>
+              </div>
+              <div class="card dashed" style="padding:10px 12px">
+                <div class="xs muted">CLI</div>
+                <div class="mono xs text2" style="line-height:1.7">$ saarthi brief versions T-0012<br>$ saarthi brief restore T-0012 2</div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="row">
+                <span class="small muted">Compare</span>
+                <span class="chip on mono" style="padding:3px 10px">v2 · 10:12</span>
+                <span class="faint">→</span>
+                <span class="chip on mono" style="padding:3px 10px">v3 · 10:38</span>
+                <span class="grow"></span>
+                <span class="mono xs"><span class="green">+15</span> <span class="red">−4</span></span>
+              </div>
+              <div class="code" style="padding:6px 0">
+                <div class="ln"><span>1</span><span><span class="mk"> </span><span class="tk-k">## Goal</span></span></div>
+                <div class="ln del"><span></span><span><span class="mk">−</span>Add password reset API</span></div>
+                <div class="ln add"><span>2</span><span><span class="mk">+</span>Users can reset a forgotten password by email. Today they must</span></div>
+                <div class="ln add"><span>3</span><span><span class="mk">+</span>email support and wait (ticket #4821).</span></div>
+                <div class="ln"><span>4</span><span> </span></div>
+                <div class="ln"><span>5</span><span><span class="mk"> </span><span class="tk-k">## Acceptance criteria</span></span></div>
+                <div class="ln del"><span></span><span><span class="mk">−</span>(none)</span></div>
+                <div class="ln add"><span>6</span><span><span class="mk">+</span>- POST /auth/password-reset sends an email with a single-use link</span></div>
+                <div class="ln add"><span>7</span><span><span class="mk">+</span>- The link expires after 30 minutes</span></div>
+                <div class="ln add"><span>8</span><span><span class="mk">+</span>- A used or expired token returns 410</span></div>
+                <div class="ln add"><span>9</span><span><span class="mk">+</span>- Unknown email still returns 202 (no user enumeration)</span></div>
+                <div class="ln add"><span>10</span><span><span class="mk">+</span>- Tests cover all of the above</span></div>
+                <div class="ln"><span>11</span><span> </span></div>
+                <div class="ln"><span>12</span><span><span class="mk"> </span><span class="tk-k">## Notes</span></span></div>
+                <div class="ln del"><span></span><span><span class="mk">−</span>Client asked in ticket #4821.</span></div>
+                <div class="ln add"><span>13</span><span><span class="mk">+</span>Use the existing mailer (app/mail.send_mail). No Redis: the client</span></div>
+                <div class="ln add"><span>14</span><span><span class="mk">+</span>does not want new infra. Hash tokens before saving and compare</span></div>
+                <div class="ln add"><span>15</span><span><span class="mk">+</span>with hmac.compare_digest. Use timezone-aware UTC datetimes.</span></div>
+                <div class="ln"><span>16</span><span> </span></div>
+                <div class="ln"><span>17</span><span><span class="mk"> </span><span class="tk-k">## Focus paths</span></span></div>
+                <div class="ln del"><span></span><span><span class="mk">−</span>(none)</span></div>
+                <div class="ln add"><span>18</span><span><span class="mk">+</span>- app/auth/routes.py</span></div>
+                <div class="ln add"><span>19</span><span><span class="mk">+</span>- app/auth/security.py</span></div>
+                <div class="ln add"><span>20</span><span><span class="mk">+</span>- app/mail.py</span></div>
+                <div class="ln add"><span>21</span><span><span class="mk">+</span>- app/models/user.py</span></div>
+                <div class="ln add"><span>22</span><span><span class="mk">+</span>- tests/auth/</span></div>
+              </div>
+              <div class="card" style="padding:12px 14px">
+                <div class="row gap-12">
+                  <div class="grow">
+                    <div class="strong" style="font-size:13.5px">Restore v2?</div>
+                    <div class="small muted">Saves <b class="text2">v4</b> as a copy of v2. v3 stays in the list.</div>
+                  </div>
+                  <button class="btn">Open v2</button>
+                  <button class="btn primary">Restore v2 as v4</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

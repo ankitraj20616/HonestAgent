@@ -1,0 +1,150 @@
+<!-- {"title": "Research Desk", "note": "Task Room Research tab for T-0012 (stage Research): notes, links with fetched titles, snippets, a send-to-agent switch on each item, and the Research this panel. F4.1, F4.2, F4.3, F4.4, F4.6", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
+<style>
+  .ri { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; }
+  .ri.off { background: transparent; border-style: dashed; }
+  .ri.off .ri-body { color: var(--muted); }
+  .ri-kind { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .ri-title { font-weight: 600; font-size: 13.5px; }
+  .ri-body { font-size: 13px; color: var(--text-2); text-wrap: pretty; }
+  .ri-meta { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--faint); flex-wrap: wrap; }
+  .send { display: flex; align-items: center; gap: 8px; border: none; background: none; color: var(--muted); font-size: 12px; padding: 0; }
+  .snip { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--term-bg); border: 1px solid var(--line);
+          font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.55; color: var(--term-text); white-space: pre; overflow: hidden; }
+  .add-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+</style>
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage research">Research</span>
+    <div class="journey-box"><x-journey stage="research" tone="info"></x-journey>
+      <div class="lbl"><b>Research · 2 of 8</b>Capture → <span class="blue">Research</span> · 6 items</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>0m</b></span><span class="room-meta">Cost <b>$0.00</b></span>
+    <button class="btn primary">Run agent</button>
+  </div>
+  <div class="room">
+    <div class="room-side">
+      <div class="col"><div class="row between"><h3>Brief · v2</h3><span class="xs faint">saved</span></div>
+        <div class="goal">Add password reset API</div>
+        <div class="small muted" style="padding:10px;border:1px dashed var(--line2);border-radius:10px">No acceptance criteria yet. Collect research, then click <b class="text2">Draft brief</b>.</div>
+        <div class="small muted pretty">Note: client asked in ticket #4821.</div>
+      </div>
+      <div class="col"><h3>Workspace</h3>
+        <div class="ws"><span class="br">saarthi/T-0012-add-password-reset-api</span>
+          <div class="kvs"><span><b>0</b> ahead</span><span><b>0</b> behind</span><span><b>0</b> files</span></div></div>
+      </div>
+      <div class="col" style="gap:6px"><h3>Runs</h3>
+        <div class="small muted">No runs yet.</div>
+      </div>
+    </div>
+
+    <div class="room-main">
+      <div class="tabs">
+        <button class="tab">Stream</button>
+        <button class="tab">Terminal</button>
+        <button class="tab">Brief</button>
+        <button class="tab on">Research <span class="n">6</span></button>
+        <button class="tab">Proof</button>
+        <button class="tab">Review</button>
+        <button class="tab">Code</button>
+        <button class="tab">Docs <span class="n">8</span></button>
+        <button class="tab">Timeline</button>
+      </div>
+      <div class="tab-body">
+        <div class="col gap-12" style="max-width:900px">
+
+          <section class="card info" style="padding:14px 16px">
+            <div class="row top gap-12">
+              <div class="grow">
+                <div class="row"><span class="strong" style="font-size:14px">Research this</span><span class="tag blue">read-only</span></div>
+                <div class="small muted mt-4 pretty">The agent reads the code and writes a finding: related files, how it works, risks, suggested approach. It cannot change files. The stage stays <b class="text2">Research</b>.</div>
+              </div>
+            </div>
+            <div class="row mt-12" style="gap:8px">
+              <div class="seg" style="flex-shrink:0"><button class="on"><span class="agent cl sm">CL</span> Claude</button><button><span class="agent cx sm">CX</span> Codex</button></div>
+              <input class="input grow" value="How are login tokens made today? Is there any reset code already?">
+              <button class="btn primary">Research this</button>
+            </div>
+          </section>
+
+          <div class="row between" style="margin-top:4px">
+            <div class="row"><span class="strong" style="font-size:14px">Research items</span><span class="small muted">4 of 6 go to the agent</span></div>
+            <button class="btn">Draft brief</button>
+          </div>
+
+          <div class="add-bar">
+            <div class="seg"><button class="on">Note</button><button>Link</button><button>Snippet</button></div>
+            <input class="input" placeholder="Write a note. Markdown works. Enter to add.">
+            <button class="btn">Add</button>
+          </div>
+
+          <div class="card ri">
+            <div class="row gap-12">
+              <span class="ri-kind muted">Note</span>
+              <span class="ri-title grow ellipsis">Client request (ticket #4821)</span>
+              <button class="send">Send to agent <span class="toggle on"></span></button>
+            </div>
+            <div class="ri-body">"I forgot my password and there is no way to reset it. I had to email support and wait 2 days." Reset links must expire in 30 minutes. Same answer for known and unknown emails.</div>
+            <div class="ri-meta"><span>Added 10:04 from CLI</span><span>·</span><span class="mono">01JC4M7Q2X</span></div>
+          </div>
+
+          <div class="card ri off">
+            <div class="row gap-12">
+              <span class="ri-kind muted">Note</span>
+              <span class="ri-title grow ellipsis">Ask client about SMS</span>
+              <button class="send">Send to agent <span class="toggle"></span></button>
+            </div>
+            <div class="ri-body">Do they want SMS reset later? Not for this task. For me only.</div>
+            <div class="ri-meta"><span>Added 10:05</span></div>
+          </div>
+
+          <div class="card ri">
+            <div class="row gap-12">
+              <span class="ri-kind accent">Link</span>
+              <span class="ri-title grow ellipsis">Forgot Password - OWASP Cheat Sheet Series</span>
+              <button class="send">Send to agent <span class="toggle on"></span></button>
+            </div>
+            <div class="row gap-12"><a class="mono small ellipsis grow">https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html</a><span class="ri-meta nowrap"><span class="dot green"></span>Title fetched · 10:06</span></div>
+            <div class="ri-body">Same response for known and unknown emails. Single-use tokens. Hash them before saving.</div>
+          </div>
+
+          <div class="card ri">
+            <div class="row gap-12">
+              <span class="ri-kind accent">Link</span>
+              <span class="ri-title grow ellipsis">secrets — Generate secure random numbers for managing secrets — Python 3.12 docs</span>
+              <button class="send">Send to agent <span class="toggle on"></span></button>
+            </div>
+            <div class="row gap-12"><a class="mono small ellipsis grow">https://docs.python.org/3/library/secrets.html</a><span class="ri-meta nowrap"><span class="dot green"></span>Title fetched · 10:07</span></div>
+            <div class="ri-body">Use <span class="mono">token_urlsafe</span>.</div>
+          </div>
+
+          <div class="card ri">
+            <div class="row gap-12">
+              <span class="ri-kind green">Snippet</span>
+              <span class="ri-title grow ellipsis">Staging log: users try /auth/forgot</span>
+              <span class="xs faint nowrap">6 lines</span>
+              <button class="send">Send to agent <span class="toggle on"></span></button>
+            </div>
+<pre class="snip">2026-10-10 18:02:11 INFO  uvicorn.access  10.0.3.7 - "POST /auth/forgot HTTP/1.1" 404
+2026-10-10 18:02:11 WARN  app.main        no route for POST /auth/forgot
+2026-10-10 18:02:40 INFO  uvicorn.access  10.0.3.7 - "GET /auth/reset?email=k.rao%40acme.dev HTTP/1.1" 404</pre>
+            <div class="ri-meta"><a>Show all 6 lines</a><span>·</span><span>Added 10:09 from <span class="mono">kubectl logs deploy/api | saarthi research add T-0012 --snippet</span></span></div>
+          </div>
+
+          <div class="card ri off">
+            <div class="row gap-12">
+              <span class="ri-kind green">Snippet</span>
+              <span class="ri-title grow ellipsis">Full staging log, 10 Oct</span>
+              <span class="xs faint nowrap">50,412 chars</span>
+              <button class="send">Send to agent <span class="toggle"></span></button>
+            </div>
+            <div class="ri-meta"><span>Saved whole (1,284 lines). If you switch it on, only the first 8,000 chars go into the Context Pack.</span></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

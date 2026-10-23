@@ -1,0 +1,111 @@
+<!-- {"title": "Shortcut sheet (?)", "note": "Press ? on any screen: grouped shortcuts (Global, Go to, Board, Task Room, Review) over the Board. Go to follows the nav: G H Home, G B Board, G M Memory, G P Playbooks. One list in shortcuts.ts feeds this sheet and the Command Bar; keys do not fire while typing. FSD M9 5.4, F18.2; TDD Decision 9", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "muted", "line": "build · 12m", "cost": "$0.48"}],
+ "daemon": {"sub": "127.0.0.1:7878 · v1.0.0"}} -->
+<style>
+  .sheet { width: min(980px, calc(100vw - 48px)); max-height: none; }
+  .sheet-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+  .sheet-col { padding: 14px 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+  .sheet-col + .sheet-col { border-left: 1px solid var(--line); }
+  .grp { display: flex; flex-direction: column; }
+  .grp .upper { margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .sk { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .grp .sk:last-child { border-bottom: none; }
+  .sk .keys { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .sk .keys .kbd { font-size: 11px; color: var(--text2); background: var(--surface2); border-color: var(--line2); border-bottom-width: 2px; padding: 1px 6px; }
+  .sk .keys .then { font-size: 11px; color: var(--faint); }
+  .sk.hl { background: var(--road-soft); margin: 0 -8px; padding: 5px 8px; border-radius: 7px; border-bottom-color: transparent; }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
+  </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>1</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8"><b>VERIFY</b><span>1</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>1</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead idle">16</span><span class="ti">Add audit log for admin actions</span></div><div class="ft"><span>P2</span><span>security</span><span class="r">2d</span></div></div><div class="bcard"><div class="tt"><span class="bead idle">14</span><span class="ti">Dark mode for the settings page</span></div><div class="ft"><span>P3</span><span>ui</span><span class="r">4d</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead info">15</span><span class="ti">Investigate slow dashboard query</span></div><div class="ft"><span class="agent cl sm">CL</span><span>research</span><span class="r">done</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>brief v1</span><span class="r">P2</span></div></div></div>
+    <div class="col8"><div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div><div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with line-item totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.48</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead info">10</span><span class="ti">Refactor Stripe webhook handlers</span></div><div class="ft"><span>checks 3 of 5</span><span class="r">$1.08</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cx sm">CX</span><span>30m</span><span class="r">$0.77</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Upgrade FastAPI to 0.115</span></div><div class="ft"><span>PR #108</span><span class="r">Tue</span></div></div></div>
+    <div class="col8"><div class="bcard"><div class="tt"><span class="bead road dim">08</span><span class="ti">1 memory note to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div></div>
+  </div>
+</div>
+
+<div class="scrim center">
+  <div class="modal sheet">
+    <div class="modal-head" style="padding:16px 20px 12px">
+      <h2>Keyboard shortcuts</h2>
+      <span class="kbd" style="font-size:11px">?</span>
+      <div class="grow"></div>
+      <div class="input" style="width:220px;color:var(--faint);font-size:12.5px">Find a shortcut</div>
+      <button class="btn ghost sm">Esc</button>
+    </div>
+    <div class="sheet-cols">
+      <div class="sheet-col">
+        <div class="grp">
+          <div class="upper">Global <span class="faint" style="letter-spacing:0;text-transform:none">· any screen</span></div>
+          <div class="sk"><span>Command Bar</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">K</span></span></div>
+          <div class="sk"><span>Quick capture, from any app</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">Alt</span><span class="kbd">N</span></span></div>
+          <div class="sk hl"><span>This sheet</span><span class="keys"><span class="kbd">?</span></span></div>
+          <div class="sk"><span>New task</span><span class="keys"><span class="kbd">N</span></span></div>
+          <div class="sk"><span>Search on this screen</span><span class="keys"><span class="kbd">/</span></span></div>
+          <div class="sk"><span>Close dialog or sheet</span><span class="keys"><span class="kbd">Esc</span></span></div>
+        </div>
+        <div class="grp">
+          <div class="upper">Go to</div>
+          <div class="sk"><span>Home</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">H</span></span></div>
+          <div class="sk"><span>Board</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">B</span></span></div>
+          <div class="sk"><span>Memory</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">M</span></span></div>
+          <div class="sk"><span>Playbooks</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">P</span></span></div>
+          <div class="sk"><span>Settings</span><span class="keys"><span class="kbd">G</span><span class="then">then</span><span class="kbd">S</span></span></div>
+        </div>
+      </div>
+      <div class="sheet-col">
+        <div class="grp">
+          <div class="upper">Board <span class="tag amber" style="letter-spacing:0;text-transform:none;font-size:10.5px">you are here</span></div>
+          <div class="sk"><span>Move selection</span><span class="keys"><span class="kbd">J</span><span class="kbd">K</span></span></div>
+          <div class="sk"><span>Open the selected task</span><span class="keys"><span class="kbd">Enter</span></span></div>
+          <div class="sk"><span>Filter the board</span><span class="keys"><span class="kbd">/</span></span></div>
+        </div>
+        <div class="grp">
+          <div class="upper">Task Room</div>
+          <div class="sk"><span>Start a run</span><span class="keys"><span class="kbd">R</span></span></div>
+          <div class="sk"><span>Send message to agent</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">Enter</span></span></div>
+          <div class="sk"><span>Stop run</span><span class="keys"><span class="kbd">Ctrl</span><span class="kbd">.</span></span></div>
+          <div class="sk"><span>Run checks</span><span class="keys"><span class="kbd">C</span></span></div>
+          <div class="sk"><span>Race: Claude and Codex</span><span class="keys"><span class="kbd">Shift</span><span class="kbd">R</span></span></div>
+          <div class="sk"><span>Tabs: Stream to Timeline</span><span class="keys"><span class="kbd">1</span><span class="then">–</span><span class="kbd">5</span></span></div>
+        </div>
+      </div>
+      <div class="sheet-col">
+        <div class="grp">
+          <div class="upper">Review</div>
+          <div class="sk"><span>Next / previous file</span><span class="keys"><span class="kbd">]</span><span class="kbd">[</span></span></div>
+          <div class="sk"><span>Ask for a second opinion</span><span class="keys"><span class="kbd">O</span></span></div>
+          <div class="sk"><span>Send "fix these" to the agent</span><span class="keys"><span class="kbd">F</span></span></div>
+          <div class="sk"><span>Approve</span><span class="keys"><span class="kbd">A</span></span></div>
+          <div class="sk"><span>Ship</span><span class="keys"><span class="kbd">Shift</span><span class="kbd">S</span></span></div>
+        </div>
+        <div class="card" style="padding:12px 14px;background:var(--panel);margin-top:auto">
+          <div class="small text2 pretty">Shortcuts do not fire while you type in a text box, the brief editor or the terminal.</div>
+          <div class="xs faint mt-8 pretty">The Command Bar shows the same keys next to each action. Both read one list.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+<!-- {"title": "Start run dialog", "note": "Opened by dropping T-0013 on Run (or the Run agent button). Agent, mode, extra instruction, interactive terminal switch. Same request as saarthi run. Race (M7) and playbooks (M6) are shown as later. F5.9, F2.4", "shell": "app", "nav": "board", "needs": 1, "cost": "$4.12", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0012", "title": "Reset API", "state": "needs you", "tone": "road", "line": "build · 18m", "cost": "$0.62"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "crashed", "tone": "bad", "line": "build · 4m", "cost": "$0.11"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"}]} -->
+<style>
+  .pick { display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); color: var(--text); text-align: left; }
+  .pick.on { border-color: var(--road); background: var(--road-soft); box-shadow: 0 0 0 3px var(--road-soft); }
+  .pick.off { opacity: .5; border-style: dashed; background: transparent; cursor: not-allowed; }
+  .pick .nm { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .pick .ds { font-size: 11.5px; color: var(--muted); }
+  .grid-agents { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .grid-modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .switch-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface2); }
+  .later { font-size: 10.5px; font-weight: 600; padding: 0 6px; border-radius: 9px; border: 1px solid var(--line2); color: var(--faint); text-transform: uppercase; letter-spacing: .04em; }
+  .cli-echo { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); padding: 8px 11px; border-radius: 9px; background: var(--term-bg); border: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Board</h1><span class="mono faint small">acme-billing</span>
+    <span class="input" style="width:220px;color:var(--faint)">Filter title, ID, label…</span>
+    <span class="chip on">All agents</span><span class="chip">Claude</span><span class="chip">Codex</span>
+    <span class="grow"></span><span class="small faint">Drag a bead to move it. The daemon checks every move.</span>
+  </div>
+  <div class="rim" style="padding:0 18px 10px">
+    <div class="seg8"><b>CAPTURE</b><span>2</span></div>
+    <div class="seg8"><b>RESEARCH</b><span>1</span></div>
+    <div class="seg8"><b>BRIEF</b><span>2</span></div>
+    <div class="seg8 live"><b>RUN</b><span>2</span></div>
+    <div class="seg8 bad"><b>VERIFY</b><span>1</span></div>
+    <div class="seg8 ok"><b>REVIEW</b><span>1</span></div>
+    <div class="seg8"><b>SHIP</b><span>3</span></div>
+    <div class="seg8"><b>REMEMBER</b><span>1</span></div>
+  </div>
+  <div class="cols8" style="flex:1;padding:0 18px 16px">
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead idle">15</span><span class="ti">Cache tax rates per region</span></div><div class="ft"><span>P3</span><span class="r">3d</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead idle">19</span><span class="ti">Retry webhook on 5xx</span></div><div class="ft"><span>P2</span><span class="r">1d</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead info">31</span><span class="ti">Upgrade Alembic to 1.14</span></div><div class="ft"><span class="agent cx sm">CX</span><span>research</span><span class="r">done</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard"><div class="tt"><span class="bead idle">24</span><span class="ti">Show task cost on cards</span></div><div class="ft"><span>brief v2</span><span class="r">P2</span></div></div>
+      <div class="bcard ghost"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>moving…</span></div></div>
+    </div>
+    <div class="col8 drop">
+      <div class="flag road" style="padding:2px 2px 0">Drop to start a run</div>
+      <div class="bcard needs"><span class="flag road"><span class="dot road pulse"></span>Needs you</span><div class="tt"><span class="bead road">12</span><span class="ti">Add password reset API</span></div><div class="ft"><span class="agent cl sm">CL</span><span>18m</span><span class="r">$0.62</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead road dim">18</span><span class="ti">Invoice PDF export with totals</span></div><div class="ft"><span class="agent cl sm">CL</span><span>12m</span><span class="r">$0.38</span></div></div>
+      <div class="bcard lifted"><div class="tt"><span class="bead idle">13</span><span class="ti">Export invoices as CSV</span></div><div class="ft"><span>opens Start run</span></div></div>
+    </div>
+    <div class="col8">
+      <div class="bcard failed"><span class="flag bad">Run crashed</span><div class="tt"><span class="bead bad">27</span><span class="ti">Event replay after reconnect</span></div><div class="ft"><span class="agent cx sm">CX</span><span>4m</span><span class="r">$0.11</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok">09</span><span class="ti">Rate-limit the login endpoint</span></div><div class="ft"><span class="agent cl sm">CL</span><span class="r">2h</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead ok dim">06</span><span class="ti">Fix invoice rounding</span></div><div class="ft"><span>PR #112</span><span class="r">Tue</span></div></div>
+      <div class="bcard"><div class="tt"><span class="bead ok dim">08</span><span class="ti">Add audit log table</span></div><div class="ft"><span>PR #109</span><span class="r">Mon</span></div></div>
+    </div>
+    <div class="col8 dim">
+      <div class="bcard"><div class="tt"><span class="bead road dim">06</span><span class="ti">2 memory notes to approve</span></div><div class="ft"><span>learnings/</span><span class="r">new</span></div></div>
+    </div>
+  </div>
+</div>
+<div class="scrim center">
+  <div class="modal wide" style="max-height:none">
+    <div class="modal-head" style="align-items:flex-start;padding-top:18px">
+      <div class="grow">
+        <div class="row"><span class="bead idle">13</span><span class="mono faint small">T-0013 · acme-billing · Brief → Run</span></div>
+        <h2 style="font-size:19px;margin-top:6px">Start a run · Export invoices as CSV</h2>
+      </div>
+      <button class="btn xs ghost">Esc</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <span class="label">Agent</span>
+        <div class="grid-agents">
+          <button class="pick on"><span class="nm"><span class="agent sm cl">CL</span>Claude Code</span><span class="ds">claude 2.0.14 · logged in</span></button>
+          <button class="pick"><span class="nm"><span class="agent sm cx">CX</span>Codex</span><span class="ds">codex 0.46.0 · logged in</span></button>
+          <button class="pick off" disabled><span class="nm">Race both <span class="later">later</span></span><span class="ds">Comes in M7</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">Mode</span>
+        <div class="grid-modes">
+          <button class="pick"><span class="nm">Plan</span><span class="ds">Plan only, no code</span></button>
+          <button class="pick on"><span class="nm">Build</span><span class="ds">Write code</span></button>
+          <button class="pick"><span class="nm">Fix</span><span class="ds">Fix a bug or error</span></button>
+          <button class="pick"><span class="nm">Research</span><span class="ds">Read-only</span></button>
+        </div>
+        <span class="hint">After the run, Build and Fix move the task to Verify. Plan moves it back to Brief. Research does not move it.</span>
+      </div>
+
+      <div class="field">
+        <span class="label">Extra instruction (optional)</span>
+        <textarea class="textarea" style="min-height:58px">Use the csv module from the standard library. Same columns as GET /invoices.</textarea>
+      </div>
+
+      <div class="switch-row">
+        <span class="toggle" style="margin-top:2px"></span>
+        <div>
+          <div class="small strong">Interactive terminal</div>
+          <div class="xs muted pretty" style="margin-top:2px">Runs <span class="mono">claude</span> in a real terminal (PTY). You type in the Terminal tab. This run has no clean cards, no Needs You and no resume.</div>
+        </div>
+      </div>
+
+      <div class="row gap-12">
+        <div class="field grow">
+          <span class="label row gap-4">Playbook <span class="later">later</span></span>
+          <div class="input" style="color:var(--faint);opacity:.6">No playbook · playbooks come in M6</div>
+        </div>
+        <div class="field grow">
+          <span class="label">Same as</span>
+          <div class="cli-echo">saarthi run T-0013 --agent claude --mode build --message "…"</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between">
+      <span class="xs faint">New worktree <span class="mono">saarthi/T-0013-export-invoices-as-csv</span> · uses the last free slot (4 of 4)</span>
+      <div class="row">
+        <button class="btn ghost">Cancel</button>
+        <button class="btn primary">Start run</button>
+      </div>
+    </div>
+  </div>
+</div>

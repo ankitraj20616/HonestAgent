@@ -1,0 +1,48 @@
+<!-- {"title": "Proof · green", "note": "Proof tab after fix round 1: Trust ring (checks + criteria; second opinion arrives in M5), stats, checks, brief criteria to confirm. The gate passed and the task moved to Review. F7.3, F7.4, F7.7", "shell": "app", "nav": "board", "needs": 0, "cost": "$4.80", "slots": 4,
+ "agents": [
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "fixing", "tone": "bad", "line": "fix 1 of 3 · 6m", "cost": "$0.15"},
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 20m", "cost": "$0.51"}]} -->
+<div class="fill">
+  <div class="room-head">
+    <span class="id">T-0012</span><h1>Add password reset API</h1><span class="stage review">Review</span>
+    <div class="journey-box"><x-journey stage="review" tone="ok"></x-journey>
+      <div class="lbl"><b>Review · 6 of 8</b>Proof is green · waiting for your eyes</div></div>
+    <span class="grow"></span>
+    <span class="room-meta">Time <b>28m</b></span><span class="room-meta">Cost <b>$0.95</b></span>
+    <button class="btn">Run agent</button>
+  </div>
+  <div class="tabs"><span class="tab">Stream</span><span class="tab">Terminal</span><span class="tab on">Proof <span class="dot ok"></span></span><span class="tab">Code <span class="n">6</span></span><span class="tab">Docs <span class="n">6</span></span><span class="tab">Timeline</span></div>
+  <div class="proof">
+    <div class="proof-l">
+      <x-trust checks="50" criteria="28" second="0" size="250"></x-trust>
+      <div class="legend">
+        <div class="lg-row"><i class="sw-ok"></i><span>Required checks · 2 of 2 pass</span><b>50 / 50</b></div>
+        <div class="lg-row"><i class="sw-road"></i><span>Brief criteria · 4 met, 1 not sure</span><b>28 / 35</b></div>
+        <div class="lg-row"><i class="sw-off"></i><span class="faint">Second opinion · arrives in M5</span><b class="faint">0 / 15</b></div>
+      </div>
+      <div class="gate"><b>Gate passed · moved to Review by itself</b>All required checks are green. The Trust score helps you decide; it never blocks you.</div>
+    </div>
+    <div class="proof-r">
+      <div class="stats4">
+        <div><b>6</b><span>files changed</span></div>
+        <div><b><span class="ok-t">+171</span> <span class="bad-t" style="font-size:18px">−4</span></b><span>lines</span></div>
+        <div><b>7</b><span>tests added</span></div>
+        <div><b>1</b><span>fix round used</span></div>
+      </div>
+      <div><div class="upper">Checks · card #2 · 11:06</div>
+        <div class="ck-row"><span class="st">✓</span><b>lint</b><span class="cmd">uv run ruff check .</span><span class="req">required</span><span class="tm">0.3s</span></div>
+        <div class="ck-row"><span class="st">✓</span><b>tests</b><span class="cmd">uv run pytest -q</span><span class="req">required</span><span class="tm">6.4s</span></div>
+        <div class="ck-row"><span class="st">✓</span><b>types</b><span class="cmd">uv run pyright</span><span class="req">optional</span><span class="tm">4.1s</span></div>
+      </div>
+      <div><div class="row between"><span class="upper">Brief criteria · filled by side run R-0029, you confirm</span><button class="btn sm primary">Confirm coverage</button></div>
+        <div class="card pad-0 mt-8">
+          <div class="crit-row"><span>POST /auth/password-reset sends a single-use link</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>The link expires after 30 minutes</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>A used or expired token returns 410</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>Unknown email still returns 202 (no user enumeration)</span><span class="seg"><span class="on met">Met</span><span>Not sure</span><span>Not met</span></span></div>
+          <div class="crit-row"><span>Tests cover all of the above <span class="faint small">· "no test for the email text"</span></span><span class="seg"><span>Met</span><span class="on ns">Not sure</span><span>Not met</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,122 @@
+<!-- {"title": "Memory screen", "note": "The project's core_docs/ tree from the main checkout, a markdown view of memory/project_memory.md, what always goes into the Context Pack, and recent updates made by Saarthi. F12.1, F12.2", "shell": "app", "nav": "memory", "needs": 0, "cost": "$4.23", "slots": 4,
+ "agents": [
+  {"tag": "cl", "task": "T-0018", "title": "Invoice PDF", "state": "writing tests", "tone": "ok", "line": "build · 12m", "cost": "$0.38"},
+  {"tag": "cx", "task": "T-0027", "title": "Event replay", "state": "running", "tone": "muted", "line": "fix · 4m", "cost": "$0.11"}]} -->
+<style>
+  .mem { display: grid; grid-template-columns: 280px minmax(0, 1fr) 300px; flex: 1; min-height: 0; border-top: 1px solid var(--line); }
+  .mem-tree { border-right: 1px solid var(--line); padding: 14px 10px; overflow: auto; background: var(--panel); display: flex; flex-direction: column; gap: 1px; }
+  .tf { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: none; border-radius: 8px; background: transparent;
+        color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: left; }
+  .tf .sz { margin-left: auto; font-size: 10.5px; color: var(--faint); white-space: nowrap; flex-shrink: 0; }
+  .tf.dir { color: var(--faint); }
+  .tf.in1 { padding-left: 24px; }
+  .tf.on { background: var(--surface-3); color: var(--text); }
+  .mem-doc { overflow: auto; padding: 20px 32px 40px; }
+  .md { max-width: 720px; display: flex; flex-direction: column; gap: 8px; }
+  .md h2 { font-size: 22px; font-weight: 600; margin: 10px 0 2px; }
+  .md h3 { font-size: 15px; font-weight: 600; color: var(--accent-text); margin: 12px 0 0; }
+  .md p { font-size: 14px; line-height: 1.6; color: var(--text-2); text-wrap: pretty; }
+  .md .li { display: grid; grid-template-columns: 14px minmax(0, 1fr); font-size: 14px; line-height: 1.55; color: var(--text-2); }
+  .md .li > span:first-child { color: var(--faint); }
+  .md code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; padding: 0 4px; border-radius: 4px; background: var(--surface-3); }
+  .mem-side { border-left: 1px solid var(--line); padding: 16px; overflow: auto; display: flex; flex-direction: column; gap: 18px; background: var(--panel); }
+  .mem-side h3 { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  .pathbox { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow-wrap: anywhere; }
+  .log { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; background: var(--surface); }
+</style>
+<div class="fill">
+  <div class="bar-head">
+    <h1 class="h-title">Memory</h1><span class="mono faint small">acme-billing · core_docs/</span>
+    <span class="grow"></span><span class="small faint">What the agents remember. Plain markdown in your main checkout.</span>
+    <button class="btn">Open folder</button>
+  </div>
+<div class="mem">
+  <nav class="mem-tree">
+    <div class="row between" style="padding:0 8px 8px"><span class="upper">core_docs/</span><span class="xs faint">13 files</span></div>
+    <button class="tf"><span class="ellipsis">README.md</span><span class="sz">2 KB</span></button>
+    <button class="tf"><span class="ellipsis">FUNCTIONAL_SPECIFICATIONS.md</span><span class="sz">31 KB</span></button>
+    <button class="tf"><span class="ellipsis">TDD-tech-design-doc.md</span><span class="sz">34 KB</span></button>
+    <button class="tf"><span class="ellipsis">TECH_STACK.md</span><span class="sz">3 KB</span></button>
+    <button class="tf"><span class="ellipsis">MILESTONES.md</span><span class="sz">5 KB</span></button>
+    <button class="tf dir">▾ memory/</button>
+    <button class="tf in1 on"><span class="ellipsis">project_memory.md</span><span class="sz">10 KB</span></button>
+    <button class="tf dir">▾ learnings/</button>
+    <button class="tf in1"><span class="ellipsis">auth.md</span><span class="sz">2 KB</span></button>
+    <button class="tf in1"><span class="ellipsis">testing.md</span><span class="sz">1 KB</span></button>
+    <button class="tf dir">▾ decisions/</button>
+    <button class="tf in1"><span class="ellipsis">ADR-001-backend-language.md</span><span class="sz">2 KB</span></button>
+    <button class="tf in1"><span class="ellipsis">ADR-002-session-tokens.md</span><span class="sz">12 KB</span></button>
+    <button class="tf dir">▾ plans/</button>
+    <button class="tf in1"><span class="ellipsis">m1_accounts.md</span><span class="sz">6 KB</span></button>
+    <button class="tf in1"><span class="ellipsis">m2_invoices.md</span><span class="sz">4 KB</span></button>
+    <button class="tf dir">▾ timeline/</button>
+    <button class="tf in1"><span class="ellipsis">timeline.md</span><span class="sz">1 KB</span></button>
+    <div class="xs faint" style="padding:12px 8px 0">Main checkout · branch <span class="mono">main</span></div>
+  </nav>
+
+  <section class="mem-doc">
+    <div class="md">
+      <div class="row gap-12">
+        <span class="mono small muted grow">core_docs/memory/project_memory.md</span>
+        <span class="xs faint">10,214 chars · changed 10 Oct</span>
+        <div class="seg"><button class="on">View</button><button>Edit</button></div>
+      </div>
+      <div class="banner info" style="padding:8px 12px;font-size:12.5px">
+        <span class="dot blue"></span>
+        <span>Edits change files in your main checkout (branch: <span class="mono">main</span>). Saarthi does not commit them.</span>
+      </div>
+
+      <h2>Project memory</h2>
+      <p>Big wins and hard bugs for acme-billing. Each entry: Problem → Root cause → Fix → Result.</p>
+
+      <h3>2026-10-10 - T-0011 Fix flaky login test</h3>
+      <div class="li"><span>–</span><span>Problem: <code>test_login_rate_limit</code> fails about 1 in 10 runs.</span></div>
+      <div class="li"><span>–</span><span>Root cause: the limiter used wall-clock time; tests ran across a second boundary.</span></div>
+      <div class="li"><span>–</span><span>Fix: inject a clock and freeze it in tests with the <code>freezer</code> fixture.</span></div>
+      <div class="li"><span>–</span><span>Result: 200 runs, 0 failures.</span></div>
+
+      <h3>2026-10-09 - T-0008 Upgrade FastAPI to 0.115</h3>
+      <div class="li"><span>–</span><span>Problem: startup events were removed.</span></div>
+      <div class="li"><span>–</span><span>Fix: moved to the <code>lifespan</code> context manager in <code>app/main.py</code>.</span></div>
+      <div class="li"><span>–</span><span>Result: all 312 tests green, no behaviour change.</span></div>
+
+      <h3>2026-10-07 - T-0006 Add pagination to /invoices</h3>
+      <div class="li"><span>–</span><span>Solution: cursor pagination on <code>(created_at, id)</code>. Offset was slow past page 400.</span></div>
+      <div class="li"><span>–</span><span>Reuse: <code>app/pagination.py: paginate()</code> for every list endpoint.</span></div>
+
+      <h3>2026-10-03 - T-0005 Sign-up email verification</h3>
+      <div class="li"><span>–</span><span>Problem: verification emails went to spam on Gmail.</span></div>
+      <div class="li"><span>–</span><span>Root cause: the From domain had no DKIM record.</span></div>
+      <div class="li"><span>–</span><span>Fix: DKIM on <code>mail.acme.dev</code>; all mail goes through <code>app/mail.send_mail</code>.</span></div>
+    </div>
+  </section>
+
+  <aside class="mem-side">
+    <div class="col">
+      <h3>Always in the Context Pack</h3>
+      <div class="pathbox">CLAUDE.md</div>
+      <div class="pathbox">core_docs/FUNCTIONAL_SPECIFICATIONS.md</div>
+      <div class="pathbox">core_docs/TDD-tech-design-doc.md</div>
+      <div class="xs faint pretty">Listed by path, never inlined. Other files are picked per run by keyword match.</div>
+    </div>
+    <div class="col">
+      <h3>Never matched</h3>
+      <div class="pathbox faint">core_docs/timeline/**</div>
+    </div>
+    <div class="col">
+      <h3>Recent updates by Saarthi</h3>
+      <div class="log"><div class="mono xs muted">learnings/testing.md</div><div>Added rule: freeze time, never sleep</div><div class="xs faint">10 Oct · from T-0011 · approved by you</div></div>
+      <div class="log"><div class="mono xs muted">memory/project_memory.md</div><div>Flaky login test (T-0011)</div><div class="xs faint">10 Oct · from T-0011</div></div>
+      <div class="log"><div class="mono xs muted">timeline/timeline.md</div><div>T-0008 shipped · PR #207</div><div class="xs faint">9 Oct</div></div>
+    </div>
+    <div class="col">
+      <h3>Settings</h3>
+      <div class="term" style="border-radius:10px"><div class="term-body" style="padding:8px 10px;font-size:11px;line-height:1.55"><span class="c">[memory]</span>
+max_files = <span class="y">5</span>
+max_chars = <span class="y">20000</span>
+auto_update_on_ship = <span class="g">true</span></div></div>
+      <div class="xs faint">From <span class="mono">.saarthi/project.toml</span></div>
+    </div>
+  </aside>
+</div>
+</div>

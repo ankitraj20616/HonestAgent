@@ -1,0 +1,72 @@
+<!-- {"title": "First run 2/3 - Tools ready", "note": "Wizard step 2: tool rows from /health (same TOOL_CHECKS as saarthi doctor). git + Claude logged in, so Continue is on; codex and bwrap show their fix with a copy button. FSD M9 5.3 step 2; TDD Decision 7", "shell": "bare"} -->
+<style>
+  .cmd { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--term-text); }
+  .cmd .pr { color: var(--faint); }
+  .try { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .x { color: var(--red); font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .num { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+
+
+  .tools { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .tool { display: grid; grid-template-columns: 62px 168px minmax(0, 1fr) 150px; gap: 12px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; }
+  .tool:first-child { border-top: none; }
+  .tool.head { padding: 8px 14px; font-size: 11.5px; color: var(--faint); }
+  .tool .fix { grid-column: 3 / 5; display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 10px; margin-top: -2px; border-radius: 6px; border: 1px solid var(--line); background: var(--term-bg); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--term-text); }
+  .tool .fix .k { color: var(--faint); font-family: 'Inter', sans-serif; font-size: 11.5px; }
+  .tool .fix .btn { font-family: 'Inter', sans-serif; }
+  .st { display: inline-flex; align-items: center; justify-content: center; width: 50px; padding: 1px 0; border-radius: 10px; border: 1px solid currentColor; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+  .st.ok { color: var(--green); background: var(--green-soft); }
+  .st.warn { color: var(--accent-text); background: var(--accent-soft); }
+  .st.fail { color: var(--red); background: var(--red-soft); }
+</style>
+<div class="bare center">
+  <div class="wiz">
+    <aside class="wiz-side">
+      <div class="brand-row"><svg class="logo-w" width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><circle class="lw-rim" cx="17" cy="17" r="14"/><g class="lw-spoke"><line x1="17" y1="3" x2="17" y2="31"/><line x1="3" y1="17" x2="31" y2="17"/><line x1="7.1" y1="7.1" x2="26.9" y2="26.9"/><line x1="26.9" y1="7.1" x2="7.1" y2="26.9"/></g><circle class="lw-hub" cx="17" cy="17" r="4.5"/></svg><div><div class="strong" style="font-size:15px">Set up Saarthi</div><div class="xs faint">First run · about 2 minutes</div></div></div>
+      <div class="wheel-box"><x-wheel data='{"size": 210, "capture_plus": false, "lit": ["capture", "research"], "hub": {"big": "2", "sub": "OF 3"}, "beads": []}'></x-wheel></div>
+      <div class="vsteps">
+        <div class="step done"><span class="n">✓</span><span><b>Daemon</b><small>The background service</small></span></div>
+        <div class="step on"><span class="n">2</span><span><b>Tools</b><small>git and one agent</small></span></div>
+        <div class="step"><span class="n">3</span><span><b>First project</b><small>A git repo to work on</small></span></div>
+      </div>
+      <div class="xs faint pretty" style="margin-top:auto">The Wheel draws one more spoke for each step you finish.</div>
+    </aside>
+    <div class="wiz-main">
+    <div class="wiz-body">
+      <div class="row between base">
+        <div>
+          <h1 style="font-size:22px;font-weight:600;letter-spacing:-.01em">Check your tools</h1>
+          <div class="muted mt-4">You need <span class="text2">git</span> and <span class="text2">one agent that is logged in</span>. The rest can wait.</div>
+        </div>
+        <div class="row small muted"><span class="dot green"></span><span>Daemon <span class="mono text2">1.0.0</span> · <span class="mono">saarthid.service</span> active</span></div>
+      </div>
+
+      <div class="tools">
+        <div class="tool head"><span>Status</span><span>Tool</span><span>Found</span><span>Needed for</span></div>
+        <div class="tool"><span class="st ok">ok</span><span class="row"><span class="mono strong">git</span><span class="tag amber">required</span></span><span class="mono small text2">2.43.0</span><span class="small muted">worktrees, commits</span></div>
+        <div class="tool"><span class="st ok">ok</span><span class="row"><span class="mono strong">claude</span><span class="tag">one agent</span></span><span class="small text2"><span class="mono">2.1.12</span> · logged in</span><span class="small muted">runs with Claude</span></div>
+        <div class="tool"><span class="st warn">warn</span><span class="row"><span class="mono strong">codex</span><span class="tag">one agent</span></span><span class="small text2"><span class="mono">0.46.0</span> · not logged in</span><span class="small muted">runs with Codex</span>
+          <div class="fix"><span class="k">Fix</span><span class="grow">codex login</span><button class="btn xs">Copy</button></div></div>
+        <div class="tool"><span class="st ok">ok</span><span class="row"><span class="mono strong">gh</span><span class="tag">optional</span></span><span class="small text2"><span class="mono">2.45.0</span> · logged in as ankit</span><span class="small muted">opening PRs at Ship</span></div>
+        <div class="tool"><span class="st ok">ok</span><span class="row"><span class="mono strong">rg</span><span class="tag">optional</span></span><span class="mono small text2">14.1.0</span><span class="small muted">Code Peek search</span></div>
+        <div class="tool"><span class="st fail">fail</span><span class="row"><span class="mono strong">bwrap</span><span class="tag">optional</span></span><span class="small text2">installed, but user namespaces are blocked by AppArmor</span><span class="small muted">the Full profile</span>
+          <div class="fix"><span class="k">Fix</span><span class="grow" style="font-family:'Inter',sans-serif;font-size:12.5px">Follow <span class="mono accent">USER_GUIDE.md › Sandbox on Ubuntu 24.04</span>. Until then the <span class="mono">full</span> profile stays off.</span><button class="btn xs">Open guide</button></div></div>
+      </div>
+
+      <div class="banner ok">
+        <span class="dot green"></span>
+        <span class="grow"><span class="strong">You can continue.</span> <span class="text2">git and Claude are ready. Codex and bwrap can be fixed later in Settings › Health.</span></span>
+        <span class="mono xs muted nowrap">same as saarthi doctor</span>
+      </div>
+    </div>
+
+    <div class="wiz-foot">
+      <span class="small muted">Installed a tool just now? Run <span class="mono text2">saarthi daemon install-service --refresh-env</span></span>
+      <div class="grow"></div>
+      <button class="btn ghost">Back</button>
+      <button class="btn">Check again</button>
+      <button class="btn primary">Continue</button>
+    </div>
+    </div>
+  </div>
+</div>

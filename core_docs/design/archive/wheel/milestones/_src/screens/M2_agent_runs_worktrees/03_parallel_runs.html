@@ -1,0 +1,123 @@
+<!-- {"title": "Parallel runs + worktrees", "note": "tmux with Claude on T-0012 and Codex on T-0027 at the same time, each in its own worktree; task list shows 4 of 4 slots, a fifth run is queued, a Codex message is queued until the step ends, and saarthi workspace shows branch, path, ahead/behind, changes. F5.7, F5.9, F5.10, F6.1, F6.3, F14.2", "shell": "bare"} -->
+<style>
+  .sp { height: 100vh; padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 14px; }
+  .sp .window { flex: 1; min-height: 0; background: var(--term-bg); }
+  .tmux { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 318px) minmax(0, 1fr);
+          gap: 1px; background: var(--line-strong); }
+  .pane { background: var(--term-bg); color: var(--term-text); display: flex; flex-direction: column; min-height: 0; min-width: 0;
+          font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.58; }
+  .pane-t { display: flex; align-items: center; gap: 8px; padding: 4px 12px; font-size: 11px; color: var(--faint); border-bottom: 1px dashed var(--line); }
+  .pane.on .pane-t { color: var(--accent-text); border-bottom-color: var(--accent-line); }
+  .pane-b { flex: 1; min-height: 0; padding: 8px 12px; white-space: pre; overflow: hidden; }
+  .pane .p { color: var(--accent-text); } .pane .c { color: var(--blue); } .pane .g { color: var(--green); }
+  .pane .r { color: var(--red); } .pane .y { color: var(--accent-text); } .pane .d { color: var(--faint); }
+  .pane .b { font-weight: 700; color: var(--text); } .pane .m { color: var(--muted); } .pane .i { color: var(--faint); font-style: italic; }
+  .foot { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+  .tstat { height: 22px; display: flex; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--surface-3); color: var(--text-2); }
+  .tstat > span { padding: 0 10px; height: 100%; display: flex; align-items: center; }
+  .tstat .sess { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+</style>
+<div class="sp">
+  <div class="window">
+    <div class="window-bar">
+      <div class="lights"><span></span><span></span><span></span></div>
+      <div class="wtitle mono" style="font-size:11.5px">tmux · saarthi</div>
+      <span class="mono xs faint">2 agents · 2 worktrees</span>
+    </div>
+    <div class="tmux">
+      <!-- top left: claude -->
+      <div class="pane on">
+        <div class="pane-t"><span class="dot amber pulse"></span><span>0.0 · saarthi run watch T-0012</span><span class="grow"></span><span class="agent cl sm">CL</span></div>
+<div class="pane-b"><span class="p">$</span> saarthi run watch T-0012 --live-only
+<span class="d">Run 01JC7Q2M4R · claude · build · acme-billing</span>
+<span class="d">10:56:10</span>  <span class="c">tool</span>   <span class="b">Read </span> app/auth/routes.py
+<span class="d">10:56:18</span>  <span class="c">tool</span>   <span class="b">Edit </span> app/auth/routes.py
+<span class="d">10:56:18</span>  <span class="g">file</span>   app/auth/routes.py  <span class="g">(+6</span> <span class="r">-2)</span>
+<span class="d">10:56:30</span>  <span class="c">tool</span>   <span class="b">Bash </span> uv run ruff check app/auth
+<span class="d">10:56:31</span>  <span class="d">out</span>    <span class="g">All checks passed!</span>
+<span class="d">10:56:40</span>  msg    Adding a test for token reuse.
+<span class="d">10:56:52</span>  <span class="c">tool</span>   <span class="b">Edit </span> tests/auth/test_reset.py
+<span class="d">10:56:52</span>  <span class="g">file</span>   tests/auth/test_reset.py  <span class="g">(+18</span> <span class="r">-0)</span>
+<span class="d">10:57:04</span>  <span class="c">tool</span>   <span class="b">Bash </span> uv run pytest -q tests/auth
+<span class="d">10:57:08</span>  <span class="d">out</span>    <span class="g">8 passed in 0.47s</span>
+<span class="d">10:57:11</span>  <span class="i">think  Reuse must fail after the first confirm. Check used_at…</span>
+<span class="foot"><span class="p">◐ running</span>  claude · build  <span class="b">16m 04s</span>  <span class="m">31.5k in · 6.8k out</span>  $0.29</span></div>
+      </div>
+
+      <!-- top right: codex -->
+      <div class="pane">
+        <div class="pane-t"><span class="dot amber pulse"></span><span>0.1 · saarthi run watch T-0027</span><span class="grow"></span><span class="agent cx sm">CX</span></div>
+<div class="pane-b"><span class="p">$</span> saarthi run watch T-0027 --live-only
+<span class="d">Run 01JC7R0D2S · codex · fix · saarthi</span>
+<span class="d">10:55:02</span>  <span class="c">tool</span>   <span class="b">shell</span> rg -n "last_event_id" daemon/src
+<span class="d">10:55:03</span>  <span class="d">out</span>    <span class="m">api/routes/ws.py:88:  after = msg.last_event_id</span>
+<span class="d">10:55:20</span>  <span class="i">think  The queue is drained before the replay query…</span>
+<span class="d">10:55:41</span>  msg    Replay must register the live queue first.
+<span class="d">10:55:58</span>  <span class="g">file</span>   daemon/src/saarthi/api/routes/ws.py  <span class="g">(+14</span> <span class="r">-3)</span>
+<span class="d">10:56:05</span>  <span class="c">tool</span>   <span class="b">shell</span> uv run pytest -q tests/integration/test_ws.py
+<span class="d">10:56:31</span>  <span class="d">out</span>    <span class="g">6 passed in 2.04s</span>
+<span class="d">10:56:44</span>  <span class="g">file</span>   daemon/tests/integration/test_ws.py  <span class="g">(+22</span> <span class="r">-0)</span>
+<span class="d">10:57:02</span>  <span class="c">tool</span>   <span class="b">shell</span> uv run pytest -q tests/integration
+<span class="d">10:57:09</span>  <span class="d">out</span>    <span class="g">41 passed in 6.88s</span>
+<span class="d">10:57:12</span>  <span class="b">you</span>    <span class="m">Also test a gap of 0 events.</span>  <span class="y">queued</span>
+<span class="foot"><span class="p">◐ running</span>  codex · fix  <span class="b">3m 41s</span>  <span class="m">21.0k in · 2.2k out</span>  <span class="d">cost -</span></span></div>
+      </div>
+
+      <!-- bottom left: tasks + queue -->
+      <div class="pane">
+        <div class="pane-t"><span>0.2 · bash · ~/OFFICE/saarthi</span></div>
+<div class="pane-b"><span class="p">$</span> saarthi task list --all-projects --stage running
+<span class="b">acme-billing</span>
+<span class="b">ID      STAGE    P   TITLE                                      UPDATED</span>
+T-0012  <span class="p">Running</span>  <span class="y">P1</span>  Add password reset API                     <span class="d">now</span>
+T-0018  <span class="p">Running</span>  P2  Invoice PDF export with line-item totals   <span class="d">12m ago</span>
+<span class="b">saarthi</span>
+<span class="b">ID      STAGE    P   TITLE                                      UPDATED</span>
+T-0027  <span class="p">Running</span>  P2  Event replay after WebSocket reconnect     <span class="d">now</span>
+T-0031  <span class="p">Running</span>  P2  Upgrade Alembic to 1.14                    <span class="d">3m ago</span>
+<span class="p">$</span> saarthi run T-0024 --agent codex --mode build --detach
+Run 01JC7S4B9N <span class="y">queued</span> (4 of 4 running). It will start by itself.
+<span class="p">$</span> saarthi run say T-0027 "Also test a gap of 0 events."
+<span class="y">Queued.</span> Codex will get it when this step ends.
+<span class="p">$</span> saarthi run T-0012 --agent codex
+<span class="r">T-0012 already has an active run: 01JC7Q2M4R (running).</span>
+<span class="d">Hint: saarthi run watch T-0012</span>
+<span class="p">$</span> <span class="cursor" style="height:13px"></span></div>
+      </div>
+
+      <!-- bottom right: workspaces -->
+      <div class="pane">
+        <div class="pane-t"><span>0.3 · bash · ~/OFFICE/saarthi</span></div>
+<div class="pane-b"><span class="p">$</span> saarthi workspace T-0012
+<span class="d">Branch    </span> saarthi/T-0012-add-password-reset-api  <span class="d">(base main)</span>
+<span class="d">Path      </span> ~/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012
+<span class="d">Ahead     </span> 0   <span class="d">Behind</span> 2
+<span class="d">Changed   </span> <span class="y">8 files</span> (uncommitted)
+<span class="d">Checkpoint</span> none yet <span class="d">(made when a run ends)</span>
+<span class="p">$</span> saarthi workspace T-0027
+<span class="d">Branch    </span> saarthi/T-0027-event-replay-after-websocket-reconnect
+<span class="d">Path      </span> ~/.local/share/saarthi/worktrees/saarthi-7kq2px/T-0027
+<span class="d">Ahead     </span> 0   <span class="d">Behind</span> 0
+<span class="d">Changed   </span> <span class="y">2 files</span> (uncommitted)
+<span class="d">Checkpoint</span> 1 <span class="d">(09:58, end of run 01JC51QK2D)</span>
+<span class="p">$</span> git -C ~/OFFICE/acme-billing status --short
+<span class="p">$</span> git -C ~/OFFICE/acme-billing worktree list --porcelain | grep ^worktree
+worktree /home/me/OFFICE/acme-billing
+worktree /home/me/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0012
+worktree /home/me/.local/share/saarthi/worktrees/acme-billing-3f9k2a/T-0018
+<span class="p">$</span> <span class="cursor" style="height:13px"></span></div>
+      </div>
+    </div>
+    <div class="tstat">
+      <span class="sess">[saarthi]</span><span>0:runs*</span><span class="faint">1:shell-</span>
+      <span class="grow"></span>
+      <span class="faint">daemon 127.0.0.1:7878</span><span>4 of 4 slots · 1 queued</span><span>10:57 11-Oct-26</span>
+    </div>
+  </div>
+
+  <div class="grid-3" style="gap:22px">
+    <div class="annot">Each task has its own branch and worktree, so two agents never touch the same files. The main repo folder stays clean: <span class="mono">git status --short</span> prints nothing.</div>
+    <div class="annot">At most 4 runs at once (<span class="mono">max_parallel_runs</span>). A fifth waits in the queue and starts by itself. One active run per task: a second one is refused with the active run's ID.</div>
+    <div class="annot">Codex cannot take a message mid-step, so <span class="mono">run say</span> queues it and sends it as a resume when the step ends. Codex reports tokens but no cost, so cost shows <span class="mono">-</span>.</div>
+  </div>
+</div>
