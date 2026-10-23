@@ -3,7 +3,7 @@
 **Date:** 2026-10-12
 **Status:** Approved in brainstorming (owner said "start implementation")
 **Changes:** FSD (new F22, F23; F3.3 becomes Must), core TDD, MILESTONES.md, milestone docs M2, M3, M6, a new milestone **M10**, the Wheel design screens.
-**Look:** The Wheel (`2026-10-11-wheel-ui-design.md`). Nothing in the look changes. Only new screens and one new tab.
+**Look:** ~~The Wheel~~. Since 2026-10-23 the look is the Simple UI (`2026-10-23-simple-ui-design.md`). The features below still hold, but the screens are now prototype views: Docs → `docs`; Tickets → `tickets`, `ticketStart`, `ticketsOffline`, `writeBack`, `settingsJira`; plus the ticket chip on the task page and the Jira card on `done`. Where this doc says "Task Room", "Tickets panel" or "Wheel", read: task page, Jira tickets page, and no Wheel.
 
 ---
 

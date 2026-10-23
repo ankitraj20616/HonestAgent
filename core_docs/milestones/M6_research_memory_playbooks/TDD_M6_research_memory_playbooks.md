@@ -1,15 +1,17 @@
-# TDD — M6: Research Desk + Memory + Playbooks
+# TDD — M6: Just research + Lessons and notes + Saved instructions
 
 **Document type:** Technical Design Document (TDD)
 **Milestone:** M6 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`): desktop files renamed to the new screens; Lessons learned card on Done; no daemon change
 **Estimated effort:** 21 hours (2 rough weeks at ~10 h/week)
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
 **Related documents:** `FSD_M6_research_memory_playbooks.md`, `../../TDD-tech-design-doc.md` (4.3, 4.8, 5.4, 5.9, 6.2, 8.5, 9.1, 10), `../../TECH_STACK.md`, `../M5_review_ship/TDD_M5_review_ship.md` (before), `../M7_race_mode/TDD_M7_race_mode.md` (after)
+**Screens:** prototype views `research`, `planReview`, `contextPack`, `notes`, `noteEdit`, `playbooks`, `playbookEdit`, `done` (Lessons learned card) in `core_docs/design/Saarthi Prototype.html#<id>` (full list in `core_docs/design/README.md`).
 
 ---
 
@@ -29,6 +31,7 @@ From `CLAUDE.md`:
 6. **No hard-coded values** (rule 7). Budgets, limits, paths and markers go in `config.py` or `project.toml`.
 7. **Tests first, `FakeAdapter` + recorded fixtures** (rule 8). New fixtures are listed in section 12.
 8. **Do not build Later features** (rule 10): no embeddings, no ADR suggestions, no attachments.
+9. **Screen words are not API words.** The UI says Goal, Just research, What Claude reads, Lessons and notes, Lessons learned, Saved instructions (Simple UI spec section 5). Tables, endpoints, events and CLI keep `brief`, `research`, `context-pack`, `memory_*`, `playbooks`. Only the desktop strings change.
 
 ## 3. What already exists (do not rebuild)
 
@@ -39,13 +42,13 @@ From `CLAUDE.md`:
 | `saarthi brief edit` (opens `$EDITOR`) | M1 | `brief draft` reuses its editor helper. |
 | Run Manager, modes incl. `research`, `POST /tasks/{id}/runs`, `run.finished` | M2 | "Research this" is a normal run with mode `research`. |
 | Context Pack v0 (brief only) -> `<worktree>/.saarthi/context/TASK.md`, `GET /tasks/{id}/context-pack` | M2 | Replaced by v1. Same file path, same endpoint, richer response. |
-| Plan docs (`docs/plans.py`), docs finder (`docs/finder.py`), `GET /tasks/{id}/docs*`, `doc.saved`, Docs tab | M2 / M3 | Plan goes into the Context Pack (Decision 6). Research items join the docs list (Decision 6a). |
+| Plan docs (`docs/plans.py`), docs finder (`docs/finder.py`), `GET /tasks/{id}/docs*`, `doc.saved`, Docs (Task page → More → Docs) | M2 / M3 | Plan goes into the Context Pack (Decision 6). Research items join the docs list (Decision 6a). |
 | Read-only agent flags (TDD 4.9 "Read-only" row) | M5 (Second Opinion) | Used for research runs and draft calls. |
 | Read-only side runs (brief coverage) | M4 | `config.SIDE_RUN_MODES`, `RunRequest.output_schema`, `agents/structured.py: extract_json()` (M4 TDD Decisions 7-8). M6 adds side-run modes `brief_draft` and `memory_draft` and reuses the same path. In this doc, "helper call" means one such side run. |
 | JSON answer parsing (Codex `--output-schema`, Claude fenced JSON) | M5 (findings) | Reused for brief draft and memory draft. |
 | Proof Card with failing checks + output tails | M4 | Source of `{{failing_checks}}`. |
 | Ship flow, `ship.pr_created`, push with default-branch guard, worktree cleanup | M5 | Memory updates hang off `task.stage_changed -> shipped` and reuse the push. |
-| Code Peek, CodeMirror, react-markdown, merge view, Command Bar | M3 / M5 | Reused on the Memory screen, brief compare, playbook search. |
+| Files (IDE view), CodeMirror, react-markdown, merge view, command bar (`Ctrl K`) | M3 / M5 | Reused on Lessons and notes, goal compare, saved-instructions search. |
 
 ## 4. Technical decisions
 
@@ -72,7 +75,7 @@ On `run.finished` for a `research` run, `core/research.py: extract_finding(run_i
 
 1. Reads the run's `agent.message` events (not `raw`) from the Event Store, newest first. The first one that holds a full marker pair wins. Text between the markers is the finding.
 2. No markers -> use `runs.summary` (the last agent message, already saved by M2).
-3. Empty after `strip()` -> save nothing. The API and CLI say "No finding text found - see the stream". The run's own `run.finished` event is the record.
+3. Empty after `strip()` -> save nothing. The API and CLI say "No finding text found - see Activity". The run's own `run.finished` event is the record.
 4. Missing headings do not block saving. They are listed in `research.added` payload `missing_headings`, and the CLI prints a warning.
 
 **Why markers:** both agents end with free text that may also hold chatter ("Done! Here is..."). Markers are simple, agent-neutral, and testable with fixtures. Read-only runs cannot write a file, so "write findings to a file" is not an option.
@@ -83,7 +86,7 @@ On `run.finished` for a `research` run, `core/research.py: extract_finding(run_i
 
 **Why:** the POST must stay fast (UI and CLI). No new dependency is needed for one GET. Only `http`/`https` schemes are allowed (checked before the fetch).
 
-### Decision 4 — "Draft brief" is a synchronous read-only helper call that returns a draft and saves nothing
+### Decision 4 — "Draft brief" ("Make a goal from this" on screen) is a synchronous read-only helper call that returns a draft and saves nothing
 
 `POST /tasks/{id}/brief/draft {agent?}` starts an M4 side run with mode `brief_draft`, waits for it, and uses `prompts/brief_draft.md` and `prompts/brief_draft.schema.json`. Input: task title, latest brief (if any), research items with `send_to_agent = true`. Output: `{goal, acceptance[], notes, focus_paths[]}`. The response is the draft; no `briefs` row is written. The client saves it with the existing `PUT /tasks/{id}/brief`.
 
@@ -105,7 +108,7 @@ If the JSON is invalid, the response has `draft = null`, `raw_text`, and a warni
 Cut text ends with `> (cut at N chars - read the full file: <path>)`.
 
 ### Decision 6a — Research items are listed as docs (F22.5, new)
-`docs/finder.py` (M2) gets one more source: `research_items` of kind `agent_finding` and `note` become docs of kind `research`, `doc_id = research:<item_id>`, `title` = item title, `path` = null, `source = "data"`, `change = null`, `pinned = false`. They come last in the order (after pinned). `GET /tasks/{id}/docs/content?doc=research:<id>` returns the item body as `markdown`. No new endpoint and no new table. Links and snippets are not docs. `research.added`, `research.updated` and `research.deleted` make the Docs tab refresh (M6 adds these three types to the docs refresh list in the M3 `eventRouter`). **Why:** one place to read everything written for a task; the data stays in `research_items`, so there is still one source of truth.
+`docs/finder.py` (M2) gets one more source: `research_items` of kind `agent_finding` and `note` become docs of kind `research`, `doc_id = research:<item_id>`, `title` = item title, `path` = null, `source = "data"`, `change = null`, `pinned = false`. They come last in the order (after pinned). `GET /tasks/{id}/docs/content?doc=research:<id>` returns the item body as `markdown`. No new endpoint and no new table. Links and snippets are not docs. `research.added`, `research.updated` and `research.deleted` make Docs refresh (M6 adds these three types to the docs refresh list in the M3 `eventRouter`). **Why:** one place to read everything written for a task; the data stays in `research_items`, so there is still one source of truth.
 
 ### Decision 7 — Keyword scoring with ripgrep, one call per keyword
 
@@ -127,13 +130,13 @@ Drop files in `[memory] always_include` or matching `[memory] exclude`. Drop sco
 ### Decision 8 — Which copy of memory is read (new)
 
 - **Context Pack:** the task **worktree** copy (`<worktree>/<memory_path>`), so the agent sees the same files it can open. Falls back to the main checkout when no worktree exists yet (preview before the first run).
-- **Memory screen:** the **main checkout** (`projects.repo_path`). Saarthi never commits these edits.
+- **Lessons and notes screen:** the **main checkout** (`projects.repo_path`). Saarthi never commits these edits.
 
 ### Decision 9 — Playbooks are files; the `playbooks` table is an index synced from them (new)
 
 Three folders, highest priority first: project `<repo>/.saarthi/playbooks/`, global `~/.config/saarthi/playbooks/`, built-in `saarthi/playbooks/builtin/` (package data, read with `importlib.resources`).
 
-`playbooks/store.py: sync(project_id | None)` scans the folders, upserts rows (by `id`), and deletes rows whose file is gone. It skips files whose `file_mtime` and size did not change. It runs on daemon start, on every `GET /playbooks`, and before a run resolves a playbook. **Why:** files can be edited by hand, committed with the project, and shared later (team mode). The table (owned by M6 in core TDD 5.9) gives fast lists for the Command Bar and a stable key for `runs.playbook_id`.
+`playbooks/store.py: sync(project_id | None)` scans the folders, upserts rows (by `id`), and deletes rows whose file is gone. It skips files whose `file_mtime` and size did not change. It runs on daemon start, on every `GET /playbooks`, and before a run resolves a playbook. **Why:** files can be edited by hand, committed with the project, and shared later (team mode). The table (owned by M6 in core TDD 5.9) gives fast lists for the command bar and a stable key for `runs.playbook_id`.
 
 **IDs are readable keys, not ULIDs** (new): `builtin:fix-bug-tdd`, `global:fix-bug-tdd`, `project:<project_id>:fix-bug-tdd`. **Why:** rows are rebuilt from files; a ULID would change on every rebuild and break `runs.playbook_id` history. The API and CLI also accept a bare slug (`fix-bug-tdd`), resolved by priority for the given project (matches core TDD 8.1 `playbook_id: "plan-then-build"`). `runs.playbook_id` stores the resolved full id.
 
@@ -170,11 +173,11 @@ Slug = file name without `.md` (`^[a-z0-9][a-z0-9-]{0,63}$`). No front matter ->
 - **Timeline row is made by Saarthi**, not the agent: date, task id, title, `timeline_summary`, PR url (from the latest `ship.pr_created`). If the last non-empty line of `timeline.md` starts with `|`, write a table row (pipes in text escaped); else a `- ` bullet. **Why:** dates and links must be exact; the timeline row exists even when the agent call fails.
 - **project_memory** text is put under `## <date> - <task id> <title>`. **Append-only** (`action = append`, or `create` when the file does not exist). **Why:** a full-file rewrite could silently drop my manual edits; a small block is easy to review.
 - **Decide:** approve (optionally with edited text -> `final_text`) or reject, per update. When no update for the task is `pending` and at least one is `approved`, `apply()` runs.
-- **Apply:** use the task worktree if it exists, else `git worktree add <tmp> <branch>` and remove it after. Write files (paths must stay under `memory_path`), `git add -- <paths>`, `git commit -m <MEMORY_COMMIT_MESSAGE>`, push with M5's guarded push. Mark rows `applied` with `commit_sha`. If `gh pr view <branch> --json state` says `MERGED` or `CLOSED`, the result carries a warning: "PR already merged; memory commit is on the branch only". **Why the temp worktree:** M5 asks to delete the worktree right after ship; M6 must not block that.
+- **Apply:** use the task worktree if it exists, else `git worktree add <tmp> <branch>` and remove it after. Write files (paths must stay under `memory_path`), `git add -- <paths>`, `git commit -m <MEMORY_COMMIT_MESSAGE>`, push with M5's guarded push. Mark rows `applied` with `commit_sha`. If `gh pr view <branch> --json state` says `MERGED` or `CLOSED`, the result carries a warning: "PR already merged; memory commit is on the branch only". **Why the temp worktree:** M5 may remove the task copy soon after ship (by hand, or the 7-day cleanup linked on Done); M6 must not block that.
 
-### Decision 14 — Memory screen has its own small endpoints with a path guard and a hash check (new)
+### Decision 14 — Lessons and notes has its own small endpoints with a path guard and a hash check (new)
 
-`GET /projects/{id}/memory/tree`, `GET /projects/{id}/memory/file?path=`, `PUT /projects/{id}/memory/file {path, text, base_hash}`. `path` is relative to the memory folder (`memory/project_memory.md`). `memory/files.py: safe_path()` resolves the path, refuses anything outside `<repo>/<memory_path>`, refuses symlinks that leave it, allows only `MEMORY_EDITABLE_SUFFIXES` for writes and files under `MEMORY_FILE_MAX_BYTES`. `base_hash` (sha256 of the text the client loaded) must match the file on disk, else 409. **Why separate from M3's `/projects/{id}/files`:** that endpoint serves Code Peek on the workspace; memory needs the main checkout, a write path and a tighter guard. Keeping them apart keeps each guard simple.
+`GET /projects/{id}/memory/tree`, `GET /projects/{id}/memory/file?path=`, `PUT /projects/{id}/memory/file {path, text, base_hash}`. `path` is relative to the memory folder (`memory/project_memory.md`). `memory/files.py: safe_path()` resolves the path, refuses anything outside `<repo>/<memory_path>`, refuses symlinks that leave it, allows only `MEMORY_EDITABLE_SUFFIXES` for writes and files under `MEMORY_FILE_MAX_BYTES`. `base_hash` (sha256 of the text the client loaded) must match the file on disk, else 409. **Why separate from M3's `/projects/{id}/files`:** that endpoint serves the Files screen (read and tiny edits in a task copy); memory needs the main checkout, a write path and a tighter guard. Keeping them apart keeps each guard simple.
 
 ### Decision 15 — Small CLI id prefixes (new)
 
@@ -216,15 +219,16 @@ Research item and memory update commands accept a unique id prefix of at least `
 
 | File | What |
 |---|---|
-| `components/task-room/ResearchTab.tsx`, `ResearchItemCard.tsx`, `AddResearchForm.tsx` | Notes, links, snippets, toggle, "Research this" button (calls `POST /tasks/{id}/runs`). |
-| `components/task-room/BriefVersions.tsx` | Versions list, read-only view, compare (CodeMirror merge from M5), Restore. |
-| `components/task-room/BriefEditor.tsx` (M3) | "Draft brief" button fills the editor. |
-| `components/task-room/MemoryUpdatesPanel.tsx` | Pending updates with diff-style preview, Edit, Approve, Reject. |
-| `components/run/RunDialog.tsx` (M3) | Playbook picker + Preview button. |
-| `components/run/ContextPackPreview.tsx` | Section table + full markdown. |
-| `screens/MemoryScreen.tsx` | Tree, react-markdown view, CodeMirror markdown edit, "changed on disk" handling. |
-| `screens/PlaybooksScreen.tsx` | List by scope, view, edit (non built-in), Copy to edit, Import dialog with checkboxes. |
-| `components/command-bar/sources.ts` (M3) | Add playbooks as a source. |
+| `screens/TaskPage/ResearchView.tsx`, `ResearchItemCard.tsx`, `AddResearchForm.tsx` | View `research`: notes, links, snippets, "Send to Claude" toggle, the finding, **Make a goal from this**. |
+| `screens/NewTask/MoreOptions.tsx` (M3) | "Just research, no code" choice (starts `POST /tasks/{id}/runs {mode: "research"}`) and the Saved instructions picker. |
+| `screens/TaskPage/GoalHistory.tsx` | Goal card -> Edit -> History: versions list, read-only view, compare (CodeMirror merge from M5), Restore. |
+| `screens/TaskPage/GoalCard.tsx` (M3) | **Make a goal from this** fills the editor (calls `POST /tasks/{id}/brief/draft`). |
+| `screens/Done/LessonsLearnedCard.tsx` | Optional card on `done`: drafts with a diff-style preview; Save all / Edit first (edit, keep, drop each) / Skip. |
+| `screens/TaskPage/More/WhatClaudeReads.tsx` | View `contextPack`: section table + full markdown. |
+| `screens/LessonsAndNotes.tsx`, `screens/NoteEdit.tsx` | Views `notes` / `noteEdit`: tree, react-markdown view, CodeMirror markdown edit, "changed on disk" handling. |
+| `screens/SavedInstructions.tsx`, `screens/SavedInstructionEdit.tsx` | Views `playbooks` / `playbookEdit`: list by scope, view, edit (non built-in), Copy to edit, "Import from a file" dialog with checkboxes. |
+| `components/command-bar/sources.ts` (M3) | Add saved instructions (playbooks) as a source. |
+| `components/TopBar/ProjectMenu.tsx` (M3) | Enable the Lessons and notes and Saved instructions entries. |
 | `api/` | Regenerate the client from OpenAPI. |
 
 ## 6. Data model changes
@@ -274,7 +278,7 @@ Unique: (`scope`, `project_id`, `slug`).
 | `memory.update_proposed` | Each draft saved | `{update_id, kind, file_path, action, chars}` |
 | `memory.update_decided` (new) | Approve / reject | `{update_id, decision, edited: bool}` |
 | `memory.update_applied` | Commit made | `{update_ids[], commit_sha, branch, pushed: bool, warning?}` |
-| `memory.file_saved` (new) | Memory screen save | `{project_id, path, chars}` (`task_id = null`) |
+| `memory.file_saved` (new) | Lessons and notes save | `{project_id, path, chars}` (`task_id = null`) |
 
 Existing events reused: `research.added` (gains `run_id`, `missing_headings` for findings), `research.updated` (title fetch), `brief.saved` (restore and draft save), `run.*` (research run and helper calls as M4 records them).
 
@@ -399,7 +403,7 @@ Global setting (`settings` table / Settings screen): `research.fetch_titles` (de
 
 | Case | What we do |
 |---|---|
-| Research run ends with no finding text | Nothing saved. CLI/UI: "No finding text found - see the stream." |
+| Research run ends with no finding text | Nothing saved. CLI/UI: "No finding text found - see Activity." |
 | Title fetch fails / times out / not HTML | Keep host + path as title. Log only. |
 | Link with a non-http(s) scheme | 422 "only http and https links". |
 | Draft brief: agent not ready | 409 with the fix command (M2 `check_ready`). |
@@ -438,13 +442,14 @@ All with `FakeAdapter` and recorded fixtures. New fixtures (recorded once with t
 | `tests/integration/test_memory_updates.py` | Temp repo + bare `origin`: ship -> drafts; approve 2 / reject 1 -> one commit with only approved text on the task branch; `main` untouched; works with the worktree removed; push to default branch refused. |
 | `tests/api/test_memory_files_api.py` | Tree, read, write; `../` and symlink escape refused; 409 on hash mismatch. |
 | `tests/api/test_playbooks_api.py` | CRUD; built-in 403; copy; render; import dry run writes nothing. |
-| `desktop/src/components/task-room/ResearchTab.test.tsx` | Toggle calls PATCH; new item appears from a WebSocket event. |
+| `desktop/src/screens/TaskPage/ResearchView.test.tsx` | Toggle calls PATCH; new item appears from a WebSocket event. |
+| `desktop/src/screens/Done/LessonsLearnedCard.test.tsx` | Save all sends one `approve` per pending draft; Skip sends `reject` for all; Edit first sends the edited text; card hides when no drafts. |
 
 ## 13. Manual verification
 
 1. Run the FSD QA checklist (section 9) on this repo (Saarthi dogfooding Saarthi).
 2. `saarthi context <task> --show` on a real Saarthi task: check the picked memory files make sense.
-3. One real "Research this" with Claude and one with Codex: both give a finding with the 4 headings (if not, adjust `prompts/research.md`, re-record fixtures).
+3. One real "Just research" run with Claude and one with Codex: both give a finding with the 4 headings (if not, adjust `prompts/research.md`, re-record fixtures).
 4. Ship one real client task and approve the memory updates; open the PR and see the memory commit.
 5. Import the 3 real `quick-prompts.md` files.
 
@@ -461,7 +466,7 @@ All with `FakeAdapter` and recorded fixtures. New fixtures (recorded once with t
 
 ## 15. What this milestone does not do
 
-Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3, M10), team-shared playbooks, secret masking (M8), Race Mode (M7), memory edits committed by Saarthi from the Memory screen, a playbook template language with logic.
+Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3, M10), team-shared playbooks, secret masking (M8), Side by side (M7), memory edits committed by Saarthi from Lessons and notes, a playbook template language with logic.
 
 ## 16. Effort breakdown
 
@@ -474,8 +479,8 @@ Embeddings, ADR suggestions (F12.4), attachments (F4.5), ticket import (F3.3, M1
 | Context Pack v1: keywords, match, builder, preview | 3 |
 | Playbooks: format, store/sync, render, built-ins, API, CLI | 3 |
 | Import of `quick-prompts.md` | 1 |
-| Memory screen API + CLI | 1 |
+| Lessons and notes API + CLI | 1 |
 | Memory updates: draft, decide, apply, push | 2.5 |
-| Desktop: Research tab, versions, preview, Memory, Playbooks, updates panel | 2.5 |
+| Desktop: research view, goal history, What Claude reads, Lessons and notes, Saved instructions, Lessons learned card | 2.5 |
 | Plan in Context Pack + research items in Docs list + tests | 1 |
 | **Total** | **21** |

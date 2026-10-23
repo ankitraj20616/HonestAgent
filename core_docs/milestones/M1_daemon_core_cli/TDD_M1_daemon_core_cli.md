@@ -2,14 +2,16 @@
 
 **Document type:** Technical Design Document (TDD)
 **Milestone:** M1 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), new UI words, path and process helpers kept in one place so M2 can add macOS and Windows
 **Estimated effort:** ~20 hours (2 weeks at 8-10 h/week)
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `FSD_M1_daemon_core_cli.md`, `../M0_spike_skeleton/TDD_M0_spike_skeleton.md`, `../M2_agent_runs_worktrees/TDD_M2_agent_runs_worktrees.md`, `../../TDD-tech-design-doc.md` (sections 4.1, 4.2, 4.10, 5, 6, 7, 9, 10, 12), `../../TECH_STACK.md`
+**Screens:** prototype view `cli` (the `saarthi` CLI sessions) in `core_docs/design/Saarthi Prototype.html#cli` (full list in `core_docs/design/README.md`). M1 has no window screen.
 
 ---
 
@@ -50,7 +52,7 @@ Build `saarthid` (FastAPI + SQLite + event bus + stage machine) and the `saarthi
 **(new)** `aiosqlite`, `httpx`, `python-ulid`, `pytest-cov` are not in TECH_STACK. **Why:** async SQLite driver (Decision 3), HTTP client for the CLI (also what FastAPI's `TestClient` uses), ULIDs (core TDD 5), coverage gate (MILESTONES "done when").
 
 ### Decision 2 — One `config.py`, three sources
-`config.py` holds every constant and a `Settings` Pydantic model. Values come from, in order: env vars (`SAARTHI_*`), `~/.config/saarthi/config.toml`, defaults in `config.py`. Paths follow XDG (`$XDG_CONFIG_HOME`, `$XDG_DATA_HOME`). `SAARTHI_CONFIG_DIR` and `SAARTHI_DATA_DIR` override them (tests and QA use these).
+`config.py` holds every constant and a `Settings` Pydantic model. Values come from, in order: env vars (`SAARTHI_*`), `~/.config/saarthi/config.toml`, defaults in `config.py`. Paths follow XDG (`$XDG_CONFIG_HOME`, `$XDG_DATA_HOME`), through two helpers only: `config_dir()` and `data_dir()`. `SAARTHI_CONFIG_DIR` and `SAARTHI_DATA_DIR` override them (tests and QA use these). M2 switches the helpers to `platformdirs` so macOS and Windows get their own folders; no other code changes.
 **Why:** one place to look (rule 7); env overrides let every test run in `tmp_path`. We read TOML with stdlib `tomllib` (no extra lib).
 The host is a constant (`127.0.0.1`), **not** a setting. **Why:** nobody should be able to expose the API by editing a file (core TDD 15).
 
@@ -151,7 +153,7 @@ JSONL files **(new)**: events with a `run_id` -> `logs/runs/<run_id>.jsonl` (cor
 ```json
 {"subscribe": ["board:01JA3K...", "task:T-0042"], "last_event_id": 1040}
 ```
-Topics: `board:<project_id>`, `task:<task_id>`, `run:<run_id>` (matches from M2), and `all` **(new)** for the M3 Command Deck. Server sends events in the core 6.1 shape plus `project_id`. Control messages **(new)** carry a `control` key so clients can tell them apart:
+Topics: `board:<project_id>`, `task:<task_id>`, `run:<run_id>` (matches from M2), and `all` **(new)** for the M3 Home screen ("All projects": tasks of every repo, Needs-you counts across repos). Server sends events in the core 6.1 shape plus `project_id`. Control messages **(new)** carry a `control` key so clients can tell them apart:
 `{"control":"subscribed","topics":[...],"replayed":12,"last_event_id":1052}`, `{"control":"error","code":"bad_topic","message":"..."}`, `{"control":"resync","reason":"replay_too_large"}`.
 No gaps, no duplicates: on subscribe the server (1) registers the live queue first, (2) reads `id > last_event_id` from SQLite and sends it, (3) drains the queue, skipping ids it already sent. More than `WS_REPLAY_MAX_EVENTS` missed -> `resync` (client reloads via REST). A subscriber whose queue passes `WS_QUEUE_MAX` is closed with code `4008`; it reconnects and replays, so nothing is lost.
 
@@ -164,7 +166,7 @@ Token file `<config>/token`, made on first start with `secrets.token_urlsafe(TOK
 - `saarthi daemon start`: spawn `saarthid` with `start_new_session=True`, stdout/stderr to `logs/daemon.out`, then poll `/health` until ready (`DAEMON_START_TIMEOUT_SEC`). `--dev` runs it in the foreground with debug logs (TECH_STACK 5).
 - `daemon stop`: SIGTERM the pid, wait `DAEMON_STOP_TIMEOUT_SEC`. `--force` sends SIGKILL after that.
 - Migrations: on start, if the DB is behind `head`, copy it to `<data>/backups/saarthi-<old_rev>-<utc>.db`, then `alembic upgrade head` in code.
-**Why:** single user, no manual migration step; the copy makes a bad migration easy to undo. M9 replaces the spawn with a systemd unit.
+**Why:** single user, no manual migration step; the copy makes a bad migration easy to undo. `flock` and SIGTERM are Linux/macOS calls; they sit in two small helpers in `daemon.py` so M2 can add the Windows versions. M9 makes the daemon a Tauri sidecar that the app starts, plus a background mode per OS (systemd on Linux, launchd on macOS, autostart on Windows).
 
 ### Decision 15 — Error shape and CLI exit codes **(new)**
 Every error: `{"error": {"code": "move_not_allowed", "message": "...", "hint": "saarthi brief edit T-0001"}}`. FastAPI validation errors are wrapped in the same shape (`code: "invalid_request"`, plus `details`).
@@ -190,7 +192,7 @@ All under `daemon/`.
 | `pyproject.toml` | deps, entry points, ruff, pyright (`strict` for `src/`), pytest (`asyncio_mode = "auto"`, coverage gate on `saarthi.core`) |
 | `alembic.ini` | for `uv run alembic revision` during development only |
 | `src/saarthi/__init__.py` | `__version__` |
-| `src/saarthi/config.py` | constants, `Settings`, path helpers (section 10) |
+| `src/saarthi/config.py` | constants, `Settings`, path helpers `config_dir()` / `data_dir()` (section 10) |
 | `src/saarthi/daemon.py` | `main()`: lock, pid, logging, token, migrate, `uvicorn.run(create_app(), ...)` |
 | `src/saarthi/logging.py` | structlog JSON to `logs/daemon.log` (rotating) |
 | `src/saarthi/api/app.py` | `create_app(settings)`: lifespan (engine, bus), routers, middleware, error handlers |
@@ -358,7 +360,7 @@ Every read command has `--json`. Project is chosen by `--project/-p`, else `GET 
 | `API_HOST` | `"127.0.0.1"` (not overridable) | daemon |
 | `API_PREFIX` | `"/api/v1"` | API, CLI |
 | `DEFAULT_PORT` | `7878` | daemon, CLI |
-| `APP_DIR_NAME` | `"saarthi"` | XDG paths |
+| `APP_DIR_NAME` | `"saarthi"` | XDG paths (`platformdirs` from M2) |
 | `DB_FILENAME`, `TOKEN_FILENAME`, `PID_FILENAME`, `LOCK_FILENAME` | `"saarthi.db"`, `"token"`, `"saarthid.pid"`, `"saarthid.lock"` | daemon |
 | `TOKEN_BYTES` | `32` | auth |
 | `DB_BUSY_TIMEOUT_MS`, `DB_WRITE_RETRIES`, `DB_RETRY_BACKOFF_SEC` | `5000`, `3`, `(0.1, 0.3, 0.9)` | uow |
@@ -477,8 +479,9 @@ cd daemon && uv run pytest && uv run ruff check . && uv run pyright
 - No agents, runs, worktrees, Context Pack, notifier (M2). `runs` table exists, unused.
 - No `/settings`, `/files`, `/search` endpoints, no UI, no CORS for Tauri (M3).
 - No `Review` / `Shipped` guards, no override reason (M4, M5).
-- No research CLI, link title fetch, brief versions view, "Draft brief" (M6).
-- No secret masking (M8), no systemd unit (M9).
+- No research CLI, link title fetch, goal history view, "Draft brief" (M6).
+- No macOS / Windows paths, lock or PTY (M2).
+- No secret masking (M8), no background service per OS (systemd / launchd / autostart) and no sidecar packaging (M9).
 
 ---
 

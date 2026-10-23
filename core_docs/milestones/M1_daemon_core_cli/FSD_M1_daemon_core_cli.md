@@ -2,14 +2,16 @@
 
 **Document type:** Functional Specification Document (FSD)
 **Milestone:** M1 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), new UI words, note on the 4 on-screen statuses, per-OS paths
 **Estimated effort:** ~20 hours (2 weeks at 8-10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M1_daemon_core_cli.md`, `../M0_spike_skeleton/FSD_M0_spike_skeleton.md`, `../M2_agent_runs_worktrees/FSD_M2_agent_runs_worktrees.md`, `../../FUNCTIONAL_SPECIFICATIONS.md`, `../../TDD-tech-design-doc.md`
+**Screens:** prototype view `cli` (the `saarthi` CLI sessions) in `core_docs/design/Saarthi Prototype.html#cli` (full list in `core_docs/design/README.md`). M1 has no window screen.
 
 ---
 
@@ -58,11 +60,11 @@ What M1 unlocks:
 |---|---|
 | **Daemon** (`saarthid`) | A program that runs in the background. It owns all data and all logic. |
 | **CLI** (`saarthi`) | The command you type. It only sends requests to the daemon. |
-| **Token** | A secret password in `~/.config/saarthi/token`. Every request must carry it. |
+| **Token** | A secret password in `~/.config/saarthi/token` (Linux path; M2 picks the right folder on macOS and Windows). Every request must carry it. |
 | **Task ID** | A short name for a task, like `T-0001`. Unique across all projects. |
 | **Stage** | Where a task is in its life: `Inbox`, `Research`, `Ready`, ... (FSD F2.3). |
 | **Stage rule** | A check before a move. Example: `Ready` needs a brief with a goal. |
-| **Brief version** | Each time you save a brief, Saarthi keeps a new copy with a number (v1, v2, ...). |
+| **Brief version** | Each time you save a brief, Saarthi keeps a new copy with a number (v1, v2, ...). The window (M3) shows the brief as the task's **Goal** and its acceptance criteria as **What done looks like**. |
 | **Event** | A saved line that says "this happened" (task created, stage changed, brief saved). |
 | **`project.toml`** | A settings file in your repo at `.saarthi/project.toml`. |
 | **Replay** | When a client reconnects, the daemon first sends the events it missed. |
@@ -184,6 +186,7 @@ What M1 unlocks:
   - Moves that the system makes (for example `Ready -> Running` when a run starts) are in the table but cannot be done by hand. M1 refuses them with "This move happens automatically when ...". M2, M4, M5 turn them on.
   - Moving a task to the stage it is already in does nothing and says so.
   - `--reason` is saved in the event.
+  - These are the engine stages. The window (M3) groups them into 4 simple statuses: To do, Working, Needs you, Done (F2.9). The CLI keeps the real stage names.
 - **Acceptance criteria:**
   - Every pair of stages is tested: allowed moves pass, all others fail with a clear message.
   - `Inbox -> Ready` fails without a brief, fails with a brief whose goal is blank, works with a goal.
@@ -275,7 +278,7 @@ What M1 unlocks:
 ### 5.9 Research items API (data only)
 
 - **What:** the API can add, list, edit, and delete research items (notes, links, snippets) for a task.
-- **Why:** M1 owns the table and the endpoints so the data model is complete. The Research Desk features (title fetch, "Research this", "send to agent" use) are M6.
+- **Why:** M1 owns the table and the endpoints so the data model is complete. The research features (title fetch, "Just research", "send to agent" use) are M6.
 - **Rules:** no CLI command in M1. Add and edit make `research.added` / `research.updated` events. Delete also makes `research.updated` (marked as deleted).
 - **Acceptance criteria:** API tests only.
 
@@ -325,12 +328,13 @@ What M1 unlocks:
 |---|---|
 | Runs, agents, worktrees, `saarthi run ...` | M2 |
 | `runs` table in use (M1 only creates it) | M2 |
-| Any screen; `/settings` endpoint; Health page | M3 |
+| Any screen; `/settings` endpoint; Settings → Health page | M3 |
 | `Review` and `Shipped` stage rules, override reason | M4, M5 |
-| Brief versions screen, "Draft brief", research features and CLI | M6 |
+| Goal history screen (Goal card → Edit → History), "Draft brief", research features and CLI | M6 |
 | Agent login check ("logged in") on health | M2 |
 | Secret masking in events | M8 |
-| systemd service, auto-start at login | M9 |
+| Data and config folders per OS (`platformdirs`) | M2 |
+| Background mode and start at login (systemd on Linux, launchd on macOS, autostart on Windows) | M9 |
 
 ---
 
@@ -370,7 +374,7 @@ Use a fresh data folder so IDs start at `T-0001`:
 3. **Un-park target.** Core TDD 7 has no move out of `Parked` except `Archived`. M1 allows `Parked -> Inbox / Research / Ready`. Later, when runs exist, should un-park go back to the exact stage it came from?
 4. **Research delete event.** There is no `research.deleted` in 6.2. M1 uses `research.updated` with `deleted: true`.
 5. **`send_to_agent` default** for new research items. M1 uses `true`. M6 may change it.
-6. **Race Mode and `worktree_path`** (known gap 4 in `../README.md`): the `tasks` table keeps one `worktree_path` as in core TDD 5.2. M7 decides how to model two worktrees.
+6. **Side by side (Race Mode) and `worktree_path`** (known gap 4 in `../README.md`): the `tasks` table keeps one `worktree_path` as in core TDD 5.2. M7 decides how to model two worktrees.
 
 ---
 

@@ -1,6 +1,6 @@
 # Saarthi - rules for AI agents
 
-Saarthi is a task-first Agentic Development Environment for Linux. Not an IDE. Not built on VS Code.
+Saarthi is a task-first Agentic Development Environment for Linux, macOS and Windows, with a built-in IDE-style file view. Not built on VS Code.
 
 ## Read first
 - `core_docs/README.md` - idea and doc map

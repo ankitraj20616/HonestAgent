@@ -2,14 +2,16 @@
 
 **Document type:** Technical Design Document (TDD)
 **Milestone:** M10 of M0-M10 (built after M6; see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-12
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), Jira tickets page in the project menu, pending write back makes a task "Needs you" (Decision 17), new UI file names
 **Estimated effort:** 18 hours (2 rough weeks at ~10 h/week)
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
 **Related documents:** `FSD_M10_jira_tickets.md`, `../../design/2026-10-12-task-docs-and-jira-design.md` (spec, section 4), `../../TDD-tech-design-doc.md` (4.10, 4.13, 5.2, 5.10-5.12, 6, 8.8, 8.9, 9.1, 10, 12, 15), `../../TECH_STACK.md`, `../M5_review_ship/TDD_M5_review_ship.md` (ship, PR title), `../M6_research_memory_playbooks/TDD_M6_research_memory_playbooks.md` (before; Context Pack v1), `../M7_race_mode/TDD_M7_race_mode.md` (after)
+**Screens:** prototype views `tickets`, `ticketStart`, `ticketsOffline`, `writeBack`, `done`, `settingsJira`, `cli` in `core_docs/design/Saarthi Prototype.html#<id>` (full list in `core_docs/design/README.md`).
 
 ---
 
@@ -107,6 +109,10 @@ Login: `GET https://<site>/rest/api/3/myself`. If 401: `GET https://<site>/_edge
 ### Decision 16 — Jira errors become our error codes; Jira's own text is kept
 `tickets/errors.py`: `JiraAuthError` (401) -> HTTP 401 `jira_auth`; 403 -> 403 `jira_forbidden`; 404 -> 404 `ticket_not_found`; 400 on search -> 422 `invalid_jql` with Jira's `errorMessages`; 429 after retries -> 429 `jira_rate_limited`; connect error or timeout -> 502 `jira_unreachable`. **Why:** the CLI and UI show one message and one hint per case (section 12). Note: the M1 CLI client must check `error.code` before it treats a 401 as "daemon token wrong".
 
+### Decision 17 — A pending write back makes the task "Needs you" (new, Simple UI spec section 4)
+M3 owns the pure stage → status function (F2.9). M10 passes one more fact into its `waiting_on_user` flag: `pending_ticket_actions > 0` -> status **Needs you**, for any shown stage. The function itself does not change. `TaskOut` gets `pending_ticket_actions: int` (a `COUNT` of `ticket_actions` rows with `status` in `pending`, `failed` — both wait for me), and the cross-project Needs-you count (F1.5) uses the same status, so it includes these tasks. The Home row text comes from the newest pending action's `summary` ("Jira: move ACME-151 to In Review?"). `auto_send = true` sends at once, so the task never waits.
+**Why:** the user must say yes before Saarthi changes a client's Jira; Needs you is the one place that lists what waits for me. Keeping the rule in the daemon's status function means Home, Board view and the CLI agree (rule 1).
+
 ## 5. Modules and files
 
 ### Daemon (`daemon/src/saarthi/`)
@@ -131,7 +137,8 @@ Login: `GET https://<site>/rest/api/3/myself`. If 401: `GET https://<site>/_edge
 | `memory/context_pack.py` | changed (M6) | Untrusted markers (Decision 11). |
 | `workspace/manager.py` (M2), `workspace/ship.py` (M5) | changed | Branch name and PR title (Decision 14). |
 | `core/projects.py` | changed | Read and check `[tickets]` from `project.toml`. |
-| `schemas/task.py` | changed | `TaskOut` gains `ticket_key`, `ticket: {key, status, status_category, url} \| null`. |
+| `schemas/task.py` | changed | `TaskOut` gains `ticket_key`, `ticket: {key, status, status_category, url} \| null`, `pending_ticket_actions: int` (Decision 17). |
+| `schemas/task.py` status (M3 F2.9) | changed | Passes `pending_ticket_actions > 0` into `status_for(..., waiting_on_user=...)` (Decision 17). |
 | `config.py` | changed | Section 6. |
 | `db/models.py` | changed | `Ticket`, `TicketView`, `TicketAction`, `Task.ticket_key`. |
 | `db/migrations/versions/<rev>_m10_tickets.py` | new | Section 7 (one migration). |
@@ -143,13 +150,13 @@ Tests: `tests/fixtures/jira/` (section 14).
 
 | File | What |
 |---|---|
-| `screens/TicketsScreen.tsx` | Views list, search, Refresh, list, detail, offline / error banner. |
-| `components/tickets/TicketList.tsx`, `TicketDetail.tsx` | Rows with status pill and task bead; markdown detail (react-markdown, `skipHtml`). |
-| `components/tickets/StartFromTicketDialog.tsx` | Calls `start` with `dry_run: true` for the preview, then `start`. |
-| `components/tickets/TicketChip.tsx` | Task Room header + Board card; menu Open / Refresh / Change / Unlink. |
-| `components/task-room/TicketActionCard.tsx` | Send / Skip; updates on `ticket.action_*` events. |
-| `screens/settings/JiraSettings.tsx` | Site, email, hidden token, Test, scopes hint, project mapping (read only). |
-| `components/layout/TopBar.tsx` (M3) | **Tickets** link when the project has `[tickets]`. |
+| `screens/JiraTickets/JiraTicketsPage.tsx` | `tickets` / `ticketsOffline`: views list, search, Refresh, list, detail, offline / error banner. |
+| `components/tickets/TicketList.tsx`, `TicketDetail.tsx` | Rows with status pill and linked task id; markdown detail (react-markdown, `skipHtml`). |
+| `screens/JiraTickets/StartFromTicket.tsx` | `ticketStart`: calls `start` with `dry_run: true` for the preview, then `start`. |
+| `components/tickets/TicketChip.tsx` | Task page header + Board view card; menu Open / Refresh / Change / Unlink. |
+| `components/tickets/WriteBackCard.tsx` | `writeBack`: what changes in Jira, Send / Skip; used in the Home Needs-you row, on the task page and on the Done screen; updates on `ticket.action_*` events. |
+| `screens/Settings/JiraSettings.tsx` | `settingsJira`: site, email, hidden token, Test, scopes hint, project mapping (read only). |
+| Project menu (M3, top bar project picker) | **Jira tickets** item when the project has `[tickets]`. |
 
 ## 6. Config added
 
@@ -321,7 +328,7 @@ Exit codes as M1: 0 ok, 1 refused or Jira said no, 2 error. Project = `--project
 
 **`skip(action_id)`** -> `skipped`, `ticket.action_skipped {reason: "user"}`.
 
-Home's Needs You counter (M3) counts `needs_you` tasks only, so actions never touch it (test).
+**Needs you** (Decision 17): a `pending` or `failed` action puts its task under Needs you (a failed one waits for **Send again** or **Skip**); when none is left, the task falls back to the status of its stage. Every action change emits a `ticket.action_*` event, so Home and the Needs-you count update live over the WebSocket (test).
 
 ## 11. Jira mapping
 
@@ -411,9 +418,10 @@ Fixtures in `tests/fixtures/jira/` (recorded once from a test site, then trimmed
 | `tests/unit/workspace/test_branch_ticket.py` | Branch `saarthi/T-0033-ACME-151-export-invoices-as-csv` (key in capitals); PR title `ACME-151: Export invoices as CSV`; no key -> M2/M5 behaviour. |
 | `tests/unit/memory/test_context_pack_ticket.py` | Brief and "Jira comments" item wrapped in markers; task without ticket unchanged. |
 | `tests/integration/test_ticket_start.py` | `FakeTicketProvider`: start -> task, brief v1, item, events; second start -> 409 with task id; dry run writes nothing; link existing task with / without brief; unlink. |
-| `tests/integration/test_write_back_flow.py` | Fake stage moves + fake `ship.pr_created` through the real Event Bus -> actions; Needs You count unchanged. |
+| `tests/integration/test_write_back_flow.py` | Fake stage moves + fake `ship.pr_created` through the real Event Bus -> actions; a pending action makes the task Needs you and adds 1 to the Needs-you count; Send / Skip takes it out; `auto_send` never makes it Needs you. |
+| `tests/unit/core/test_status_ticket_actions.py` | Stage → status function (M3) with `pending_ticket_actions`: `running` + 1 pending -> Needs you; `running` + 0 -> Working; `shipped` + 1 pending (PR comment) -> Needs you. |
 | `tests/api/test_tickets_api.py`, `test_jira_api.py` | Every endpoint and error code; login 401 saves nothing; token absent from all saved events, logs (caplog) and responses. |
-| `desktop/src/components/tickets/*.test.tsx` | Chip shows status; action card Send calls the API and turns "Sent" on `ticket.action_sent`. |
+| `desktop/src/components/tickets/*.test.tsx` | Chip shows status; `WriteBackCard` Send calls the API and turns "Sent" on `ticket.action_sent`; the Home Needs-you row disappears after it. |
 
 No test opens a socket: the provider fixture is built with `MockTransport`, and a `conftest.py` guard fails any real `httpx` transport.
 
@@ -447,7 +455,7 @@ No test opens a socket: the provider fixture is built with `MockTransport`, and 
 | Cache, views, sync, API, CLI (`jira`, `tickets`) | 4 |
 | Start / link + brief draft + comments item + branch / PR title | 2.5 |
 | Write back: actions, subscribers, send / skip, Context Pack markers | 3 |
-| UI: Tickets screen, start dialog, chip, action card, Settings -> Jira | 3.5 |
+| UI: Jira tickets page, start screen, chip, write-back card (Home row, task page, Done), Settings -> Jira; status input for Needs you | 3.5 |
 | **Total** | **18** |
 
 ## 18. What this milestone does not do

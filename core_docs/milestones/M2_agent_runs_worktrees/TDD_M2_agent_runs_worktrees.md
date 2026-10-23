@@ -2,20 +2,22 @@
 
 **Document type:** Technical Design Document (TDD)
 **Milestone:** M2 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
-**Estimated effort:** 21.5 hours
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), new UI words, Decision 20: one per-OS layer (paths from `platformdirs`, ConPTY via `pywinpty`, process stop, lock) and a 3-OS CI matrix
+**Estimated effort:** 23.5 hours
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. Every decision says *why*.
 **Related documents:** `FSD_M2_agent_runs_worktrees.md`, `../../TDD-tech-design-doc.md` (sections 4.3-4.5, 4.8, 4.11, 4.12, 5.5, 6, 7, 8.1, 8.2, 8.6, 12), `../M1_daemon_core_cli/TDD_M1_daemon_core_cli.md`, `../M3_desktop_ui_v1/TDD_M3_desktop_ui_v1.md`, `../../decisions/ADR-001-agent-integration.md`
+**Screens:** prototype view `cli` (the `saarthi` CLI sessions) in `core_docs/design/Saarthi Prototype.html#cli` (full list in `core_docs/design/README.md`). M2 has no window screen.
 
 ---
 
 ## 1. The goal in one sentence
 
-Let the daemon start, watch, steer, stop and resume Claude and Codex runs on a task, each in its own git worktree, with every agent line turned into a saved event — all usable from the `saarthi` CLI.
+Let the daemon start, watch, steer, stop and resume Claude and Codex runs on a task, each in its own git worktree, with every agent line turned into a saved event — all usable from the `saarthi` CLI on Linux, macOS and Windows.
 
 ---
 
@@ -72,7 +74,7 @@ class RunResult(BaseModel):
     ended_with_question: str | None       # path B of Needs You
     permission_denials: list[str] = []    # path B (Claude)
 ```
-`AgentAdapter` keeps the core methods (`check_ready`, `start`, `events`, `send`, `stop`, `resume`) and adds `capabilities`. **Why:** the Run Manager must treat Claude and Codex differently (live input, resume) without naming them.
+`AgentAdapter` keeps the core methods (`check_ready`, `start`, `events`, `send`, `stop`, `resume`) and adds `capabilities`. **Why:** the Run Manager must treat Claude and Codex differently (live input, resume) without naming them. M7 adds `GeminiAdapter` behind the same protocol; the Run Manager does not change.
 
 ### Decision 3 — Needs You has two paths, both handled in the Run Manager **(new, confirm with M0 ADR-001)**
 - **Path A — live:** the mapper emits `agent.needs_input {live: true}` (Claude: a `tool_use` whose name is in `CLAUDE_QUESTION_TOOLS`). Process stays alive. Run -> `needs_input`. `send()` delivers the answer.
@@ -108,10 +110,10 @@ M2 adds the missing rows to `ALLOWED_MOVES` with `by = system` and a test per ro
 **Why `Verifying` and not `Review` for a finished build run:** it is the exact core move (`Running -> Verifying: build/fix run ends -> checks start`). In M2 the "checks start" step is an empty hook (`after_build_run(task, run)`); M4 puts the Check Runner there with no change to the Run Manager. Moving straight to `Review` would claim proof that does not exist, and would mean M2 writing the `Review` rule that M4 owns. The task waits in `Verifying`; I verify by hand and run `saarthi task move T-0002 review` (allowed until M4 adds the guard). Tasks left in `Verifying` when M4 lands just need `saarthi checks`.
 
 ### Decision 7 — One active run per task **(new)**
-Active = `queued`, `running`, or `needs_input`. A second start returns `409 run_active`. **Why:** a task has one worktree; two agents in one folder is exactly the clash Saarthi exists to stop. Race Mode (M7) will decide its own model.
+Active = `queued`, `running`, or `needs_input`. A second start returns `409 run_active`. **Why:** a task has one worktree; two agents in one folder is exactly the clash Saarthi exists to stop. Side by side (Race Mode, M7) will decide its own model.
 
 ### Decision 8 — Stopping, process groups and orphans
-Agents start with `start_new_session=True`. Stop = `SIGTERM` to the group, wait `STOP_GRACE_SEC`, then `SIGKILL`. On daemon start, for each run in `running` / `needs_input` with `ended_at IS NULL` and a `pid`: if `/proc/<pid>` exists **and** its `cwd` is the task's worktree **and** its cmdline contains the adapter binary, kill its group. Then mark `interrupted`. **Why:** a resume must never start a second agent in the same worktree. The two checks avoid killing an unrelated process that reused the PID. **(new)**
+Agents start in their own process group. Stop = a polite stop to the group, wait `STOP_GRACE_SEC`, then a hard kill (Linux/macOS: `SIGTERM` then `SIGKILL`; Windows: see Decision 20). On daemon start, for each run in `running` / `needs_input` with `ended_at IS NULL` and a `pid`: if the process exists **and** its `cwd` is the task's worktree **and** its cmdline contains the adapter binary (read with `psutil`, same code on every OS), kill its group. Then mark `interrupted`. **Why:** a resume must never start a second agent in the same worktree. The two checks avoid killing an unrelated process that reused the PID. **(new)**
 
 ### Decision 9 — Daemon restart rules (core 8.6, refined) **(new)**
 - `running`, or `needs_input` with `ended_at IS NULL` (path A) -> `interrupted`, checkpoint, task -> `Failed` (note "interrupted").
@@ -136,7 +138,7 @@ M8 owns permission profiles and the Safety Guard. M2 uses only the default profi
 - `.saarthi/context/` is added once to `<git-common-dir>/info/exclude`. **(new)** **Why:** git-ignored without editing the user's `.gitignore`; `info/exclude` is shared by all worktrees.
 
 ### Decision 12 — Setup script runs once, tracked by a marker in the worktree's git dir **(new)**
-Command: `["bash", <worktree>/<setup_script>]`, cwd = worktree, env adds `SAARTHI_REPO`, `SAARTHI_TASK_ID`, `SAARTHI_WORKTREE`. On exit 0, write `<git-dir of worktree>/saarthi-setup-done`. **Why:** the marker lives outside the working tree, so the agent cannot commit or delete it by accident, and it disappears with the worktree.
+Command: `["bash", <worktree>/<setup_script>]` (on Windows, the `bash` that comes with Git for Windows, found with `shutil.which`; if missing, setup fails with "bash not found - install Git for Windows"), cwd = worktree, env adds `SAARTHI_REPO`, `SAARTHI_TASK_ID`, `SAARTHI_WORKTREE`. On exit 0, write `<git-dir of worktree>/saarthi-setup-done`. **Why:** the marker lives outside the working tree, so the agent cannot commit or delete it by accident, and it disappears with the worktree.
 
 ### Decision 13 — Checkpoint per core 4.5.1, with "no change, no new ref"
 ```
@@ -153,7 +155,7 @@ git update-ref refs/saarthi/checkpoints/T-0002/3 <commit>
 Mappers emit `agent.file_changed {path, change}` from edit tools (Claude `Edit`/`Write`/`MultiEdit`, Codex `file_change` items). The Run Manager adds `diff` (from `workspace.diff_file`, cut to `FILE_DIFF_MAX_LINES`) and `added`/`removed` counts before publishing. **Why:** FSD F5.4 wants a "small diff" card; the git diff is the truth, tool inputs are not.
 
 ### Decision 15 — PtyShellAdapter is built in M2, not M3 **(new)**
-It is daemon code that emits `terminal.output`, an event M2 owns. CLAUDE.md rule 2 says a feature works in the CLI before it gets a screen, so `saarthi run --pty` + `run watch` + `run say` are its CLI. M3 only adds keystroke/resize frames on the WebSocket and the xterm.js tab. Scope is small: start a command in a PTY (`PTY_COLS` x `PTY_ROWS`), stream bytes, write input, stop. `capabilities = (live_input=True, resumable=False, structured=False)`. `runs.agent = "pty"`; the real agent CLI is in `run.started.payload.command`. End-of-run stage rules follow the mode like any run.
+It is daemon code that emits `terminal.output`, an event M2 owns. CLAUDE.md rule 2 says a feature works in the CLI before it gets a screen, so `saarthi run --pty` + `run watch` + `run say` are its CLI. M3 only adds keystroke/resize frames on the WebSocket and the xterm.js Terminal view (task page → More → Terminal). Scope is small: start a command in a PTY (Unix PTY on Linux/macOS, ConPTY through `pywinpty` on Windows; Decision 20) (`PTY_COLS` x `PTY_ROWS`), stream bytes, write input, stop. `capabilities = (live_input=True, resumable=False, structured=False)`. `runs.agent = "pty"`; the real agent CLI is in `run.started.payload.command`. End-of-run stage rules follow the mode like any run.
 
 ### Decision 16 — Raw lines and terminal bytes go to the JSONL log only
 Each raw agent stdout line is written to `logs/runs/<run_id>.jsonl` as `{"kind": "raw", "line": …}` before mapping. `terminal.output` events are published to the WebSocket with `id: null` and appended to the log, never to SQLite (core 6.2). **Why:** the full raw stream is always on disk (NF3), while SQLite stays small. Clients must not use `id: null` events as `last_event_id`.
@@ -162,7 +164,7 @@ Each raw agent stdout line is written to `logs/runs/<run_id>.jsonl` as `{"kind":
 `saarthi run T-0002 …` is the same as `saarthi run start T-0002 …`. A small `DefaultGroup` (click) falls back to `start` when the first word is not a sub-command. All run commands accept a **run ID or a task ID** (task ID = its active run, or its latest run). **Why:** matches the MILESTONES.md commands exactly and saves copying ULIDs.
 
 ### Decision 18 — Response additions for M3
-`GET /tasks/{id}` and task list items gain `active_run: {id, agent, mode, status} | null`. Run responses gain a computed `needs_input: {kind, question, options, live} | null` (from the latest `agent.needs_input` event). **Why:** the board card and the "Needs You" list in M3 need them without extra calls. No new columns.
+`GET /tasks/{id}` and task list items gain `active_run: {id, agent, mode, status} | null`. Run responses gain a computed `needs_input: {kind, question, options, live} | null` (from the latest `agent.needs_input` event). **Why:** the Home rows and the "Needs you" group in M3 need them without extra calls. No new columns.
 
 ### Decision 19 — Plan docs live in the data folder **(new)**
 A finished `plan` run writes its final message to `<DATA_DIR>/tasks/<task_id>/docs/plan-<run_id>.md` (F22.2), not to the worktree.
@@ -173,6 +175,26 @@ A finished `plan` run writes its final message to `<DATA_DIR>/tasks/<task_id>/do
 - A file in both sets shows once, as `changed`, with `pinned: true`.
 - Every path is resolved and must stay inside the worktree / data folder (`..` and symlinks out are refused).
 - Doc IDs: `plan:<run_id>`, `wt:<path>`, `pin:<path>`; `research:<item_id>` comes in M6.
+
+### Decision 20 — One per-OS layer, tested on Linux, macOS and Windows **(new)**
+Saarthi is one app for Linux, macOS and Windows (simple UI spec P3). M2 is the first milestone that touches folders, processes and terminals, so every OS difference sits in one small module, `os_support.py`. No other file checks the OS.
+
+| Need | Linux / macOS | Windows |
+|---|---|---|
+| Config, data, log folders | `platformdirs` (`user_config_dir`, `user_data_dir`, `user_log_dir`, app name `APP_DIR_NAME`, `appauthor=False` so Windows uses `%LOCALAPPDATA%\saarthi`); `SAARTHI_*_DIR` still override | same |
+| Process group at start | `start_new_session=True` | `creationflags=CREATE_NEW_PROCESS_GROUP` |
+| Polite stop, then kill | `os.killpg` `SIGTERM`, wait, `SIGKILL` | `CTRL_BREAK_EVENT`, wait, then `["taskkill", "/T", "/F", "/PID", pid]` (list args) |
+| Process info (orphan check) | `psutil` | `psutil` |
+| Single-daemon lock (M1 Decision 14) | `fcntl.flock` | `msvcrt.locking` |
+| PTY (Decision 15) | stdlib `pty` + `loop.add_reader` | `pywinpty` (ConPTY), read in a worker thread |
+| Find an agent binary | `shutil.which(CLAUDE_BIN)` | same; resolves npm `.cmd` shims, which `create_subprocess_exec` cannot find by name |
+
+- M1's `config_dir()` / `data_dir()` helpers switch to `platformdirs` here. On Linux the folders do not move (they are the same XDG paths).
+- New deps **(new)**: `platformdirs`, `psutil`, and `pywinpty; sys_platform == "win32"`. **Why:** small, well-known, pure-Python or wheel-only libs; writing our own process-tree kill and ConPTY wrapper would be more code and more bugs.
+- Worktrees on Windows get `git config core.longpaths true` (list args) when created. **Why:** worktree paths under `%LOCALAPPDATA%` get long fast.
+- CI: `.github/workflows/daemon-tests.yml` runs `uv run pytest`, `ruff`, `pyright` on `ubuntu-24.04`, `macos-14`, `windows-2022` (it grows out of the M0 Spike 6 workflow). The fake agent binaries get a `.cmd` launcher on Windows.
+
+**Why now and not M9:** if the run code assumes POSIX for 7 milestones, M9 would have to rewrite the Run Manager. One table of differences now costs about 2 hours.
 
 ---
 
@@ -187,13 +209,14 @@ All under `daemon/src/saarthi/`.
 | `agents/registry.py` | `get_adapter(name) -> AgentAdapter` (the only lookup by name) |
 | `agents/claude/mapper.py`, `agents/claude/adapter.py` | Claude stream-json mapping + process (stdin stream-json messages) |
 | `agents/codex/mapper.py`, `agents/codex/adapter.py` | Codex `exec --json` mapping + process, `exec resume` |
-| `agents/pty_shell.py` | `PtyShellAdapter` (stdlib `pty` + asyncio reader) |
+| `agents/pty_shell.py` | `PtyShellAdapter` (gets its PTY from `os_support.open_pty()`: stdlib `pty` on Linux/macOS, `pywinpty` on Windows) |
+| `os_support.py` | Decision 20: folders, process group start/stop, process info, lock, `open_pty()`, `find_binary()` |
 | `agents/fake.py` | `FakeAdapter`: replays a fixture; can pause at `needs_input` until `send()`; scripted exit code |
 | `workspace/git.py` | `run_git(args, cwd, env=None) -> GitResult` (list args only, timeout) |
 | `workspace/manager.py` | `ensure_worktree`, `run_setup_script`, `status`, `diff`, `diff_file`, `checkpoint`, `remove_worktree` |
 | `memory/context_pack.py` | `build_v0(task, brief, mode, message) -> str`, `write(worktree, text)` |
 | `core/runs.py` | `RunManager`: queue, slots, lifecycle, stage moves, pending input, restart recovery |
-| `core/notify.py` | `Notifier`: bus listener -> `notify-send` (args list) |
+| `core/notify.py` | `Notifier`: bus listener -> `notify-send` (args list) on Linux only; no-op on macOS and Windows until the app shows notifications (M3, Tauri plugin) |
 | `schemas/runs.py` | `RunCreate`, `RunOut`, `RunInput`, `RunResume`, `WorkspaceOut`, `ContextPackOut` |
 | `schemas/events.py` (extend M1's) | One Pydantic payload model per event in section 7. **Why:** one source of truth; M3 generates TypeScript types from it. |
 | `api/routes/runs.py`, `api/routes/workspace.py`, `api/routes/docs.py` | Endpoints in section 8 |
@@ -365,7 +388,8 @@ CLI (`cli/run.py`, `cli/workspace.py`). Every command has `--json`.
 | `DOCS_MAX_BYTES` | `1_000_000` |
 | `DEFAULT_PINNED_DOCS` | `["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]` |
 | `DOCS_DIR_NAME` | `"docs"` (under `DATA_DIR / "tasks" / <task_id>`) |
-| `NOTIFY_ENABLED`, `NOTIFY_SEND_BIN`, `NOTIFY_APP_NAME` | `True`, `"notify-send"`, `"Saarthi"` |
+| `NOTIFY_ENABLED`, `NOTIFY_SEND_BIN`, `NOTIFY_APP_NAME` | `True`, `"notify-send"`, `"Saarthi"` (Linux only) |
+| `WINDOWS_GIT_LONGPATHS` | `True` (Decision 20) |
 
 `project.toml`:
 ```toml
@@ -391,7 +415,9 @@ pinned = ["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "c
 | `git worktree add` fails (path exists, not a worktree) | `run.failed {error: "worktree_path_busy", path}`; never delete the folder. |
 | Setup script fails / times out | Kill its group; `run.failed` with output tail; no marker, so next run retries. |
 | Checkpoint fails | Log + `run.*` still emitted with `checkpoint_ref: null`. A run result is never lost over a checkpoint. |
-| `notify-send` missing | One warning in `daemon.log`, then silent. |
+| `notify-send` missing (Linux) | One warning in `daemon.log`, then silent. |
+| `bash` missing for the setup script (Windows) | `run.failed {error: "bash_not_found"}` with the fix text. |
+| `pywinpty` missing or ConPTY not available (old Windows) | `--pty` run fails with `424 pty_not_available`; JSON-mode runs still work. |
 | `input` to a finished run | `409`. |
 | Resume without session id | `409 not_resumable`, message "start a new run". |
 | Orphan PID check fails (not ours) | Do not kill. Mark `interrupted`. Log a warning. |
@@ -415,7 +441,8 @@ Fixtures: M0 files in `tests/fixtures/agents/` (`claude_build_ok.jsonl`, `claude
 | `integration/test_claude_adapter_process.py` | With `fake_claude.py`: stdin stream-json message for `send()`, stop kills the group |
 | `integration/test_codex_adapter_process.py` | With `fake_codex.py`: resume command, no live input |
 | `unit/agents/test_fake_adapter.py` | Replay, pause at needs_input, scripted failure |
-| `integration/test_pty_shell.py` | `bash -c 'read x; echo got:$x'`: input reaches it, `terminal.output` bytes come back, not in SQLite |
+| `integration/test_pty_shell.py` | `bash -c 'read x; echo got:$x'` (Windows: `cmd /c "set /p x= & echo got:%x%"`): input reaches it, `terminal.output` bytes come back, not in SQLite; stop ends it |
+| `unit/test_os_support.py` | Folders come from `platformdirs` and the env overrides win; `stop_group` sends the polite stop first and kills after `STOP_GRACE_SEC` (a fake child that ignores it); `find_binary` finds a `.cmd` on Windows; lock refuses a second holder |
 | `integration/test_workspace_manager.py` | Create, reuse branch, suffix, exclude entry, setup once + marker, setup failure, status ahead/behind/changed, diff_file, remove |
 | `integration/test_checkpoint.py` | Ref created, branch log and user index unchanged, no-change reuse, numbering |
 | `unit/test_context_pack_v0.py` | Text has id, title, mode, all brief sections, message; `.saarthi/context/` excluded |
@@ -426,18 +453,18 @@ Fixtures: M0 files in `tests/fixtures/agents/` (`claude_build_ok.jsonl`, `claude
 | `integration/test_plan_doc.py` | FakeAdapter plan run `done` -> file in data folder + one `doc.saved`, worktree unchanged; `failed` / `stopped` -> no file, no event |
 | `api/test_docs_api.py` | Bodies and errors of the two docs endpoints; `docs show` by number |
 | `unit/core/test_allowed_moves_m2.py` | One test per new row |
-| `unit/test_notifier.py` | Fake `notify-send` on PATH: one call per needs_input / finished / failed; missing binary -> one warning |
+| `unit/test_notifier.py` | Linux: fake `notify-send` on PATH: one call per needs_input / finished / failed; missing binary -> one warning. macOS/Windows: no call, no warning |
 | `api/test_runs_api.py`, `api/test_workspace_api.py` | Status codes and bodies of section 8; WebSocket gets `run.*`/`agent.*` |
 | `cli/test_run_cli.py` | `DefaultGroup` routing, task id -> run id lookup, renderer output for each event kind (snapshot) |
 
-Coverage target for `agents/`, `workspace/`, `core/runs.py`: 85%.
+Coverage target for `agents/`, `workspace/`, `core/runs.py`: 85%. The whole suite runs on Linux, macOS and Windows in CI (Decision 20); a test that only makes sense on one OS is marked with `pytest.mark.skipif` and a reason.
 
 ---
 
 ## 13. Manual verification
 
 1. `scripts/smoke_real_agents.sh` (core 13, not in CI): runs a tiny build task with real Claude, then Codex, in a temp repo.
-2. Follow the FSD QA checklist (section 9) on a scratch repo.
+2. Follow the FSD QA checklist (section 9) on a scratch repo. Do the PTY and folder checks once on macOS and once on Windows (a VM is fine).
 3. Dogfood: build 3 real Saarthi tasks (for example M3 prep: `active_run` field, `run list` polish, `notify-send` icon). Note each in `core_docs/timeline/timeline.md`.
 4. Show `uv run pytest`, `uv run ruff check .`, `uv run pyright` output (CLAUDE.md rule 9).
 
@@ -452,6 +479,8 @@ Coverage target for `agents/`, `workspace/`, `core/runs.py`: 85%.
 | Claude `-p` permission prompts block silently | `acceptEdits` + allowed tools; denials surface as path B; M8 may add a permission prompt tool. |
 | Codex `workspace-write` sandbox cannot write to the main repo's `.git` (worktree git dir) | Agents should not commit in M2; if needed, document in ADR and let the user commit (M5 ships). |
 | Asyncio PTY reading is flaky | Small adapter, its own test; plan B in TECH_STACK 2.3. |
+| Windows behaves differently (ConPTY, `.cmd` shims, no process groups like POSIX) | All of it in `os_support.py` (Decision 20); the 3-OS CI matrix catches breaks on every push. |
+| Agent CLIs print different paths or line endings on Windows | Mappers strip `\r\n`; paths in events are made relative to the worktree with `pathlib`. |
 | A setup script that copies `.env` leaks secrets into logs | Known gap 2 (M8). |
 | Dogfooding on Saarthi while changing Saarthi's daemon | Run the "stable" daemon from a separate install (`uv tool install` from a tag) while developing in the repo. |
 
@@ -459,7 +488,7 @@ Coverage target for `agents/`, `workspace/`, `core/runs.py`: 85%.
 
 ## 15. What this milestone does not do
 
-No UI, no keystroke/resize frames (M3). No checks, Proof Card or `Review` guard (M4). No sync with main, cleanup prompt, `workspace.removed`, commit/push/PR (M5). No research items, memory or playbooks in the Context Pack, no plan in the Context Pack, no `research` docs (M6). No Docs tab (M3). No editing docs (Later). No race (M7). No permission profiles UI, blocked list, `bwrap`, secret masking, checkpoint list or rewind, cost meter (M8).
+No UI, no keystroke/resize frames, no Tauri notifications (M3). No checks, Proof Card ("Tests and checks") or `Review` guard (M4). No sync with main, cleanup prompt, `workspace.removed`, commit/push/PR (M5). No research items, memory or playbooks in the Context Pack, no plan in the Context Pack, no `research` docs (M6). No Docs view (M3). No editing docs (Later). No Side by side (race) and no Gemini CLI (M7). No "What agents may do" UI, blocked list, OS sandbox (`bwrap` / `sandbox-exec`), secret masking, History or Restore (checkpoints, rewind), Safety and cost (M8). No installers, sidecar or background mode per OS (M9).
 
 ---
 
@@ -478,6 +507,7 @@ No UI, no keystroke/resize frames (M3). No checks, Proof Card or `Review` guard 
 | Context Pack v0 | 0.5 |
 | Task Docs: finder, reader, plan doc, `doc.saved`, API, CLI + tests | 1.5 |
 | Notifier | 0.5 |
+| Per-OS layer (`os_support.py`) + 3-OS CI matrix (Decision 20) | 2 |
 | API routes | 1 |
 | CLI (`run` group, Rich `watch`, `say`, `stop`, `resume`, `list`, `workspace`) | 2 |
-| **Total** | **21.5** |
+| **Total** | **23.5** |

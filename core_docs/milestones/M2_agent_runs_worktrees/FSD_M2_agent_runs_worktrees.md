@@ -2,14 +2,16 @@
 
 **Document type:** Functional Specification Document (FSD)
 **Milestone:** M2 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
-**Estimated effort:** 21.5 hours (2 weeks at ~10 h/week)
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), new UI words, Gemini CLI noted for M7, per-OS paths (`platformdirs`), PTY on Windows (ConPTY), notifications per OS
+**Estimated effort:** 23.5 hours (2+ weeks at ~10 h/week)
 **Written for:** The developer-owner, as product owner
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `TDD_M2_agent_runs_worktrees.md`, `../../FUNCTIONAL_SPECIFICATIONS.md`, `../../TDD-tech-design-doc.md`, `../M1_daemon_core_cli/FSD_M1_daemon_core_cli.md` (before), `../M3_desktop_ui_v1/FSD_M3_desktop_ui_v1.md` (next), `../../decisions/ADR-001-agent-integration.md` (M0 output)
+**Screens:** prototype view `cli` (the `saarthi` CLI sessions) in `core_docs/design/Saarthi Prototype.html#cli` (full list in `core_docs/design/README.md`). M2 has no window screen.
 
 ---
 
@@ -18,7 +20,7 @@
 This document covers **M2 only**: running real agents (Claude Code and Codex) on a task, each task in its own git worktree, driven from the `saarthi` CLI.
 
 It covers the features M2 owns in the ownership map (`../README.md`):
-F5.1, F5.2, F5.3 (v0, brief only), F5.6, F5.7, F5.8, F5.9, F5.10, F6.1, F6.2, F6.3 (CLI), F14.2, F16.1, F19.1 (`notify-send`), NF3, F22.2, F22.3, F22.4 (CLI + API; the Docs tab is M3).
+F5.1 (Claude Code and Codex; Gemini CLI is M7), F5.2, F5.3 (v0, brief only), F5.6, F5.7, F5.8, F5.9, F5.10, F6.1, F6.2, F6.3 (CLI), F14.2, F16.1, F19.1 (daemon notification on Linux), NF3, F22.2, F22.3, F22.4 (CLI + API; the Docs view is M3), plus the per-OS base of NF6 (paths, terminal, process control on Linux, macOS and Windows).
 
 There is no desktop window in M2. Everything here is used from the terminal. The window comes in M3.
 
@@ -45,8 +47,8 @@ After M2:
 
 | Before (needed) | This milestone | After (unlocked) |
 |---|---|---|
-| **M0** recorded real agent streams in `tests/fixtures/agents/` and wrote ADR-001 (how "needs input" looks). | Agent adapters, worktrees, runs, Needs You, resume, CLI. | **M3** puts these runs on screen (Stream tab, Terminal tab, message box). |
-| **M1** gave projects, tasks, briefs, events, the stage table `ALLOWED_MOVES`, the API and the WebSocket. | | **M4** plugs the Check Runner into the "build run ended" step. |
+| **M0** recorded real agent streams in `tests/fixtures/agents/` and wrote ADR-001 (how "needs input" looks). | Agent adapters, worktrees, runs, Needs You, resume, CLI. | **M3** puts these runs on screen (task page: Activity tab, More → Terminal, the answer box). |
+| **M1** gave projects, tasks, briefs, events, the stage table `ALLOWED_MOVES`, the API and the WebSocket. | | **M4** plugs the Check Runner ("Tests and checks") into the "build run ended" step. |
 
 ---
 
@@ -55,10 +57,11 @@ After M2:
 | Word | Simple meaning |
 |---|---|
 | **Adapter** | A small piece of code that knows how to talk to one agent CLI. Saarthi has one per agent. |
-| **Worktree** | A second working folder of the same git repo, on its own branch. Changes there do not touch your main folder. |
+| **Worktree** | A second working folder of the same git repo, on its own branch. Changes there do not touch your main folder. The window calls it "its own copy of the repo". |
 | **Setup script** | An optional script (`.saarthi/setup.sh`) that runs once in a new worktree. Example: copy `.env`, run `uv sync`. |
 | **Doc** | One markdown text I may want to read for a task: a saved plan, a changed `*.md` file, or a pinned project doc. |
-| **Context Pack** | A file the agent reads first. In M2 it only holds the brief: `.saarthi/context/TASK.md`. |
+| **Context Pack** | A file the agent reads first. In M2 it only holds the brief: `.saarthi/context/TASK.md`. The window calls it "What Claude reads". |
+| **Data folder** | Where Saarthi keeps its database, logs and worktrees. Linux: `~/.local/share/saarthi/`. macOS: `~/Library/Application Support/saarthi/`. Windows: `%LOCALAPPDATA%\saarthi\`. Examples in this doc show the Linux path. |
 | **Checkpoint** | A hidden git snapshot of the worktree, saved at the end of every run. It does not change your branch history. |
 | **Session ID** | The agent's own ID for a conversation. Saarthi saves it so a run can be resumed. |
 | **Interrupted** | A run that was alive when the daemon stopped. It can be resumed. |
@@ -70,7 +73,7 @@ After M2:
 
 ### F5.1 Supported agents
 
-- **What:** Saarthi can drive Claude Code (`claude`) and Codex (`codex`). It uses the logins I already have.
+- **What:** Saarthi can drive Claude Code (`claude`) and Codex (`codex`). It uses the logins I already have. Gemini CLI (`gemini`) is the third agent; it comes in M7.
 - **Why:** These are the two agents I use every day. No API keys to manage.
 - **Example:**
   ```
@@ -81,6 +84,7 @@ After M2:
   - Each agent sits behind the same adapter interface. No agent-specific code outside `agents/`.
   - If the CLI is missing, the run does not start. The error says how to fix it.
   - Saarthi never asks for API keys.
+  - Claude stays the default agent. `--agent gemini` is refused in M2 with "Gemini CLI comes in M7".
 - **Acceptance criteria:**
   - A Claude run and a Codex run can each be started from the CLI.
   - With the agent CLI missing, `saarthi run` exits with code 1 and a clear message. No run row is left in `running`.
@@ -115,8 +119,8 @@ After M2:
   - `plan` and `research` runs are read-only for the agent. `build` and `fix` can edit files in the worktree only.
   - `saarthi run` attaches to the live view by default. `--detach` starts it and returns.
   - `--dry-run` prints the Context Pack and the agent command, and starts nothing.
-  - `--pty` starts the agent's normal interactive screen inside a pseudo-terminal instead of the clean JSON mode. `run watch` then shows the raw terminal, and `run say` types a line into it. No clean events, no Needs You, no resume for these runs. This is the base for M3's Terminal tab.
-  - Playbooks (`--playbook`) are not in M2. They come in M6.
+  - `--pty` starts the agent's normal interactive screen inside a pseudo-terminal instead of the clean JSON mode. `run watch` then shows the raw terminal, and `run say` types a line into it. No clean events, no Needs You, no resume for these runs. This is the base for M3's Terminal (task page → More → Terminal). It works on Linux, macOS and Windows (on Windows through ConPTY, the Windows pseudo-terminal).
+  - Saved instructions (playbooks, `--playbook`) are not in M2. They come in M6.
 - **Acceptance criteria:**
   - Starting a run on a task in `Inbox` fails with "Task must be Ready, Failed or Review".
   - Starting a second run on a task that has an active run fails with the active run's ID.
@@ -149,14 +153,14 @@ After M2:
 
 ### F5.6 Needs You
 
-- **What:** When an agent asks a question or needs permission, the task moves to `Needs You`, I get a desktop notification, and I answer from the CLI.
+- **What:** When an agent asks a question or needs permission, the task moves to `Needs You`, I get a desktop notification (Linux in M2; all OSes from M3), and I answer from the CLI.
 - **Why:** I should not have to watch the stream to notice the agent is stuck.
 - **Example:**
   ```
   10:31:02  ASK   Should I add a new `run_notes` table, or reuse `events`?
                   Answer: saarthi run say 01JC4Z8M3V "reuse events"
   ```
-  Desktop: **Saarthi — Needs You · T-0002** "Should I add a new `run_notes` table…"
+  Desktop: **Saarthi — Needs you · T-0002** "Claude has a question: Should I add a new `run_notes` table…"
   ```
   $ saarthi run say T-0002 "reuse events"
   Sent. Run 01JC4Z8M3V is running again. Task T-0002 -> Running.
@@ -220,7 +224,7 @@ After M2:
 
 ### F6.1 Auto workspace
 
-- **What:** On the first run of a task, Saarthi creates branch `saarthi/<task-id>-<short-title>` and a worktree at `~/.local/share/saarthi/worktrees/<project>/<task-id>`.
+- **What:** On the first run of a task, Saarthi creates branch `saarthi/<task-id>-<short-title>` and a worktree at `<data folder>/worktrees/<project>/<task-id>` (Linux: `~/.local/share/saarthi/worktrees/...`).
 - **Why:** Isolation. Each task works on its own copy.
 - **Rules:**
   - The base is the project's default branch.
@@ -282,7 +286,7 @@ After M2:
   ```
 - **Rules:**
   - Four kinds of doc exist; M2 owns three: `plan`, `changed`, `pinned`. The fourth, `research`, comes in M6.
-  - The plan file goes in the **data folder** (`~/.local/share/saarthi/tasks/<task_id>/docs/plan-<run_id>.md`), not in the worktree. A plan run still changes no worktree file.
+  - The plan file goes in the **data folder** (`<data folder>/tasks/<task_id>/docs/plan-<run_id>.md`), not in the worktree. A plan run still changes no worktree file.
   - The file starts with a small comment header (task, run, agent, mode, time), then the agent's text.
   - Only a `plan` run that ends with status `done` saves a doc. A failed or stopped plan run saves nothing.
   - A "changed" doc is a `*.md` file added or changed against the base branch, committed or not.
@@ -307,7 +311,7 @@ After M2:
 
 - **What:** At the end of every run (done, failed, stopped, interrupted), Saarthi saves a hidden snapshot of the worktree.
 - **Why:** Later (M8) I can rewind. Nothing an agent does is lost.
-- **Rules:** The snapshot is stored under `refs/saarthi/checkpoints/<task-id>/<n>`. The task branch and its history do not change. If nothing changed since the last checkpoint, no new one is made. The list screen and Rewind are M8.
+- **Rules:** The snapshot is stored under `refs/saarthi/checkpoints/<task-id>/<n>`. The task branch and its history do not change. If nothing changed since the last checkpoint, no new one is made. The History list and Restore are M8 (task page → More → History).
 - **Acceptance criteria:** After a run, `git for-each-ref refs/saarthi/checkpoints/T-0002` shows a ref. `git log` of the task branch is unchanged.
 
 ### F16.1 Tokens and cost per run
@@ -316,11 +320,32 @@ After M2:
 - **Rules:** Claude reports cost. Codex may only report tokens; cost stays empty. Task totals (`total_cost_usd`, `total_seconds`) are updated at the end of each run. Per-day totals and the meter are M3/M8.
 - **Acceptance criteria:** Replaying `claude_build_ok` stores the fixture's cost and tokens on the run row.
 
-### F19.1 Desktop notifications (`notify-send`)
+### F19.1 Desktop notifications (daemon, Linux)
 
 - **What:** Saarthi shows a desktop notification for: agent needs you, run finished, run failed.
-- **Rules:** Uses `notify-send`. If it is not installed, Saarthi logs one warning and goes on. Native Tauri notifications are M3. "Checks failed / passed" comes with M4.
-- **Acceptance criteria:** A test with a fake `notify-send` on PATH sees exactly one call per event.
+- **Rules:** In M2 (no window yet) the daemon shows them on Linux with `notify-send`. If it is not installed, Saarthi logs one warning and goes on. On macOS and Windows the daemon sends none in M2; the CLI output is enough until M3. From M3 the app shows them on all three OSes through the Tauri notification plugin. "Checks failed / passed" comes with M4.
+- **Acceptance criteria:** A test with a fake `notify-send` on PATH sees exactly one call per event. On macOS and Windows the notifier does nothing and logs nothing.
+
+### Runs on Linux, macOS and Windows (NF6 base)
+
+- **What:** Everything in M2 works the same on Linux, macOS and Windows: the daemon, the CLI, worktrees, runs, the PTY terminal, stop and resume.
+- **Why:** Saarthi is one app for all three OSes (simple UI spec rule P3). M2 is where the daemon first touches files, processes and terminals, so the per-OS parts are built here, once.
+- **Example (Windows):**
+  ```
+  PS> saarthi run T-0002 --agent claude --mode build
+  Workspace  saarthi/T-0002-add-run-list-command (new)
+             C:\Users\me\AppData\Local\saarthi\worktrees\saarthi-7kq2px\T-0002
+  ...
+  ```
+- **Rules:**
+  - The data and config folders come from `platformdirs` (see the Data folder entry in section 4). `SAARTHI_DATA_DIR` and `SAARTHI_CONFIG_DIR` still override them.
+  - The PTY terminal uses ConPTY on Windows (through `pywinpty`) and the normal Unix PTY on Linux and macOS.
+  - Stop works on every OS: a polite stop first, then a hard kill of the agent and its child processes.
+  - Git is still run as a list of args. Paths are never built by joining strings with `/`.
+- **Acceptance criteria:**
+  - The unit and integration tests pass on Linux, macOS and Windows in CI.
+  - A `--pty` run with a fake command works on Windows: output is streamed, `run say` types into it, `run stop` ends it.
+  - On each OS, a fresh install puts the database, logs and worktrees in that OS's data folder.
 
 ### NF3 Reliability
 
@@ -387,16 +412,17 @@ After M2:
 
 | Not in M2 | Owner |
 |---|---|
-| Any screen (Stream tab, Terminal tab, message box, workspace panel) | M3 |
+| Any screen (task page: Activity tab, More → Terminal, the answer box, More → Details) | M3 |
 | Typing into an interactive agent terminal from the UI (keystrokes, resize) | M3 |
-| Native (Tauri) notifications | M3 |
-| Check Runner, Proof Card, auto checks after build, `Verifying -> Review` rule | M4 |
+| Native (Tauri) notifications on all OSes | M3 |
+| Check Runner, Proof Card ("Tests and checks" on Check and ship), auto checks after build, `Verifying -> Review` rule | M4 |
 | Sync with main, worktree cleanup prompt, `workspace.removed` event, commit, push, PR | M5 |
-| Context Pack v1 (research, memory, playbooks), playbooks, "Research this" saving findings, research items in the docs list, plan in the Context Pack | M6 |
-| Docs tab (list, markdown view, outline) | M3 |
+| Context Pack v1 (research, memory, playbooks), saved instructions (playbooks), "Just research" saving findings, research items in the docs list, plan in the Context Pack | M6 |
+| Docs view (task page → More → Docs: list, markdown view, outline) | M3 |
 | Editing docs in Saarthi, Mermaid rendering | Later (F22.6) |
-| Race Mode, per-workspace ports | M7 |
-| Permission profiles UI, blocked-commands list, `bwrap`, secret masking, checkpoint list + Rewind, cost meter | M8 |
+| Side by side (Race Mode), per-workspace ports, Gemini CLI | M7 |
+| "What agents may do" (permission profiles) UI, blocked-commands list, OS sandbox (`bwrap` on Linux, `sandbox-exec` on macOS), secret masking, History + Restore (checkpoints, rewind), Safety and cost | M8 |
+| Installers, background mode per OS, the daemon as an app sidecar | M9 |
 
 ---
 
@@ -420,7 +446,9 @@ Use a scratch repo with a tiny Python project and a brief.
 - [ ] `run stop` -> process gone (`ps`), checkpoint made, task -> `Ready`.
 - [ ] `kill -9` the daemon mid-run, restart -> `interrupted`, task `Failed`; no old agent process left; `run resume` works.
 - [ ] `saarthi run T-5 --agent claude --pty` -> `run watch` shows Claude's own screen; `run say T-5 "hello"` types into it; quitting Claude ends the run.
-- [ ] Uninstall/rename `notify-send` -> runs still work, one warning in `daemon.log`.
+- [ ] Linux: uninstall/rename `notify-send` -> runs still work, one warning in `daemon.log`.
+- [ ] On a Windows machine (or the CI log): `saarthi daemon status` shows the database under `%LOCALAPPDATA%\saarthi\`; `saarthi run T-6 --agent claude --pty` shows Claude's screen and `run stop` ends it.
+- [ ] Same `--pty` check on macOS.
 - [ ] Break `.saarthi/setup.sh` (`exit 3`) -> `run.failed` shows its output; fix it; next run re-runs setup.
 
 ---
@@ -431,11 +459,12 @@ Use a scratch repo with a tiny Python project and a brief.
 2. **Codex mid-run messages:** assumed impossible (queued until the turn ends). Confirm with M0 ADR-001; if `codex app-server` is stable (core TDD 16 Q3), revisit after v1.
 3. **"Ends with a question" false alarms:** agents often end with "Want me to also…?". M2 treats that as Needs You; `run stop` closes it as done. If this is noisy in dogfooding, add a per-project switch. Decide after 3 real tasks.
 4. **Stage table rows:** M2 needs a few moves the core table (section 7) does not list (for example `Running -> Failed` when a run crashes, which core 8.6 and 12 already describe). See TDD Decision 6. The M1 owner must agree.
-5. **Worktree folder** (FSD Q2): M2 uses the default `~/.local/share/saarthi/worktrees/`.
+5. **Worktree folder** (FSD Q2): M2 uses `<data folder>/worktrees/` (Linux: `~/.local/share/saarthi/worktrees/`).
 6. **Secrets in logs** (milestones README, known gap 2): until M8, agent logs and events may contain secrets from `.env`. Accepted risk for a local single-user tool.
+7. **Windows path length:** deep repos inside `%LOCALAPPDATA%\saarthi\worktrees\...` may pass Windows' 260-character path limit. M2 sets `core.longpaths=true` on each new worktree. If that is not enough, a shorter worktree root is a setting. Confirm during M2 on a real client repo.
 
 ---
 
 ## 11. Effort
 
-About **21.5 hours** (2 weeks at ~10 h/week). Dogfooding time (the 3 real tasks) is real work and is not counted. Breakdown in the TDD, section 16.
+About **23.5 hours** (21.5 + 2 for the per-OS layer and the 3-OS CI). Dogfooding time (the 3 real tasks) is real work and is not counted. Breakdown in the TDD, section 16.

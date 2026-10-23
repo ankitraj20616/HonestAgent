@@ -2,20 +2,22 @@
 
 **Document type:** Technical Design Document (TDD)
 **Milestone:** M0 of M0-M9 (see `../../MILESTONES.md`)
-**Product:** Saarthi - Agentic Development Environment (Linux)
+**Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
-**Version:** 0.1
+**Version:** 0.2
 **Date:** 2026-10-11
-**Estimated effort:** ~10 hours (1 week at 8-10 h/week)
+**Updated:** 2026-10-23 - Simple UI design (`../../design/2026-10-23-simple-ui-design.md`), Decision 7: cross-platform start spike in a CI matrix
+**Estimated effort:** ~11 hours (1 week at 8-10 h/week; +1 h for Spike 6, cross-platform start)
 **Written for:** Developers and coding agents (Claude, Codex) building it
 **Language style:** Simple English. Short sentences. No jargon without an explanation.
 **Related documents:** `FSD_M0_spike_skeleton.md`, `../M1_daemon_core_cli/TDD_M1_daemon_core_cli.md`, `../../TDD-tech-design-doc.md` (sections 4.4, 4.5.1, 13, 16), `../../TECH_STACK.md` (sections 3-4)
+**Screens:** prototype view `cli` in `core_docs/design/Saarthi Prototype.html#cli` (full list in `core_docs/design/README.md`). M0 has no product screen.
 
 ---
 
 ## 1. The goal in one sentence
 
-Prove we can drive Claude and Codex from Python and show a live terminal in Tauri, and leave behind real fixtures plus ADR-001 so M2 and M3 build on facts, not guesses.
+Prove we can drive Claude and Codex from Python and show a live terminal in Tauri, prove the window and a Python service start on Linux, macOS and Windows, and leave behind real fixtures plus ADR-001 so M2 and M3 build on facts, not guesses.
 
 ---
 
@@ -112,7 +114,19 @@ Scaffold `desktop/` with `npm create tauri-app@latest` (React + TypeScript + Vit
 - Binary frames = raw terminal bytes, both ways.
 - Text frames = JSON control messages. Only one in M0: `{"type": "resize", "cols": 120, "rows": 40}`.
 
-**Why:** this is the protocol M2's `PtyShellAdapter` and M3's Terminal tab will likely keep. Recorded in the ADR as a proposal, not a final contract.
+**Why:** this is the protocol M2's `PtyShellAdapter` and M3's Terminal view (task page → More → Terminal) will likely keep. Recorded in the ADR as a proposal, not a final contract.
+
+### Decision 7 — A CI matrix proves the window and a daemon stub start on all 3 OSes **(new)**
+
+`.github/workflows/spike-cross-platform.yml` runs on `ubuntu-24.04`, `macos-14` and `windows-2022`. Each job:
+
+1. Installs Rust, Node and `uv` (and the `webkit2gtk-4.1` packages plus `xvfb` on Linux).
+2. Runs `npm ci && npm run tauri build -- --debug` in `desktop/`.
+3. Starts `uv run scripts/spikes/spike_hello_daemon.py` in the background: FastAPI on `127.0.0.1:7879` with one route, `GET /health` -> `{"ok": true, "os": "<platform>"}`.
+4. Starts the built app with `SAARTHI_SPIKE_SMOKE=1` (on Linux under `xvfb-run`). In smoke mode the spike page fetches `/health`, prints `OK: window opened, /health answered in <n> s` and the app exits with code 0 (Tauri `process` plugin). A 60 s timeout fails the job.
+5. Prints the size of the built app bundle.
+
+**Why:** Saarthi ships one app for Linux, macOS and Windows (simple UI spec P3, P4). The Linux build chain and WebKitGTK speed are tested by hand in Spike 4; Spike 6 only checks that the same code builds, opens and reaches a local Python service on the other two OSes. A stub is enough because the daemon does not exist until M1. The PTY spike stays Linux-only (`pty`, `fcntl`, `termios`); Windows ConPTY is M2's job.
 
 ---
 
@@ -128,7 +142,8 @@ saarthi/
 │   └── src/spike/
 │       ├── SpikePage.tsx                    # two panes: terminal | code
 │       ├── TerminalSpike.tsx                # xterm.js + fit addon -> ws://127.0.0.1:7879
-│       └── CodeSpike.tsx                    # CodeMirror 6, read-only, big file
+│       ├── CodeSpike.tsx                    # CodeMirror 6, read-only, big file
+│       └── SmokeCheck.ts                    # SAARTHI_SPIKE_SMOKE=1: fetch /health, print OK, exit 0
 ├── scripts/spikes/
 │   ├── _common.py                           # temp repo maker, recorder, path cleaner
 │   ├── spike_claude.py                      # Spike 1
@@ -136,7 +151,9 @@ saarthi/
 │   ├── spike_pty_ws.py                      # Spike 3
 │   ├── spike_worktree.py                    # Spike 5
 │   ├── spike_detach.py                      # TDD 16 Q5 (process survival)
+│   ├── spike_hello_daemon.py                # Spike 6: stand-in service with GET /health
 │   └── review_findings.schema.json          # small schema for --output-schema
+├── .github/workflows/spike-cross-platform.yml   # Spike 6 (Decision 7)
 └── core_docs/decisions/ADR-001-agent-integration.md
 ```
 
@@ -218,6 +235,7 @@ None in the product. Spike scripts take everything (port, prompt, paths) as CLI 
 | Run hangs | `--timeout` (default 300 s), then SIGTERM the process group. Not recorded. |
 | Non-JSON stdout line | Printed as `[nnnn] RAW ...` and kept in the recording. |
 | Tauri build fails (missing system libs) | Write the `apt install` line needed in the ADR "Setup" section. |
+| Spike 6 fails on macOS or Windows only | Write the OS, the failing step and the error in the ADR "Open items". M1 does not start until the owner decides: fix now, or note it for M9. |
 
 ## 12. Tests to write
 
@@ -237,6 +255,7 @@ Follow the QA checklist in the FSD section 9.
 | No clean "needs input" signal | The ADR documents a workaround (end-and-resume). Product still works, just less live. |
 | WebKitGTK is slow | Plan B (browser UI) is cheap because the UI only talks HTTP + WebSocket. |
 | Fixture leaks private data | Decision 4 + QA checklist steps 3-4. |
+| A macOS or Windows break is found late | Spike 6 runs on every push to the spike branch; M9 turns the same matrix into the release build. |
 | Spike code slowly becomes product code | Spikes are not imported anywhere. M2 deletes `scripts/spikes/`. M3 deletes `desktop/src/spike/`. |
 
 ---
@@ -250,7 +269,7 @@ File: `core_docs/decisions/ADR-001-agent-integration.md`
 3. **Claude** — exact command and flags; list of event types seen (with one sample line each); draft mapping to 6.2 types; needs-input detection; resume; permission flags that worked.
 4. **Codex** — same as Claude, plus `--output-schema` and `codex exec review` notes, plus app-server result (Q3).
 5. **PTY + WebSocket** — protocol (Decision 6), resize, shutdown.
-6. **Tauri / WebKitGTK** — test results for Q4, system packages needed, renderer choice, plan B yes/no.
+6. **Tauri / WebKitGTK** — test results for Q4, system packages needed, renderer choice, plan B yes/no. Plus Spike 6 per OS: green or not, app size, time to first page, setup steps.
 7. **Worktree + checkpoint** — final command list, timing on a big repo.
 8. **Process survival (Q5)** — result and v1 choice.
 9. **Fixture index** — table of every fixture with scenario, agent version, and what it shows.
@@ -273,5 +292,6 @@ No Python package, DB, API, CLI, adapter classes, real UI, rewind, or secret mas
 | Spike 3 - PTY to WebSocket | 1 |
 | Spike 4 - Tauri page + smoothness checks (Q4) | 1.5 |
 | Spike 5 - Worktree + checkpoint, plus Q5 detach test | 1 |
+| Spike 6 - cross-platform CI matrix (Decision 7) | 1 |
 | ADR-001 + fixture clean-up | 1 |
-| **Total** | **~10.5** |
+| **Total** | **~11.5** |
