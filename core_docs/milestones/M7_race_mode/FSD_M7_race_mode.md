@@ -1,7 +1,7 @@
 # FSD — M7: Side by side (Race Mode) + Gemini CLI + parallel polish
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M7 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M7 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -173,6 +173,7 @@ The task stays **one row on Home** (and one card on the Board view) with a "Side
   - The block is freed when the worktree is removed.
   - A block is skipped if its first port is already in use on the machine.
   - Projects pick which env names to set in `project.toml` (`[ports] env`). The project's own scripts must read the variable; Saarthi cannot change hard-coded ports.
+  - Later in M11: the dev server for the Live test and `e2e` checks starts on this port (`{port}` in `[browser] base_url`).
   - Workspaces made before M7 get a block the next time a run, check or terminal starts there.
 - **Acceptance criteria:**
   - Two lanes of one race get different blocks.

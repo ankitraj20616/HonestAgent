@@ -222,3 +222,6 @@ __marimo__/
 # brainstorm companion files
 .superpowers/
 .claude/worktrees/
+
+# personal Hinglish guide, not for the repo
+SAMJHO_SAARTHI.md

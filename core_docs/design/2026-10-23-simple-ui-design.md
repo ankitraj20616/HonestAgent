@@ -30,6 +30,8 @@ The new design keeps every feature but shows only the next step. Advanced parts 
 | P3 | **One app for Linux, macOS and Windows.** One codebase, one release pipeline, native installers for each OS. Nothing in the UI depends on the OS. See `decisions/ADR-002-cross-platform-lightweight.md`. |
 | P4 | **Very light.** Targets: installer under 40 MB. App open in under 2 s. Idle RAM under 150 MB for the window plus under 150 MB for the background service. No Electron, no bundled browser, no VS Code. |
 | P5 | **Agents: Claude Code, Codex and Gemini CLI.** All behind the `AgentAdapter` interface. Gemini CLI joins in M7. Claude stays the default. |
+| P6 | **Agents test it live in a browser (M11).** When a project turns on browser testing, every build ends with a **Live test**: the agent opens the app in a real browser, walks through the UI parts of "What done looks like", and saves screenshots, a short video and a trace as proof ("See it work"). Logins use **saved logins of test accounts**. The browser is **not in the installer**: Saarthi uses the system Chrome / Edge / Chromium, or downloads a browser kit once, on demand. See section 11. |
+| P7 | **Live preview inside Saarthi (M12, starts with a spike).** Watch the agent's browser live in the task page, and open the task's running app in a Saarthi preview window. Letting the agent drive Saarthi's own WebView is tried in the M12 spike and kept only on the OSes where it works. See section 11. |
 
 ## 3. Decisions
 
@@ -88,6 +90,9 @@ The new design keeps every feature but shows only the next step. Advanced parts 
 | Cost meter, budget | Safety and cost |
 | Daemon | Background service (shown only when broken) |
 | Bead, Wheel | removed (logo only) |
+| E2E / browser check | Live test |
+| Evidence (screenshots, video, trace) | See it work |
+| Auth state / storageState | Saved login |
 
 "Claude" in labels means the agent that runs the task. With Codex or Gemini, the label uses that name.
 
@@ -137,6 +142,8 @@ Every screen is a view in the prototype. Open one with `Saarthi Prototype.html#<
 | Settings | `settings` · `settingsAgents` · `settingsProject` · `safety` · `fullAccess` · `settingsJira` · `settingsHealth` · `settingsAbout` |
 | Overlays | `commandBar` · `quickCapture` · `shortcuts` |
 | Errors and states | `errService` · `errAgent` · `reconnecting` · `versionMismatch` |
+| Browser testing (M11) | `settingsBrowser` · `loginSave` · `liveTest` · `evidence` · `loginExpired` |
+| Live preview (M12) | `livePreview` |
 | CLI | `cli` (the `saarthi` CLI sessions of M1, M2, M10) |
 | Notes | `designNotes` (labels, what moved where, screens per milestone) |
 
@@ -168,7 +175,42 @@ Every screen is a view in the prototype. Open one with `Saarthi Prototype.html#<
 | Daemon status, versions, health | Settings → Health / About. Full screen only when broken. |
 | Shortcut sheet, quick capture, command bar | `?`, `Ctrl Alt N`, `Ctrl K`. |
 
-## 10. Out of scope
+## 11. Browser testing (M11) and live preview (M12)
+
+### 11.1 Why
+Many tasks only count as "done" when the app really works in a browser: log in, open a page, click, see the result. Unit tests do not prove that. So the agent tests it live, once per build, and shows proof.
+
+### 11.2 Decisions
+| # | Decision |
+|---|---|
+| B1 | **No browser in the installer.** Chromium is 100-200 MB; the installer budget is 40 MB (P4). |
+| B2 | **One engine: Chromium, on all three OSes.** Same engine everywhere, so a Live test behaves the same on Linux, macOS and Windows. It also gives CDP (needed for the live screencast in M12) and is what Playwright MCP uses by default. Firefox and WebKit are not used. |
+| B2a | **Lightest path first, in this order:** (1) system **Google Chrome**, (2) system **Microsoft Edge** (built into Windows 10/11, so Windows usually needs no download), (3) system **Chromium**, (4) else Settings → Browser testing offers a one-time download of the **browser kit** into the Saarthi data folder: Playwright's **Chromium headless shell** for Live tests (the smallest build), plus the full Chromium only if the user wants to watch it or save a login and no system browser exists. Exact sizes and packaging are measured in the M11 spike. |
+| B3 | **Off by default, per project.** `[browser]` in `.saarthi/project.toml`: `enabled`, `base_url`, `dev_server` (command), `allowed_hosts`, `live_test = "auto" | "off"`, `live_test_required = false`. Backend-only projects keep it off. |
+| B4 | **Live test = one more check.** After the required checks pass, the Check Runner starts the task's dev server on the task's own port and runs the Live test. The agent drives the browser through a browser MCP server (for example Playwright MCP, flags checked in the spike). It walks the UI items of "What done looks like" and saves screenshots, video and trace. The result is a normal check result: optional by default, so it feeds the verdict like any optional check, or required if `live_test_required = true`. |
+| B4a | **The daemon owns the browser.** The daemon runs Chromium and the browser MCP server; the agent reaches it only through a per-run endpoint on `127.0.0.1`. The kit, the saved logins and the browser profile stay with the daemon, outside the agent's sandbox, so the agent never sees a session file (ADR-003, TDD 4.15). |
+| B3a | In M11, `[browser]` is shown read-only in Settings → Browser testing, with "Edit project.toml". Editing it from the UI is Later. |
+| B5 | **The project's own E2E tests** (`npx playwright test`, `pytest -m e2e`) are just checks of kind `e2e`. Saarthi starts the dev server and collects their artifacts. |
+| B6 | **Saved logins, test accounts only.** "Save a login" opens a normal (headed) browser; the user logs in once by hand; Saarthi saves the session (Playwright `storageState`) per project and name, in the data folder (owner-only file). Never in the repo, never in events, never in the Context Pack, never shown to the agent as text. The agent only gets "use login `test-admin`". Saarthi never stores the password. |
+| B7 | **Browser stays on allowed hosts.** The agent's browser opens only `base_url` and `allowed_hosts` (default `127.0.0.1`, `localhost`). Any other host needs a Needs-you OK. Never use production accounts; the Save-a-login dialog says so. |
+| B8 | **Expired login → Needs you.** If a saved login no longer works, the task shows "Log in again" (one click opens the headed browser). |
+| B9 | **See it work** on Check and ship: a step list with screenshots, the short video, and "Open trace". Kept with the task; cleaned up with the worktree. |
+| B10 | **Live preview (M12) has three parts.** (a) *Live browser*: the agent's Chromium is streamed into the task page (screencast), so you watch it click. Works on every OS. (b) *Preview window*: a separate Saarthi window (Tauri WebView) opens the task's dev server, so you click around yourself. It has **no access** to Saarthi's commands (no IPC). (c) *Agent drives the preview window*: Linux via WebKitWebDriver, Windows via WebView2 remote debugging (CDP), macOS has no driver. This part is spike-gated: kept only where the spike passes, else the agent uses its own Chromium (a). |
+
+### 11.3 Screens
+- `settingsBrowser`: Settings → Browser testing. It shows:
+  - which browser was found (or "Download browser kit");
+  - base URL, dev server command and port;
+  - allowed hosts;
+  - Live test: Auto / Off, and Required;
+  - saved logins, with "Save a login".
+- `loginSave`: the "Save a login" flow. The browser opens, you log in, Saarthi saves the session.
+- `liveTest`: the task page while the agent is live testing. Steps appear as they happen, each with a thumbnail; in M12 the live browser also shows here.
+- `evidence`: "See it work". Every step with its screenshot, the video, and "Open trace". It is reached from Check and ship.
+- `loginExpired`: the Needs-you card "Your saved login test-admin expired. Log in again."
+- `livePreview` (M12): the preview window next to the live browser, with "Let the agent use this window" shown only where supported.
+
+## 12. Out of scope
 
 - A real React build of these screens. This work is the design and the prototype.
 - Mobile layouts.

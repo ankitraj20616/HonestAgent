@@ -1,7 +1,7 @@
 # TDD — M9: Polish + Package (v1.0)
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M9 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M9 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2

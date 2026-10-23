@@ -1,7 +1,7 @@
 # FSD — M4: Checks + Proof Card
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M4 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M4 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -387,7 +387,8 @@ While checks run, the task page shows view `checks` ("Running tests and checks",
 | Proof Card in the PR body | M5 |
 | "Update from main" | M5 |
 | Playbook variable `{{failing_checks}}` | M6 (M4 makes the text it will use) |
-| Evidence: screenshots, API recordings (F7.5) | Later |
+| Evidence: screenshots, video, trace (F7.5), Live test, `e2e` checks (F24) | M11 (adds check kinds on top of this Check Runner) |
+| API recordings (F7.8) | Later |
 | Masking secrets in check logs (F15.4) | M8 |
 | Running only some checks | Not planned |
 | Cost meter for coverage calls | M8 (cost is recorded per run since M2) |

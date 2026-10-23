@@ -1,7 +1,7 @@
 # Milestones - FSD and TDD per milestone
 
 **Date:** 2026-10-11
-**Updated:** 2026-10-23 - Simple UI design (`../design/2026-10-23-simple-ui-design.md`): new screen words, many projects in one window, Files (IDE view), one app for Linux, macOS and Windows, Gemini CLI in M7.
+**Updated:** 2026-10-23 - Simple UI design (`../design/2026-10-23-simple-ui-design.md`): new screen words, many projects in one window, Files (IDE view), one app for Linux, macOS and Windows, Gemini CLI in M7. Browser testing (M11) and live preview (M12) added (spec section 11, `../decisions/ADR-003-browser-testing.md`).
 **Source of truth:** `../MILESTONES.md` (plan), `../FUNCTIONAL_SPECIFICATIONS.md` (what), `../TDD-tech-design-doc.md` (how), `../TECH_STACK.md` (with what)
 
 > The big FSD and TDD describe the whole product. The files here cut them into one small, buildable slice per milestone.
@@ -26,8 +26,11 @@
 | M8 | `M8_safety_cost_rewind/` | `FSD_M8_safety_cost_rewind.md` | `TDD_M8_safety_cost_rewind.md` | OS sandbox per OS, What agents may do, Safety and cost, History → Restore |
 | M9 | `M9_polish_package/` | `FSD_M9_polish_package.md` | `TDD_M9_polish_package.md` | `.dmg` / `.msi` / `.AppImage` + `.deb`, daemon as a sidecar, background mode per OS, first-run setup, docs - v1.0 |
 | M10 | `M10_jira_tickets/` | `FSD_M10_jira_tickets.md` | `TDD_M10_jira_tickets.md` | Jira tickets page, start a task from a ticket, write back (Needs-you row + card on Done) |
+| M11 | `M11_browser_testing/` | `FSD_M11_browser_testing.md` | `TDD_M11_browser_testing.md` | Live test in a real Chromium after the checks, `e2e` checks, saved test logins, allowed hosts, See it work. Screens: `settingsBrowser`, `loginSave`, `liveTest`, `evidence`, `loginExpired`, `check` (See it work card) |
+| M12 | `M12_live_preview/` | `FSD_M12_live_preview.md` | `TDD_M12_live_preview.md` | Live browser (screencast) in the task page, preview window with no IPC, agent drives it only where the spike passes. Screens: `livePreview`, `liveTest` |
 
 **Build order:** M0 to M9 in order, except M10 (Jira tickets). M10 needs M1-M6 and is built after M6; it may come before M7. M7-M9 keep their numbers. The files for M10 are added by the Task Docs + Jira spec (`../design/2026-10-12-task-docs-and-jira-design.md`).
+M11 (browser testing) needs M4 and M5 and uses M7's per-workspace ports, so it is built after M7 (if M7 is not done, M11 builds the port part). M12 (live preview) needs M11 and M3, and starts with a go/no-go spike per OS. The files for M11 and M12 come from the Simple UI spec, section 11.
 
 Each folder can also hold, later: `IMPLEMENTATION_PLAN_<name>.md`, `testing/`, and review notes.
 
@@ -53,6 +56,8 @@ A milestone doc must not build something owned by a later milestone. It may only
 | M8 | F14.3, F15.1, F15.2, F15.3 (per OS: `bwrap` / `sandbox-exec` / none on Windows), F15.4, F16.2 (Safety and cost), F16.3 (budget alert) |
 | M9 | F18.2 (shortcut sheet `?`), packaging for 3 OSes, background mode (systemd on Linux, launchd on macOS, autostart on Windows), first-run setup, Playwright, user guide, NF1, NF6 |
 | M10 | F3.3 (goal from ticket), F23.1-F23.6 (Jira Cloud connect, Jira tickets page, start/link task, ticket chip, write back, cache + offline) |
+| M11 | F7.5 (evidence, See it work), F24.1-F24.7 (browser on demand, `[browser]` settings, dev server per task, Live test, `e2e` checks, saved logins, allowed hosts). Uses F6.7 (ports, M7). |
+| M12 | F25.1 (live browser), F25.2 (preview window, no IPC), F25.3 (agent drives the preview window, spike-gated per OS) |
 
 ### Data (SQLite tables, TDD section 5)
 
@@ -67,6 +72,8 @@ A milestone doc must not build something owned by a later milestone. It may only
 | M7 | `race_lanes`; + `runs.race_lane_id`, `tasks.race_id`, `tasks.port` |
 | M8 | `checkpoints` (index over git refs); + `runs.permission_profile`, `runs.sandboxed`, `runs.cost_estimated`. Budgets live in `settings`. |
 | M10 | `tickets` (cache), `ticket_views` (what each view returned, for offline), `ticket_actions`; + `tasks.ticket_key` (nullable, partial unique index per project; `tasks.ticket_url` already exists) |
+| M11 | `saved_logins`; + `check_results.kind`, `check_results.artifacts`, `tasks.browser_hosts_ok`. Evidence files and the `storageState` files live in the data folder, not in the DB. |
+| M12 | None |
 
 One Alembic migration per milestone that adds tables.
 
@@ -83,6 +90,8 @@ One Alembic migration per milestone that adds tables.
 | M7 | Race endpoints, `/runs/active?project_id=` (no id = all projects; see M7 TDD) |
 | M8 | `/tasks/{id}/checkpoints`, `/tasks/{id}/checkpoints/{n}/rewind`, `/tasks/{id}/safety`, `/safety/check`, `/safety/scrub`, `/cost` |
 | M10 | `/jira/sites*`, `/projects/{id}/tickets*`, `/tasks/{id}/ticket`, `/tasks/{id}/ticket-actions`, `/ticket-actions/{id}/send`, `/ticket-actions/{id}/skip` |
+| M11 | `/browser`, `/browser/kit`, `/projects/{id}/browser`, `/projects/{id}/logins*`, `/tasks/{id}/devserver`, `/tasks/{id}/browser/hosts`, `/tasks/{id}/evidence*`, `/browser-mcp/{session_id}` (agent MCP endpoint) |
+| M12 | `/tasks/{id}/preview`, `/tasks/{id}/preview/agent`; WebSocket topic `screencast:<task_id>` |
 
 ### Events (TDD section 6.2)
 
@@ -96,6 +105,8 @@ One Alembic migration per milestone that adds tables.
 | M7 | `race.*` (`race.started`, `race.ready`, `race.winner_picked`, `race.cancelled`) |
 | M8 | `workspace.rewound`, `safety.alert`, `cost.budget_exceeded` |
 | M10 | `ticket.*` (`ticket.synced`, `ticket.imported`, `ticket.linked`, `ticket.action_proposed`, `ticket.action_sent`, `ticket.action_failed`, `ticket.action_skipped`) |
+| M11 | `browser.*` (`browser.started`, `browser.step`, `browser.screenshot`, `browser.finished`, `browser.host_blocked`, `browser.host_allowed`, `browser.kit_installed`, `browser.kit_removed`), `login.*` (`login.saved`, `login.expired`, `login.removed`), `devserver.*` (`devserver.started`, `devserver.failed`, `devserver.stopped`) |
+| M12 | `preview.*` (`preview.opened`, `preview.closed`, `preview.agent_attached`). Screencast frames are a stream, not events. |
 
 Events beyond core TDD 6.2 are marked **(new)** in each TDD. When a milestone is built, copy its new events into the core TDD.
 
@@ -151,17 +162,22 @@ These go against or beyond the core FSD / TDD. If you accept them, update the co
 | 15 | M2 | Windows support in the daemon: ConPTY (`pywinpty`), `platformdirs`, `psutil` for process control | TECH_STACK |
 | 16 | M8 | No OS sandbox on Windows in v1, so "Full access" is not offered there; macOS uses `sandbox-exec` | TDD 4.9 |
 | 17 | M9 | The daemon ships as a Tauri sidecar binary (PyInstaller, Nuitka as plan B); the app starts it | TECH_STACK, TDD 16 |
+| 18 | M11 | The browser and Playwright MCP run with the daemon; the agent reaches them through a Saarthi MCP endpoint (`RunRequest.mcp_servers`), so the saved login is never visible inside the agent's sandbox | TDD 4.4, 4.9, 4.15; ADR-003 |
+| 19 | M11 | `[browser]` in `project.toml` is read only in Saarthi (Settings shows it and opens the file); one saved login per project (`[browser] login`) | FSD F24.2, F24.6 |
+| 20 | M11 | Expired login and a blocked host make the task Needs you, through `waiting_on_user` | TDD 7 (UI only) |
+| 21 | M12 | The preview window has no capability at all; the driver may reach only the preview window (own WebView2 environment on Windows, preview-only process on Linux) | TDD 4.16 |
 
 ---
 
 ## Effort (from the TDDs)
 
-| M0 | M1 | M2 | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | Total |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| ~11 h | ~20 h | ~23.5 h | ~37.5 h | ~14.5 h | ~25 h | ~21 h | ~15 h | ~21.5 h | ~25 h | ~18 h | ~232 h |
+| M0 | M1 | M2 | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | M11 | M12 | Total |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ~11 h | ~20 h | ~23.5 h | ~37.5 h | ~14.5 h | ~25 h | ~21 h | ~15 h | ~21.5 h | ~25 h | ~18 h | ~21 h | ~15.5 h | ~268.5 h |
 
 The Simple UI and 3-OS work added ~25 h (was ~207 h): many projects, statuses and Files in M3; the verdict in M4; why notes and looked-at marks in M5; Gemini in M7; per-OS sandbox in M8; per-OS packaging in M9; Windows base in M0/M2.
 M8 and M9 are over the MILESTONES.md plan (15 h and 10 h). Their FSDs list what to cut.
+Browser testing adds ~36.5 h: M11 ~21 h (+~2 h if M7's ports are not built yet), M12 ~15.5 h (~12.5 h if the spike is no-go on every OS). In weeks: M11 about 2, M12 about 1.5; the plan total is about 23.5 weeks.
 
 ---
 

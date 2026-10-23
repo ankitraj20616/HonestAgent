@@ -1,7 +1,7 @@
 # TDD — M6: Just research + Lessons and notes + Saved instructions
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M6 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M6 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2

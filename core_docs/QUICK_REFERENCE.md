@@ -16,7 +16,7 @@
 | **Backend** | Python 3.12 daemon (FastAPI, SQLite), shipped as a Tauri sidecar |
 | **Frontend** | Tauri 2 + React + TypeScript |
 | **Agents** | Claude Code CLI (default), Codex CLI, Gemini CLI (M7) |
-| **v1 time** | about 20 weeks side-project time (M0-M10) |
+| **v1 time** | about 23.5 weeks side-project time (M0-M12) |
 | **UI spec** | `design/2026-10-23-simple-ui-design.md` + `design/Saarthi Prototype.html` |
 
 ---
@@ -79,6 +79,7 @@ Full list: Simple UI spec, section 5.
 8. **Lessons learned** - core_docs memory / learnings / timeline updated after every ship.
 
 Also: a **Docs** view in every task (plans, changed .md files, pinned docs), and **Jira** tickets (M10): start a task from a ticket, move its status after my OK.
+And: a **Live test** in a real browser after each build, with **See it work** proof and saved test logins (M11); watch it live or open a preview window (M12). Chromium from the system, or a browser kit downloaded once.
 
 ---
 
@@ -97,6 +98,7 @@ Also: a **Docs** view in every task (plans, changed .md files, pinned docs), and
 | Memory | Reads / updates core_docs, builds the Context Pack. |
 | Docs Finder | Lists plans, changed .md files, pinned docs of a task. |
 | Ticket Provider | Jira Cloud tickets and write back (M10). |
+| Browser | Finds Chromium (or the browser kit), dev server per task, Live test, saved logins, evidence (M11); live screencast and preview window (M12). |
 
 ---
 
@@ -105,7 +107,7 @@ Also: a **Docs** view in every task (plans, changed .md files, pinned docs), and
 | M0 Spike (3 OS) | M1 Core+CLI | M2 Agents+Worktrees | M3 UI + Files | M4 Checks |
 |---|---|---|---|---|
 | **M5 Check and ship** | **M6 Research+Memory** | **M7 Side by side + Gemini** | **M8 Safety+Undo (per OS)** | **M9 Installers v1.0 (3 OS)** |
-| **M10 Jira tickets** (needs M1-M6) | | | | |
+| **M10 Jira tickets** (needs M1-M6) | **M11 Browser testing** (after M7) | **M12 Live preview** (needs M11) | | |
 
 ---
 

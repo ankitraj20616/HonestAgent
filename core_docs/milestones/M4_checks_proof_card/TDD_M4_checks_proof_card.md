@@ -1,7 +1,7 @@
 # TDD — M4: Checks + Proof Card
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M4 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M4 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -454,7 +454,8 @@ New fixtures (record once with real agents via the M0 recording script, then com
 - No "What changed" groups, risk tags, Ask Codex to review, ship (M5). The verdict takes findings as input, but M4 always passes none.
 - No automatic fix rounds without a click.
 - No running a subset of checks.
-- No screenshots or API recordings (F7.5, Later).
+- No screenshots, video or trace (F7.5 is M11) and no API recordings (F7.8, Later).
+- Hook for M11: keep the batch as an ordered list of steps and `CheckSpec` easy to extend. M11 adds a `kind` (`cmd` / `e2e` / `live`), an `artifacts` column, a dev server step and a Live test side run (`live_test`) after the required checks. M4 code needs no change now.
 - No secret masking of logs (M8).
 - No `{{failing_checks}}` playbook variable (M6 uses `failing_checks_markdown()`).
 

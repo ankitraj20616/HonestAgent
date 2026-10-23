@@ -17,7 +17,7 @@ const OVERLAYS = {};
 /* The main flow, in order. "Next →" in the prototype bar follows it, then the order screens were added. */
 const FLOW = ['setup1', 'setup2', 'homeEmpty', 'newTask', 'work', 'question', 'checks', 'files', 'checkFail', 'fixing', 'check', 'done', 'home'];
 
-const AREAS = ['First run', 'Home', 'New task', 'Task page', 'Files', 'Check and ship', 'Done', 'Side by side', 'Project tools', 'Settings', 'Overlays', 'Errors and states', 'CLI', 'Notes'];
+const AREAS = ['First run', 'Home', 'New task', 'Task page', 'Files', 'Check and ship', 'Done', 'Side by side', 'Browser testing', 'Project tools', 'Settings', 'Overlays', 'Errors and states', 'CLI', 'Notes'];
 
 function view(id, meta, render) {
   if (VIEWS[id]) throw new Error('duplicate view ' + id);
@@ -186,7 +186,7 @@ function protoBar(v) {
   let list = '';
   if (open) {
     const groups = mode === 'flow' ? [['Main flow', FLOW]] :
-      mode === 'ms' ? ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10'].map(m => [m, ORDER.filter(id => (VIEWS[id].ms || '').split(/[ ,+]/).includes(m))]).filter(g => g[1].length) :
+      mode === 'ms' ? ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'].map(m => [m, ORDER.filter(id => (VIEWS[id].ms || '').split(/[ ,+]/).includes(m))]).filter(g => g[1].length) :
       AREAS.map(a => [a, ORDER.filter(id => VIEWS[id].area === a)]).filter(g => g[1].length);
     list = `<div class="proto-panel" data-keepmenu="1">
       <div class="ph">${[['area', 'By area'], ['flow', 'Main flow'], ['ms', 'By milestone']].map(([m, l]) => `<button class="${m === mode ? 'on' : ''}" data-act="protoMode" data-arg="${m}">${l}</button>`).join('')}

@@ -1,7 +1,7 @@
 # FSD — M6: Just research + Lessons and notes + Saved instructions
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M6 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M6 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2

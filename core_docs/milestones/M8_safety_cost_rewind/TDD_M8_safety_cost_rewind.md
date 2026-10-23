@@ -1,7 +1,7 @@
 # TDD — M8: Safety + Cost + Rewind
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M8 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M8 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -137,6 +137,7 @@ Notes:
 - `--die-with-parent`: if the daemon dies, the agent dies. Matches core TDD 8.6 ("interrupted + resume") and M9's background-service choice (`KillMode=mixed` on Linux).
 - `<repo>/.git` rw is a known hole: the agent could change refs of other branches. Risk 3.
 - The project's own `.git` worktree layout must be read from `git rev-parse --git-common-dir`, not guessed.
+- **Later in M11 (Live test):** the `live_test` side run is sandboxed like any run. It needs the network on (already on) to reach the daemon's browser endpoint on `127.0.0.1`. The browser, the browser kit (`<data>/browser-kit/`) and the saved logins (`<data>/logins/`) run with the daemon, outside the sandbox, so no bind or allow rule may expose them (they sit in the data folder, which is already in `SANDBOX_SECRET_PATHS`). Each Live test uses a fresh temp browser profile, deleted after the run. If M11's spike needs the stdio bridge, only the `saarthi` binary path is added read-only.
 
 ### Decision 6 — Sandbox mode setting and the "works here" check
 `safety.sandbox = "always" | "full_only"` (default `always`). `full` always needs it. `safety/sandbox.py::probe()` runs once at start and caches the result (also shown in `/health`):
@@ -474,7 +475,7 @@ Before "done": `uv run pytest`, `uv run ruff check .`, `uv run pyright` with out
 
 ## 15. What this milestone does not do
 
-- No network sandbox, no per-host allow list.
+- No network sandbox, no per-host allow list (M11 adds an allow list for the agent's browser only, not for the agent).
 - No OS sandbox on Windows (Later); so no Full access there.
 - No hard budget stop.
 - No manual "save checkpoint" button (open question in FSD).
