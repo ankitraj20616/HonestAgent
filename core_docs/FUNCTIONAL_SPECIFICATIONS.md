@@ -1,839 +1,583 @@
 # Functional Specifications (FSD)
-## Saarthi - Agentic Development Environment
+## HonestAgent v1 - a test-integrity gate for AI-agent pull requests
 
-**Version:** 0.2 (draft)
-**Date:** 2026-10-23
-**Type:** Personal project
-**Platform:** Linux, macOS and Windows (one app, one codebase)
-**UI spec:** `design/2026-10-23-simple-ui-design.md` (screens, words, statuses). Prototype: `design/Saarthi Prototype.html`.
+**Version:** 1.0 (draft)
+**Date:** 2026-10-24
+**Scope:** v1 only (milestones M0-M4, see `MILESTONES.md`)
+**How it is built:** `TDD-tech-design-doc.md`. **With what:** `TECH_STACK.md`.
 
-> Simple English. Points and sub-points. "Must" = needed for v1. "Later" = after v1.
-
----
-
-## 1. Overview
-
-### 1.1 What is Saarthi
-- A light desktop app for Linux, macOS and Windows.
-- It helps a developer **direct AI coding agents** (Claude Code, Codex, Gemini CLI).
-- The main unit is a **Task**, not a file.
-- One window holds **many git repos** (projects).
-- The developer does: research, write intent, verify, approve.
-- The agents do: write code, run tests, explain changes.
-
-### 1.2 The problem
-- Today we use an IDE, a terminal, a browser, and many agent chats at once.
-- Each repo needs its own IDE window.
-- Context is spread everywhere:
-  - Research is in browser tabs.
-  - Task details are in the head or in a chat.
-  - Agent output is in a terminal that scrolls away.
-  - Test results are in another terminal.
-- Running 2-3 tasks at the same time is hard:
-  - Agents touch the same files.
-  - We forget which terminal is doing what.
-- Verifying is manual and easy to skip.
-- Learnings are lost after the session ends.
-
-### 1.3 The solution
-- One place per task, called the **Task page**. It has:
-  - the goal (what to build),
-  - the research,
-  - the live agent work (Activity),
-  - the checks and the review (**Check and ship**),
-  - the history (under More).
-- Each task gets its **own git worktree and branch** ("its own copy of the repo"). Tasks never clash.
-- On screen a task has one of **4 statuses**: To do, Working, Needs you, Done. Inside, the engine moves it stage by stage.
-- The app **runs checks by itself** and shows a simple **verdict**.
-- A **Files** screen shows the code like an IDE file view, for exploring and reviewing.
-- The app **remembers** the project (core_docs, learnings) and gives it to the agents.
-- All repos live in **one window**: project tabs and **All projects** on Home.
-
-### 1.4 What makes it different (ADE with a built-in IDE-style file view)
-- **Task-first, not file-first.** Home is a list of tasks across all projects, not a file tree.
-- **Many repos, one window.** No new window per repo.
-- **Proof gate.** A task cannot reach the `Review` stage without passing checks.
-- **What changed.** The diff is grouped by "why", with the agent's notes and risk tags.
-- **Ask Codex to review.** One agent builds, another agent reviews.
-- **Side by side.** The same goal goes to two agents in parallel. You pick the better result.
-- **Project Memory.** The app reads and updates `core_docs/` by itself.
-- **Files, IDE-style, for reading.** Tree, tabs, syntax colours, changes against `main`. Only tiny edits. For heavy editing, one click opens your own editor. Not built on VS Code.
-- **Light and cross-platform.** One small app for Linux, macOS and Windows. No Electron.
-
-### 1.5 Success criteria
-- I can do a full daily task (research -> PR) **without opening an IDE**.
-- I can run **3 tasks in parallel**, in **different repos**, from one window, without confusion.
-- Every finished task has **proof** (checks + verdict).
-- Starting a new task takes **under 30 seconds**.
-- A new user goes from opening the app to an open pull request, without help, in **under 5 minutes**.
-- After 1 month of use, `core_docs/memory` and `learnings` are **updated by the app**, not by hand.
+> Simple English. This file says WHAT HonestAgent does, not HOW.
+> "Must" = needed for v1. "Should" = v1 if time allows. "Later" = not v1.
+> Every requirement has an ID (F3.2) so a test can point at it.
 
 ---
 
-## 2. Users
+## 1. Purpose and problem
 
-### 2.1 Primary user: Solo developer (me)
-- Python developer.
-- Uses Claude Code and Codex every day.
-- Works on 3-5 client projects at the same time.
-- Spends most time on research, reviewing, and verifying.
+### 1.1 The problem
+- AI coding agents (Claude Code, Codex, Copilot) write more and more pull requests.
+- When an agent cannot fix the code, it sometimes changes the **tests** instead:
+  it deletes them, skips them, or weakens the asserts so they "pass".
+- People in the field call this **"test tampering"** and **"CI weakening"**.
+- Reviewers miss it. The PRs are big and review is slow:
+  - **80.2%** of agent-written test patches have weak or missing checks
+    (the test does not really check the answer).
+  - Median review time is up **441%**.
+  - Sources (with links): `decisions/ADR-001-pivot-to-test-integrity-gate.md`, section "Context".
 
-### 2.2 Later: small team
-- 2-5 developers share playbooks and memory.
-- Not in v1.
+### 1.2 What HonestAgent is
+- An open-source command-line tool, `honestagent`.
+- It reads a change (two git refs, the index, or the working tree) and answers one question:
+  **"Are the tests real, or did the agent cheat to make them pass?"**
+- It gives a list of **findings** and one **verdict**: Looks good / Take a look / Has problems.
+- It runs in three places, all calling the same CLI:
+  - before a commit (pre-commit hook),
+  - on every PR (GitHub Action, one PR comment),
+  - inside the agent's own loop (Claude Code hook).
+
+### 1.3 Stance
+- **Deterministic.** The same input always gives the same output. No LLM. No network in the core.
+- **Vendor-neutral.** The agent that wrote the code does not grade itself.
+- **Read-only.** It never edits, commits or pushes the user's code.
+- **Python and pytest first.** JavaScript is Later.
 
 ---
 
-## 3. Key words (glossary)
+## 2. Who uses it
 
-Engine words stay in the code, API and CLI. The UI shows the label in the middle column (full list: UI spec, section 5).
-
-| Word (engine) | UI label | Meaning |
+| User | Need | Main way in |
 |---|---|---|
-| **Project** | Project | A git repo added to Saarthi. One window holds many projects. |
-| **Task** | Task | One piece of work. Example: "Add password reset API". |
-| **Brief** | Goal | The written intent of a task: goal, acceptance criteria, notes. |
-| **Acceptance criteria** | What done looks like | The "done when" points of a brief. The agent pre-fills them. |
-| **Stage** | Status | The engine has 8 stages. The UI groups them into 4 statuses (F2.9). |
-| **Run** | Start (button) | One agent working on one task one time. A task can have many runs. |
-| **Agent** | its name ("Claude", "Codex", "Gemini") | An AI coding tool. v1: Claude Code, Codex, Gemini CLI. |
-| **Workspace** | "its own copy of the repo" | The git worktree + branch made for a task. Branch details under More -> Details. |
-| **Check** | Tests and checks | A command that verifies the work. Example: `pytest`, `ruff`, `npm run build`. |
-| **Proof Card** | Check and ship (checks part) | A summary of all check results + evidence for a task. |
-| **Trust score** | Verdict: Looks good / Take a look / Has problems | A 0-100 number made by the daemon. The UI shows a verdict (F7.7). |
-| **Change Story** | What changed | The review view: changes grouped by purpose, with explanations. |
-| **Second Opinion** | Ask Codex to review | A read-only review by a second agent. |
-| **Playbook** | Saved instructions | A saved, reusable prompt recipe. Example: "Fix bug with TDD". |
-| **Memory** | Lessons and notes | Project knowledge: core_docs, learnings, decisions. |
-| **Memory update** | Lessons learned | Drafted memory changes, shown as a card after shipping. |
-| **Context Pack** | What Claude reads | The file the agent reads before a run. |
-| **Checkpoint / Rewind** | Undo point / Restore | A hidden snapshot of the worktree, and going back to it. |
-| **Race Mode** | Side by side | One goal, two agents, pick the winner. |
-| **Needs You** | Needs you ("Claude has a question") | The agent is waiting for your answer or permission. |
-| **Permission profile** | What agents may do: Read only / Safe / Full access | How much an agent may do in its worktree. |
-| **Daemon** | Background service | `saarthid`. Shown only when broken. |
-| - | Home | The start screen: project tabs + All projects. |
-| - | All projects | One merged task list of every project. |
-| - | Files | The IDE-style file view (F17). |
-| **Doc** | Doc | A markdown text about a task: a plan, a changed .md file, a pinned project doc, a research finding. |
-| **Ticket** | Jira ticket | A Jira issue linked to a task. |
-| **Live test** (check kind `live`) | Live test | One more check after the required checks pass: the agent opens the app in a real browser and walks the UI parts of "What done looks like" (F24.4, M11). |
-| **Evidence** | See it work | Screenshots, a short video and a trace from a Live test or an `e2e` check, shown on Check and ship (F7.5). |
-| **Saved login** (`storageState`) | Saved login | The browser session of a **test account**, saved once by hand and reused by Live tests. Never the password (F24.6). |
-| **Browser kit** | Browser kit | Playwright's Chromium, downloaded once into the Saarthi data folder when no system Chrome, Edge or Chromium is found. Never in the installer (F24.1). |
-| **Dev server** | (hidden) | The project's own "run the app" command, started by Saarthi on the task's own port (F24.3). |
-| **Live preview** | Live browser / Preview window | Watch the agent's browser inside the task page, or open the task's running app in a Saarthi window (F25, M12). |
+| **The author** (a Python freelancer; first user) | Catch his own agents cheating before he trusts their work. | Claude Code hook, pre-commit |
+| **Dev teams (5-100 people)** using AI coding agents | A reviewer sees at a glance if an agent PR touched the tests in a bad way. | GitHub Action, PR comment |
+| **Freelancers and agencies** | Give a client a written proof that the tests were not weakened. | `honestagent check --format markdown --output proof.md` |
 
 ---
 
-## 4. Main screens (overview)
+## 3. Goals and non-goals (v1)
 
-Details and view ids: UI spec, section 8. The top bar has: logo, project picker (with the project tools), search or jump (`Ctrl K`), the Needs-you pill, Settings. There is no sidebar and no dock.
+### 3.1 Goals
+- G1. Flag the common ways an agent fakes passing tests (rules HA001-HA007).
+- G2. Give one clear verdict and a clear exit code, so CI and hooks can block.
+- G3. Let a human (or the agent) allow a finding on purpose, with a written reason that stays visible.
+- G4. Work locally (CLI, pre-commit, Claude Code) and in CI (GitHub Action) with the same results.
+- G5. Optional: check that tests catch bugs on the changed lines (mutation check, HA100).
 
-1. **Home** - project tabs + All projects. Groups: Needs you, Working, To do. Done this week.
-2. **Board view** - 4 columns (project menu). "Show detailed stages" shows the engine stage.
-3. **New task** - a drafted goal + More options (how to work, saved instructions, note, side by side, safety).
-4. **Task page** - goal card, Activity, answers to the agent. More: Terminal, Docs, History, Details, What Claude reads.
-5. **Files** - IDE-style file view, per task and per project (F17).
-6. **Check and ship** - verdict, tests and checks, what changed, Ask Codex to review, Approve and create pull request. With browser testing on (M11): the Live test and a **See it work** card.
-7. **Done** - PR link, lessons learned, Jira write-back.
-8. **Side by side** - two agents on one goal, compare and pick.
-9. **Lessons and notes** - project memory (project menu).
-10. **Saved instructions** - playbooks (project menu).
-11. **Jira tickets** - per project (project menu, M10).
-12. **Safety and cost** - what agents may do, sandbox, budget, cost.
-13. **Settings** - General, Agents, Project, Safety, Jira, Browser testing (M11), Health, About.
-14. **Command bar** (`Ctrl K`, every screen) + New task from any app (`Ctrl Alt N`) + shortcut list (`?`).
-15. **Browser testing** (M11) - Settings → Browser testing, Save a login, the task page while it live tests, See it work, the "Log in again" card.
-16. **Live preview** (M12) - the live browser in the task page, and a preview window for the task's running app.
+### 3.2 Non-goals (v1)
+- No UI of any kind: no app, no web page, no dashboard. Output is text only.
+- No server, no hosted service, no database, no accounts.
+- No LLM, no AI review, no "second opinion".
+- No JavaScript / TypeScript rules.
+- No paid tier.
+- It does not fix tests or code. It only reports.
+- It does not run the test suite (except the opt-in mutation check, F12).
+- It is not a general code reviewer. It does not look for bugs in source code.
 
 ---
 
-## 5. Functional requirements
+## 4. Words
 
-### F1. Projects
-
-- **F1.1 Add project** (Must)
-  - User picks a folder that is a git repo.
-  - App checks:
-    - It is a git repo.
-    - `git` and the agent CLIs (`claude`, `codex`, `gemini`) are installed (warn if missing, do not block).
-  - App creates a `.saarthi/` folder in the repo with `project.toml`.
-  - App finds `core_docs/` (or asks for the docs folder path).
-- **F1.2 Project settings** (Must)
-  - Default branch (main/master/develop).
-  - Default agent (Claude, Codex or Gemini). Claude is the default.
-  - Check commands (test, lint, type check, build).
-  - Memory folder path (default `core_docs/`).
-- **F1.3 Project list** (Must)
-  - Shows all projects with: name, open tasks count, running agents count.
-  - In the UI: the project picker menu and the project tabs on Home.
-- **F1.4 Remove project** (Must)
-  - Removes it from Saarthi only. Never deletes the repo.
-- **F1.5 Many projects in one window** (Must, M3)
-  - The user adds every repo once. No second window, no "open folder" per repo.
-  - Home has one tab per project plus **All projects**, which merges the tasks of every project. Each row shows its project.
-  - The top bar has a project picker. Its menu has the project tools (Board view, Lessons and notes, Saved instructions, Jira tickets, Safety and cost, Project files) and the list of all projects.
-  - The "Needs you" count and notifications cover every project.
-  - A new task picks its project (default: the open project tab).
-  - Each task still has its own branch and worktree in its own repo.
-  - CLI: `saarthi task list` without a project lists the tasks of all projects.
-
-### F2. Tasks and Board view
-
-- **F2.1 Create task** (Must)
-  - From Home (**New task**), the Command bar, or the CLI: `saarthi task new "title"`.
-  - Only the title (a one-line description) and the project are required. Everything else can come later.
-- **F2.2 Quick capture** (Must)
-  - `Ctrl Alt N` from any app opens a small New task box. Type one line. It goes to the To do list of the chosen project.
-- **F2.3 Task stages** (Must)
-  - `Inbox` -> `Research` -> `Ready` -> `Running` -> `Verifying` -> `Review` -> `Shipped`
-  - Side states:
-    - `Needs You` - agent is waiting for you.
-    - `Failed` - run or checks failed.
-    - `Parked` - paused by you.
-    - `Archived` - hidden, kept for history.
-  - These are engine stages. The UI shows them as 4 statuses (F2.9).
-- **F2.4 Board view** (Must)
-  - Project menu -> Board view. 4 columns, one per status (F2.9).
-  - "Show detailed stages" adds the engine stage name to each card.
-  - Drag and drop to move (only allowed moves, see F2.5).
-  - Each card shows: title, agent icon, time spent, cost, check status dot.
-  - Cards in Needs you glow and go to the top.
-- **F2.5 Stage rules** (Must)
-  - `Ready` needs a brief with at least a goal.
-  - `Review` needs a Proof Card with all required checks green (or a manual override with a reason).
-  - `Shipped` needs a commit (and a PR if the project uses PRs).
-- **F2.6 Task fields** (Must)
-  - Title, brief, stage, priority (P1/P2/P3), labels, linked ticket URL, created/updated dates.
-- **F2.7 Filters and search** (Must)
-  - By project, status, stage, label, agent, text.
-  - `Parked` and `Archived` tasks show only with a filter.
-- **F2.8 Sub-tasks** (Later)
-  - Split a big task into smaller tasks. Agent can suggest the split.
-- **F2.9 Simple statuses** (Must, M3)
-  - The UI shows 4 statuses. Each one groups engine stages:
-
-| Status on screen | Engine stages | Row action |
-|---|---|---|
-| **Needs you** | `Needs You`, `Failed`, `Review`, and any Jira write-back, conflict, expired saved login or blocked host (M11) waiting for the user | Answer / Fix / Review |
-| **Working** | `Running`, `Verifying` | none (open the task) |
-| **To do** | `Inbox`, `Research`, `Ready` | Start (when a goal exists) |
-| **Done** | `Shipped` (+ pending lessons) | PR link |
-
-  - `Parked` and `Archived` are hidden behind a filter.
-  - The engine stages and `ALLOWED_MOVES` do not change. Only the UI groups them.
-  - The daemon gives the status with each task, so the UI and the CLI show the same thing.
-
-### F3. Task Goal (brief)
-
-- **F3.1 Goal card** (Must)
-  - On the task page. "Edit" opens a markdown editor with fixed sections:
-    - Goal (what and why)
-    - What done looks like (acceptance criteria, a list of "done when" points)
-    - Notes / constraints
-    - Files or areas to focus (optional)
-- **F3.2 Goal from research** (Must)
-  - Button: "Make a goal from this" on the research view. The agent reads the research notes and writes a brief draft.
-  - New task shows a drafted goal from the one-line description, made the same way.
-  - User edits and starts.
-- **F3.3 Brief from ticket** (Must, M10)
-  - Start a task from a Jira ticket (Cloud). App pulls the text into the brief draft.
-  - See F23.3.
-  - GitHub issues stay Later (F23.7).
-- **F3.4 Brief versions** (Must)
-  - Every save keeps a version. User can see old versions (Goal card -> Edit -> History).
-
-### F4. Research
-
-- **F4.1 Notes** (Must)
-  - Free notes per task (markdown).
-- **F4.2 Links** (Must)
-  - Save URLs with a short note. App fetches the page title.
-- **F4.3 Snippets** (Must)
-  - Paste code, logs, error messages, API responses. Each snippet has a label.
-- **F4.4 Ask agent to research** (Must)
-  - New task -> More options -> "Just research", or "Research this" on a task. Agent explores the codebase in **read-only mode** and writes findings:
-    - Related files
-    - How the current code works
-    - Risks
-    - Suggested approach
-  - Findings are saved as a research note and shown on the task page research view.
-  - "Make a goal from this" turns them into a goal (F3.2).
-- **F4.5 Files and images** (Later)
-  - Attach screenshots, PDFs, designs.
-- **F4.6 Use in context** (Must)
-  - Each research item has a toggle: "send to agent" yes/no.
-
-### F5. Agents and Runs
-
-- **F5.1 Supported agents** (Must)
-  - Claude Code (CLI `claude`) - M2. The default.
-  - Codex (CLI `codex`) - M2.
-  - Gemini CLI (CLI `gemini`) - M7.
-  - All of them sit behind the `AgentAdapter` interface. Labels use the agent's name ("Claude has a question", "Let Codex fix it").
-  - The app uses the user's **existing logins** for these CLIs. It does not ask for API keys if the CLI is already logged in.
-- **F5.2 Start a run** (Must)
-  - **Start** uses the defaults: the project's default agent, `Build` mode. No choice is needed.
-  - New task -> agent picker + More options lets the user pick: agent, how to work (mode), saved instructions (optional), a note (optional).
-  - Modes:
-    - `Plan` - agent only writes a plan. No code changes.
-    - `Build` - agent writes code.
-    - `Fix` - agent fixes failing checks.
-    - `Research` - read-only exploration.
-- **F5.3 Context Pack** (Must)
-  - Before each run, the app builds a Context Pack (UI: "What Claude reads"):
-    - The brief
-    - Selected research items
-    - Relevant memory (core_docs, learnings)
-    - Playbook text (if picked)
-    - Project rules (CLAUDE.md / AGENTS.md)
-  - User can open it before or after starting: task page -> More -> What Claude reads.
-- **F5.4 Live activity** (Must)
-  - The **Activity** tab on the task page shows agent work as clean cards, not raw text:
-    - Thinking / message card
-    - Tool call card (read file, edit file, run command)
-    - Command output (collapsed by default)
-    - File changed card (with small diff)
-  - Auto-scroll with a "pause scroll" button.
-- **F5.5 Raw terminal** (Must)
-  - Task page -> More -> Terminal shows the raw terminal of the agent.
-  - User can type into it (interactive mode).
-- **F5.6 Needs You** (Must)
-  - When the agent asks a question or asks permission:
-    - Task moves to `Needs You` (status Needs you: "Claude has a question").
-    - Desktop notification is shown.
-    - User answers on the task page (or from the row on Home).
-- **F5.7 Send message during a run** (Must)
-  - User can send a follow-up message to the running agent.
-- **F5.8 Stop / Resume** (Must)
-  - Stop a run at any time.
-  - Resume the same agent session later (if the agent supports it).
-- **F5.9 Many runs per task** (Must)
-  - All runs are listed in the task (More -> Details) with: agent, mode, start time, duration, cost, result.
-- **F5.10 Parallel runs** (Must)
-  - Different tasks can run at the same time, in the same or in different projects.
-  - Default limit: 4 running agents across all projects. Can be changed in Settings.
-- **F5.11 More agents** (Later)
-  - Aider, local models, others, via the same adapter design.
-
-### F6. Workspace (isolation)
-
-- **F6.1 Auto workspace** (Must)
-  - When a task first runs, the app creates:
-    - A branch: `saarthi/<task-id>-<short-title>`
-    - A git worktree for that branch, outside the main repo folder.
-  - The UI calls it "its own copy of the repo".
-- **F6.2 Setup script** (Must)
-  - Optional per project. Runs once after the worktree is created.
-  - Example: copy `.env`, `uv sync`, `npm install`.
-- **F6.3 Workspace info** (Must)
-  - Task page -> More -> Details shows: branch name, path, "ahead/behind main" count ("Behind main"), changed files count.
-- **F6.4 Open in tools** (Must)
-  - Buttons: open folder, open terminal here, open in my editor (`$EDITOR`, Zed, Neovim, etc.).
-- **F6.5 Sync with main** (Must)
-  - Button: "Update from main" in Details (rebase or merge, user picks in settings).
-  - If there is a conflict, the task shows in Needs you with "Let Claude fix it", which starts a `Fix` run to solve it.
-- **F6.6 Cleanup** (Must)
-  - When a task is shipped or archived, there is no prompt. The worktree is removed after 7 days (`WORKTREE_CLEANUP_DAYS` in `config.py`). The branch is kept.
-  - Done shows a link to remove it now.
-- **F6.7 Ports** (Later in this list; built in M7, see `milestones/README.md`)
-  - Give each workspace its own port number, so two dev servers do not clash.
-  - M11 starts the dev server on this port (F24.3).
-
-### F7. Checks and Proof
-
-- **F7.1 Check list per project** (Must)
-  - Defined in `.saarthi/project.toml`.
-  - Each check has: name, command, required yes/no, timeout.
-  - Examples: `pytest`, `ruff check`, `mypy`, `npm run build`, `playwright test`.
-  - M11 adds a `kind`: `cmd` (default) or `e2e` (F24.5). The Live test is a check of kind `live`, made by Saarthi (F24.4).
-- **F7.2 Auto-run checks** (Must)
-  - After every `Build` or `Fix` run ends, the app runs all checks in the task's workspace.
-- **F7.3 Proof Card** (Must)
-  - Shown as the checks part of **Check and ship** ("Tests and checks").
-  - Shows for each check: pass / fail / skipped, time taken, short output ("Show output").
-  - Shows: files changed count, lines added/removed, tests added count.
-  - Shows a "What done looks like" list: each acceptance criterion with a status (met / not sure / not met). The agent fills this.
-  - The user answers only the "Not sure" ones: "That's fine" (counts as met) or "Ask Claude to add it" (starts a `Fix` run). There is no "Confirm all".
-- **F7.4 Auto-fix loop** (Must)
-  - If checks fail, the user can click "Let Claude fix it".
-  - The app sends the failing output to the agent.
-  - Max auto-fix rounds: 3 (setting). Then it stops and asks the user.
-- **F7.5 Evidence** (Must, M11)
-  - Screenshots, a short video and a Playwright trace, for the Live test (F24.4) and for `e2e` checks (F24.5).
-  - Shown on Check and ship as **See it work**: a step list with a screenshot per step, the video, and "Open trace".
-  - Kept with the task. Removed with the worktree (F6.6).
-  - Size is capped (`EVIDENCE_MAX_MB` in `config.py`). Over the cap, the video is dropped first, then old screenshots.
-  - API call recordings are not part of this (F7.8, Later).
-- **F7.6 Manual override** (Must)
-  - "Review anyway": user can move a task to Review with failing checks, but must type a reason. The reason is saved.
-- **F7.7 Trust score** (Must, M4; second-opinion part in M5)
-  - One number from 0 to 100 that sums up the proof of a task:
-    - Required checks: 50 points, by the share that pass.
-    - Brief criteria: 35 points, by the share marked Met ("Not sure" counts 0 until the user says "That's fine").
-    - Second opinion: 15 points if no high or medium finding is open, 8 if only medium findings are open, 0 if a high finding is open or no second opinion ran.
-  - The daemon computes it, and also a **verdict** from it:
-
-| Verdict | When |
+| Word | Meaning |
 |---|---|
-| **Has problems** | A required check failed, or a high finding is open. |
-| **Take a look** | Every required check passed, but a goal is "Not met", a medium finding is open, or the score is below `TRUST_GOOD_MIN`. |
-| **Looks good** | Every required check passed, no goal is "Not met", no medium or high finding is open, and the score is at least `TRUST_GOOD_MIN`. |
-
-  - `TRUST_GOOD_MIN = 70` lives in `config.py`.
-  - A "Not sure" goal does not change the verdict.
-  - The UI shows the verdict on Check and ship. The number shows only under "How we decided".
-  - It never blocks a move. The stage rules stay as in F2.5.
-- **F7.8 API recordings** (Later)
-  - Record API calls (request + response) as proof.
-
-### F8. Second Opinion (Ask Codex to review)
-
-- **F8.1 Cross review** (Must)
-  - An optional card on Check and ship: "Ask Codex to review".
-  - The reviewer is another agent than the builder. If Claude built it, Codex reviews it (and the other way round). The label uses the reviewer's name.
-  - The reviewer agent is **read-only**.
-- **F8.2 Review result** (Must)
-  - A list of findings, each with: file, line, severity (high / medium / low), short reason.
-  - Findings show inside What changed.
-- **F8.3 Send findings back** (Must)
-  - User ticks findings and clicks "Fix these". The builder agent gets them as a new run.
-
-### F9. Side by side (Race Mode)
-
-- **F9.1 Race** (Later, M7)
-  - New task -> More options -> Side by side.
-  - The same goal goes to two agents (for example Claude and Codex) at the same time.
-  - Each one works in its own worktree.
-- **F9.2 Compare** (Later, M7)
-  - Side by side: checks, verdict, diff size, cost, time.
-- **F9.3 Pick winner** (Later, M7)
-  - The winner branch stays. The loser worktree is deleted.
-
-### F10. What changed (Change Story)
-
-- **F10.1 Grouped changes** (Must)
-  - Part of Check and ship. Changes are grouped by purpose, not by file. Example groups:
-    - "New API endpoint"
-    - "Database change"
-    - "Tests"
-  - The agent writes a 1-2 line explanation for each group.
-- **F10.2 Risk flags** (Must)
-  - Auto flags, shown as a small tag on a group (for example "Login code", "Migration"), on:
-    - DB migrations
-    - Deleted files
-    - Changes to auth / security code
-    - New dependencies
-    - Changes to config / env / CI files
-    - Big files (more than 300 changed lines)
-- **F10.3 Diff view** (Must)
-  - Open a group to see the diff of its files. Side-by-side or unified.
-  - Read-only. The same diff also shows in Files (F17.5).
-- **F10.4 Comments** (Must)
-  - Open a group, comment on any line or on the group.
-  - "Send to Claude" starts a `Fix` run with all comments.
-- **F10.5 Approve / Reject** (Must)
-  - Approve the whole task ("Approve and create pull request", F11), or reject with a note.
-- **F10.6 Plain file view** (Must)
-  - A normal "files changed" list for users who want it: Files -> "Show changes" (F17.5).
-
-### F11. Ship
-
-- **F11.1 Commit** (Must)
-  - **Approve and create pull request** has no dialog. It uses a commit message and PR text drafted by the agent.
-  - "Edit pull request text" is optional. It lets the user change the text first.
-  - Commit style follows the project setting (for example Conventional Commits).
-- **F11.2 Push and PR** (Must)
-  - Push the branch.
-  - Create a PR with GitHub CLI (`gh`). The PR body uses the goal + what changed + the checks.
-- **F11.3 No direct push to main** (Must)
-  - The app never pushes to the default branch.
-- **F11.4 PR status** (Later)
-  - Show CI status and review comments from GitHub on the task page.
-
-### F12. Project Memory (Lessons and notes)
-
-- **F12.1 Memory viewer** (Must)
-  - **Lessons and notes** (project menu) shows the project's `core_docs/` as a tree with a markdown viewer and simple editor.
-- **F12.2 Smart context** (Must)
-  - For each run, the app picks the most relevant memory files and adds them to the Context Pack.
-  - v1: simple keyword match + always-include list (FSD, TDD, CLAUDE.md).
-  - Later: search by meaning (embeddings).
-- **F12.3 Auto memory update** (Must)
-  - When a task is shipped, the agent drafts updates for:
-    - `memory/project_memory.md` (what was done, hard bugs, solutions)
-    - `learnings/` (new rules or mistakes)
-    - `timeline/timeline.md` (date + task)
-  - They show as an optional **Lessons learned** card on Done. User approves each update before it is saved.
-- **F12.4 Decisions** (Later)
-  - When the brief or review has a big decision, the app suggests a new ADR file in `decisions/`.
-
-### F13. Playbooks (Saved instructions)
-
-- **F13.1 Playbook library** (Must)
-  - **Saved instructions** (project menu). Each has: name, description, prompt text, default agent, default mode.
-  - Picked in New task -> More options.
-- **F13.2 Built-in playbooks** (Must)
-  - "Plan first, then build"
-  - "Fix bug with TDD (failing test first)"
-  - "Refactor without behaviour change"
-  - "Write tests for this module"
-  - "Review for security"
-- **F13.3 Variables** (Must)
-  - Playbooks can use variables like `{{task.title}}`, `{{brief}}`, `{{failing_checks}}`.
-- **F13.4 Scope** (Must)
-  - Global playbooks (all projects) and project playbooks (in `.saarthi/playbooks/`).
-
-### F14. Timeline and Rewind (History and undo points)
-
-- **F14.1 Task timeline** (Must)
-  - Every event is saved: brief edits, runs, agent tool calls, checks, comments, stage moves.
-  - Shown as one vertical list: task page -> More -> History.
-- **F14.2 Checkpoints** (Must)
-  - The app makes a git checkpoint (a hidden commit, UI: "undo point") at the end of every run.
-- **F14.3 Rewind** (Must)
-  - User can restore the workspace to any checkpoint (History -> Restore, with a confirm).
-  - The current state is saved as a checkpoint first, so nothing is lost.
-- **F14.4 Replay** (Later)
-  - Play back a run step by step.
-
-### F15. Safety and Permissions
-
-- **F15.1 Permission profiles** (Must)
-  - UI: "What agents may do", in Settings -> Safety and cost, and per task in Details.
-  - `Read-only` ("Read only") - agent can read, not write or run commands.
-  - `Safe build` ("Safe", default) - agent can edit files in its worktree and run allowed commands.
-  - `Full` ("Full access") - agent can do anything inside the worktree. Must be turned on per task. Not offered on Windows in v1 (see F15.3).
-- **F15.2 Blocked actions** (Must)
-  - Always blocked or always asked:
-    - `git push` to the default branch
-    - `rm -rf` outside the worktree
-    - Reading `~/.ssh`, `~/.aws`, and other secret folders
-    - Production DB commands (patterns set by user)
-  - An "always ask" action shows as a Needs-you card on the task page.
-- **F15.3 Sandbox** (Later, M8)
-  - Run the agent inside an OS sandbox so it can only see its worktree:
-    - Linux: bubblewrap (`bwrap`).
-    - macOS: a `sandbox-exec` profile.
-    - Windows v1: no OS sandbox. So "Full access" is not offered on Windows. Read only and Safe still work.
-- **F15.4 Secret masking** (Must)
-  - Values from `.env` files and known key patterns are hidden in logs and in the UI.
-
-### F16. Cost and Time Meter
-
-- **F16.1 Per run** (Must)
-  - Tokens (if the agent reports them), cost (if reported), time.
-- **F16.2 Per task and per day** (Must)
-  - Totals per task (Board card, More -> Details) and per day (Safety and cost).
-- **F16.3 Budget alert** (Later)
-  - Warn when a task or day goes over a set amount.
-
-### F17. Files (IDE view)
-
-Files works like an IDE file view, for exploring and reviewing. It is not a full editor: no LSP, no debugger, no extensions.
-
-- **F17.1 Read-only code viewer** (Must)
-  - Folder tree of the task's worktree + file tabs + code view with syntax colours.
-- **F17.2 Quick search** (Must)
-  - Find a file by name, and search text (uses `ripgrep`).
-- **F17.3 Small edits** (Must)
-  - Allow tiny edits (a typo, a value). Not a full editor.
-- **F17.4 Open in editor** (Must)
-  - "Open in my editor": one click opens the file at the line in the user's editor.
-- **F17.5 Changes against main** (Must, M3)
-  - "Show changes / Full file": a filter for only the changed files, or the whole tree.
-  - Changed files are marked in the tree.
-  - The changes against the project's default branch (`main`) show inline in the code view.
-- **F17.6 Why it changed** (Must, M5)
-  - Each changed file shows a one-line reason from the agent: "Why Claude changed this".
-  - The reason comes from the What changed grouping (F10.1).
-- **F17.7 Mark as looked at + Next change** (Must, M5)
-  - "Mark as looked at" on a changed file. The marks are kept per task.
-  - "Next change" jumps to the next change in a file not yet looked at.
-- **F17.8 Project files** (Must, M3)
-  - Project menu -> Project files: browse the main repo of any project with the same view (tree, tabs, search, "Open in my editor").
-  - No task is needed.
-  - Read-only in v1. Tiny edits (F17.3) are only in a task's copy, so the main repo is never changed by Saarthi.
-
-### F18. Command Bar and Keyboard
-
-- **F18.1 Command Bar** (Must)
-  - `Ctrl+K` opens it on any screen.
-  - Search tasks (in all projects), projects, saved instructions, and actions ("run checks", "new task", "open in editor").
-- **F18.2 Keyboard first** (Must)
-  - Every main action has a shortcut. A `?` key shows the shortcut list.
-
-### F19. Notifications
-
-- **F19.1 Desktop notifications** (Must)
-  - Native on every OS (Tauri notification plugin). Cover every project.
-  - Agent needs you.
-  - Run finished.
-  - Checks failed / passed.
-- **F19.2 Sound** (Later)
-  - Optional sound for "Needs you".
-- **F19.3 Phone glance** (Later)
-  - Read-only web page on the phone (same Wi-Fi, with a token) to see task status and answer "Needs you" questions.
-
-### F20. CLI (`saarthi`)
-
-- **F20.1 Same power as the UI** (Must)
-  - `saarthi project add <path>`
-  - `saarthi task new "<title>"`
-  - `saarthi task list`
-  - `saarthi run <task-id> --agent claude|codex|gemini --mode build`
-  - `saarthi checks <task-id>`
-  - `saarthi review <task-id>` (prints what changed)
-  - `saarthi ship <task-id>`
-  - `saarthi daemon start|stop|status`
-  - M11: `saarthi browser status`, `saarthi browser kit install`, `saarthi browser login save <name>`, `saarthi devserver start <task-id>`, `saarthi evidence <task-id>`
-- **F20.2 JSON output** (Must)
-  - `--json` flag for scripts.
-
-### F21. Settings
-
-- **F21.1 Global** (Must)
-  - Theme: dark (default) or light (Settings -> General -> Theme).
-  - Default editor command.
-  - Max parallel runs.
-  - Max auto-fix rounds.
-  - Worktree root folder.
-  - Agent CLI paths (`claude`, `codex`, `gemini`).
-  - "Keep running in the background" (M9): the background service starts at login, the OS way (see TDD).
-- **F21.2 Health check** (Must)
-  - Settings -> Health shows: background service running, git version, agent CLIs found and logged in, `gh` logged in.
-  - A full screen shows only when something is broken.
-
-### F22. Task Docs
-
-- **F22.1 Docs view on the task page** (Must, M3)
-  - Task page -> More -> Docs. A list of docs, a markdown view, and an outline of headings.
-  - Docs are read-only in Saarthi. "Open in editor" is for changes.
-- **F22.2 Plan run saved as a doc** (Must, M2)
-  - When a `Plan` run ends well, its full final answer is saved as a markdown file.
-  - A failed or stopped plan run saves nothing.
-  - The file is kept outside the worktree, so a plan run never changes a worktree file.
-- **F22.3 Changed markdown files are listed** (Must, M2 CLI + API, M3 UI)
-  - Every `.md` file added or changed on the task branch is listed (committed or not).
-  - Each one has an "added" or "modified" badge.
-- **F22.4 Pinned project docs are listed** (Must, M2 CLI + API, M3 UI)
-  - Docs like FSD, TDD, CLAUDE.md are listed. They are read from the task worktree.
-  - The pinned list is set in `project.toml`. Missing files are skipped quietly.
-  - A file that is pinned and changed shows once, as changed.
-- **F22.5 Research findings and plan in context** (Must, M6)
-  - Research findings show in Docs.
-  - The latest plan goes into the Context Pack of the next `Build` or `Fix` run.
-- **F22.6 Edit docs in Saarthi, render Mermaid diagrams** (Later)
-
-### F23. Tickets (Jira)
-
-- **F23.1 Connect Jira Cloud** (Must, M10)
-  - Site, email, API token. A health check shows who I am.
-  - The token is kept outside the repo.
-- **F23.2 Tickets panel per project** (Must, M10)
-  - Project menu -> Jira tickets.
-  - Views: Mine, Sprint, and saved JQL views from `project.toml`.
-  - Search and refresh.
-- **F23.3 Start a task from a ticket** (Must, M10)
-  - One click makes a task with a brief draft from the ticket.
-  - A ticket already linked to a task opens that task.
-  - An existing task can be linked to a ticket.
-- **F23.4 Ticket chip** (Must, M10)
-  - Shown in the task page header and on Board cards.
-- **F23.5 Write back with confirm** (Must, M10)
-  - Move the ticket status, add a PR comment, add a link to the PR.
-  - Every write needs my OK by default. A project can turn on auto send.
-  - Status moves only go forward (Running < Review < Shipped). A fix run after Review does not move the ticket back to "In Progress".
-  - A write-back waiting for my OK is a Needs-you row (F2.9), and a card on Done.
-- **F23.6 Cache and offline view** (Must, M10)
-  - Tickets are cached. When Jira is not reachable, the cache shows with "last synced" time.
-  - No background polling. Refresh is by hand, or when the panel opens and the cache is old.
-- **F23.7 GitHub Issues and other providers** (Later)
-- **F23.8 Create a Jira ticket from Saarthi; two-way comment sync** (Later)
-- **F23.9 Jira Data Center / Server** (Later)
-
-### F24. Browser testing (M11)
-
-Agents test the app live in a real browser, once per build, when the project turns it on. Details: UI spec section 11 (B1-B9), `milestones/M11_browser_testing/`, `decisions/ADR-003-browser-testing.md`.
-
-- **F24.1 Browser on demand** (Must, M11)
-  - One engine on every OS: **Chromium**. No Firefox, no WebKit. Same behaviour on Linux, macOS and Windows.
-  - Lightest path first, in this order:
-    1. system **Google Chrome**,
-    2. system **Microsoft Edge** (built into Windows 10/11, so Windows usually needs no download),
-    3. system **Chromium**,
-    4. else Settings → Browser testing offers a one-time download of the **browser kit** into the Saarthi data folder.
-  - The kit holds Playwright's **Chromium headless shell** for Live tests (the smallest build). The full Chromium is downloaded only when no system browser exists and the user wants to watch a test or save a login (both need a window).
-  - Never in the installer. The download starts only on a click (or `saarthi browser kit install`).
-  - Exact sizes and packaging are measured in the M11 spike.
-- **F24.2 Project browser settings** (Must, M11)
-  - `[browser]` in `.saarthi/project.toml`: `enabled`, `base_url`, `dev_server`, `allowed_hosts`, `live_test` (`"auto"` / `"off"`), `live_test_required`.
-  - Off by default. Backend-only projects keep it off.
-  - Settings → Browser testing shows: the browser found (or "Download browser kit"), base URL, dev server command and port, allowed hosts, Live test Auto / Off and Required, and the saved logins.
-- **F24.3 Dev server per task** (Must, M11)
-  - Saarthi starts `dev_server` in the task's own copy of the repo, on the task's own port (per-workspace ports, M7). If M7 is not built yet, M11 builds the port part.
-  - A ready check waits until `base_url` answers, with a timeout (`DEV_SERVER_READY_TIMEOUT_S`). On timeout, the Live test is an error with the last lines of the server output.
-  - It is stopped when the checks end.
-- **F24.4 Live test** (Must, M11)
-  - One more check, after the required checks pass. Shown as "Live test" in Tests and checks.
-  - The agent drives the browser through a browser MCP server (for example Playwright MCP; flags checked in the M11 spike). It walks the UI items of "What done looks like", step by step, and Saarthi saves a screenshot per step, a short video and a trace.
-  - Optional by default: a failed Live test feeds the verdict like any optional check. With `live_test_required = true` it is a required check.
-  - The task page shows the steps as they happen (`liveTest`).
-  - Max steps and time: `LIVE_TEST_MAX_STEPS`, `LIVE_TEST_TIMEOUT_S`.
-  - Example: goal "Add a password reset page". The Live test opens `/login`, clicks "Forgot password", types a test email, sees "Check your inbox". Check and ship shows "Live test · passed · 6 steps" and See it work.
-- **F24.5 `e2e` checks** (Must, M11)
-  - The project's own E2E command (`npx playwright test`, `pytest -m e2e`) is a check with `kind = "e2e"`.
-  - Saarthi starts the dev server first and collects the artifacts (screenshots, videos, traces) into See it work.
-- **F24.6 Saved logins** (Must, M11)
-  - **Test accounts only.** The Save a login dialog says so.
-  - "Save a login" opens a normal (headed) browser. The user logs in by hand. Saarthi saves the session (Playwright `storageState`) per project and name, in the data folder, in an owner-only file.
-  - It is never in the repo, in events, in the Context Pack, or in agent text. The agent only gets "you are logged in as `test-admin`".
-  - Saarthi never stores the password.
-  - When a saved login no longer works, the task shows a Needs-you card: "Your saved login test-admin expired. Log in again." One click opens the headed browser.
-- **F24.7 Allowed hosts** (Must, M11)
-  - The agent's browser opens only `base_url` and `allowed_hosts` (default `127.0.0.1`, `localhost`).
-  - Any other host is blocked, and a Needs-you card asks: "Claude wanted to open `accounts.example.com`. Allow it for this task?" After OK, the Live test can run again.
-  - Never use production accounts or production hosts.
-
-### F25. Live preview (M12, starts with a spike)
-
-Watch the agent's browser inside Saarthi, and open the task's running app in a Saarthi window. Details: UI spec section 11 (B10), `milestones/M12_live_preview/`.
-
-- **F25.1 Live browser** (Must, M12)
-  - A live picture (screencast) of the agent's Chromium inside the task page, while the Live test runs (`liveTest`).
-  - Works on every OS. It uses the same browser as M11.
-  - It only streams while someone watches.
-- **F25.2 Preview window** (Must, M12)
-  - "Open preview" opens a separate Saarthi window (Tauri WebView) on the task's dev server URL. The user clicks around by hand (`livePreview`).
-  - The window has **no IPC and no capabilities**: it cannot call any Saarthi command, because it loads untrusted app code.
-  - It only opens `base_url` and `allowed_hosts`. Other links open in the system browser.
-- **F25.3 Agent drives the preview window** (Spike-gated, M12)
-  - Linux: via WebKitWebDriver. Windows: via WebView2 remote debugging (CDP). macOS: not supported (no WKWebView driver), so it falls back to F25.1.
-  - Kept only on the OSes where the M12 spike passes. If the spike fails on an OS, F25.3 is off there and the agent uses its own Chromium (F25.1).
-  - "Let the agent use this window" shows only where it is supported.
+| **AI coding agent** (agent) | A tool that writes code, like Claude Code, Codex or Copilot. |
+| **Base / head** | The "before" and "after" git refs of a change. |
+| **Change set** | The list of changed files, each with its before and after text. |
+| **Test file** | A file that matches the test globs (F2). |
+| **Source file** | A `.py` file that is not a test file and not a snapshot file. |
+| **Rule** | One check, with an ID (HA001) and a name (`test-deleted`). |
+| **Finding** | One thing a rule flagged: rule, severity, file, line, message, before/after snippet. |
+| **Severity** | `high`, `medium` or `low`. |
+| **Allow marker** | A comment that says "this finding is on purpose", with a reason. |
+| **Allowed finding** | A finding covered by an allow marker or a config allow entry. Still shown. Does not count for the verdict. |
+| **Verdict** | Looks good / Take a look / Has problems. |
+| **Gate** | The pass/fail decision from the verdict and `--fail-on`. Shown as the exit code. |
+| **Proof report** | The Markdown report saved to a file, for a client or a reviewer. |
+| **Mutant** | A small bug HonestAgent plants in a changed line to see if the tests fail (F12). |
 
 ---
 
-## 6. Main user flows
+## 5. Features
 
-### 6.1 Daily task flow (the main flow, 5 steps)
-1. **Describe.** Press New task (or `Ctrl Alt N` from any app). Pick the project. Type "Add password reset API". Claude drafts the goal and "What done looks like".
-2. **Edit the goal and Start.** Fix anything wrong. Click Start. The task is Working. Go do something else.
-3. **Answer Claude.** A notification: "Claude has a question - should I add a new table?". The task is in Needs you. Answer "yes".
-4. **Let Claude fix it.** The run ends. Checks run by themselves. If a check fails, the verdict is "Has problems". Click "Let Claude fix it". Checks pass.
-5. **Approve and create pull request.** Check and ship shows the verdict and what changed, grouped. Answer any "Not sure" goal. Click "Approve and create pull request". The PR opens. The task is Done.
+| F | Feature | Milestone | Priority |
+|---|---|---|---|
+| F1 | Change input | M1 | Must |
+| F2 | Find test and source files | M1 | Must |
+| F3 | Tamper rules HA001-HA007 (and HA000 tool notes) | M1 | Must |
+| F4 | Allow a finding with a reason | M1 | Must |
+| F5 | Verdict | M1 | Must |
+| F6 | Reports: text, Markdown, JSON | M1 | Must |
+| F7 | Config | M1 | Must |
+| F8 | CLI commands and exit codes | M1 | Must |
+| F9 | pre-commit hook | M2 | Must |
+| F10 | GitHub Action with one sticky PR comment | M2 | Must |
+| F11 | Claude Code hook | M2 | Must |
+| F12 | Mutation check on changed lines | M3 | Should |
 
-Optional extras (never needed for the 5 steps):
-- **Research first:** New task -> More options -> Just research -> "Make a goal from this".
-- **Saved instructions:** New task -> More options, for example "Plan first, then build".
-- **Side by side:** New task -> More options -> Side by side (M7).
-- **Ask Codex to review:** a card on Check and ship. Tick findings, click "Fix these".
-- **Lessons learned:** a card on Done. Approve each memory update.
+M0 (evidence check) and M4 (launch) add no features. See `MILESTONES.md`.
 
-### 6.2 Parallel flow
-1. Task A is running (Claude).
-2. Start Task B (Codex) in another worktree.
-3. Home shows both under Working, each with live status.
-4. Whichever needs you first moves to Needs you and glows.
+### F1. Change input (Must, M1)
+- **F1.1 Two refs.** `--base REF --head REF` compares two git refs.
+  - Default head: `HEAD`.
+  - Default base: the merge-base of `HEAD` with the default branch. The default branch is found in
+    this order: `origin/HEAD`, then `main`, then `master`. If none exists, exit `2` and ask for `--base`.
+- **F1.2 Staged.** `--staged` compares the git index with `HEAD`. Used by pre-commit (F9).
+- **F1.3 Working.** `--working` compares the working tree with `HEAD`, including new untracked
+  files that are not git-ignored. Used by the Claude Code hook (F11).
+- **F1.4 One mode only.** `--staged` and `--working` cannot be used together, or with `--base` / `--head`.
+  Doing so exits with code `2` and a message.
+- **F1.5 Errors.** Not a git repo, or a ref that does not exist: exit code `2`, with a message that names the problem.
+- **F1.6 Empty change.** No changed files: verdict Looks good, exit `0`.
+- **F1.7 Read-only.** No mode changes the index, the working tree, or any ref.
 
-### 6.3 Bug fix flow
-1. Paste the error log into Research as a snippet (or as a note in New task -> More options).
-2. Pick saved instructions "Fix bug with TDD".
-3. Agent writes a failing test, then the fix.
-4. Check and ship shows the new test: failed before, passes after.
+### F2. Find test files and source files (Must, M1)
+- **F2.1 Default test globs:** `["tests/**/*.py", "**/test_*.py", "**/*_test.py", "**/conftest.py"]`.
+- **F2.2 Configurable.** `test_paths` in config (F7) replaces the default list.
+- **F2.3 Source files** are changed `.py` files that are not test files and not snapshot files. No config key for this in v1.
+- **F2.4 Config and CI files** (for HA004, HA005) are found by name, not by `test_paths`:
+  `pyproject.toml`, `setup.cfg`, `.coveragerc`, `tox.ini`, `pytest.ini`, `noxfile.py`,
+  `.pre-commit-config.yaml`, `.github/workflows/*`, and ruff / flake8 / mypy / pyright config files.
+- **F2.5 Snapshot files** (for HA006): any file under `__snapshots__/` or `snapshots/`, or ending in `.ambr`.
+- **F2.6** A file that moved from a test path to a non-test path counts as a deleted test file for HA001.
 
-### 6.4 Ticket flow
-1. Project menu -> Jira tickets for project `acme-billing`.
-2. Pick the view "Mine". Find ACME-151 "Export invoices as CSV".
-3. Click "Start as task". Task T-0033 is made.
-4. T-0033 has a drafted goal from the ticket: goal, what done looks like, notes. Edit it and click Start.
-5. Claude builds. Checks run by themselves.
-6. Task moves to the `Review` stage (status Needs you).
-7. A Needs-you card shows: "Move ACME-151 to In Review?" Click Send. Jira status changes.
-8. Click "Approve and create pull request". The PR is created.
-9. A card on Done offers a PR comment and a link on ACME-151. Click Send.
-10. The ticket now shows the PR link and comment.
+### F3. Tamper rules (Must, M1)
 
-### 6.5 Many repos flow
-1. Add `acme-billing`, `acme-web` and `saarthi` once, from the project picker.
-2. Home -> All projects shows the tasks of all three. Each row shows its project.
-3. New task -> pick `acme-web` -> Start. Then a second task in `acme-billing` -> Start.
-4. The Needs-you pill counts both repos. Click it and answer each one.
-5. Click a project tab (or use the picker) to see one project only. No second window.
+Every finding has: `rule_id`, `name`, `severity`, `file`, `line`, `message` (one plain sentence),
+`before` / `after` (short snippets), `allowed`, `allow_reason`.
 
-### 6.6 Review in Files flow
-1. On Check and ship, open Files (or task page -> Files).
-2. "Show changes" shows only the changed files. The changes against `main` show inline.
-3. Each changed file shows "Why Claude changed this".
-4. Read a file, click "Mark as looked at", then "Next change".
-5. Fix a typo with a tiny edit, or click "Open in my editor" for more.
-6. Go back to Check and ship and click "Approve and create pull request".
-- To explore code without a task: project menu -> Project files.
+| ID | Name | Default severity |
+|---|---|---|
+| HA000 | honestagent-note (tool notes) | low |
+| HA001 | test-deleted | high |
+| HA002 | skip-added | high |
+| HA003 | assertion-weakened | high (expected-value rewrite: medium) |
+| HA004 | coverage-lowered | high |
+| HA005 | ci-or-lint-weakened | medium |
+| HA006 | snapshot-rewritten | medium |
+| HA007 | gate-config-weakened | medium |
+| HA100 | mutant-survived (F12 only) | medium |
 
-### 6.7 Live test with a login (M11)
-1. In `acme-web`, set `[browser] enabled = true`, `base_url`, `dev_server` in `.saarthi/project.toml`.
-2. Settings -> Browser testing shows "Using Google Chrome". (No browser found? Click "Download browser kit" once.)
-3. Click "Save a login", name it `test-admin`. A browser opens. Log in with the **test** account by hand. Click "I'm logged in". Saarthi saves the session, not the password.
-4. Start a task: "Add a password reset page". Claude builds. The required checks pass.
-5. Saarthi starts the dev server on the task's port. The Live test starts. The task page shows each step with a thumbnail (in M12, also the live browser).
-6. Check and ship shows the verdict, "Live test · passed", and the See it work card. Open it: steps with screenshots, the video, "Open trace".
-7. Weeks later the session is old. The next Live test shows the Needs-you card "Your saved login test-admin expired. Log in again." Log in again, then "Run checks again".
+General rules:
+- **F3.0a** Python files are compared by their syntax tree, so formatting-only changes never give a finding.
+- **F3.0b** Config, CI and inline comments are compared line by line.
+- **F3.0c** A file that does not parse (before or after) gives no AST findings for that file and one HA000 note (low) saying it was skipped. It never crashes the run.
+- **F3.0d** Findings are sorted by file, then line, then rule ID. Same input, same order.
+
+**F3.1 HA001 test-deleted (high)**
+- Flags when, between base and head:
+  - a test file is deleted, or
+  - a test function (`test_*`) or test class (`Test*`) is removed from a test file, or
+  - it is renamed so pytest no longer collects it (`test_x` -> `_test_x`, `TestX` -> `XTests`).
+- Not flagged: a test that moved to another test file in the same change with the same name.
+- Line: where the test used to be in the after file (line 1 for a deleted file).
+
+```diff
+- def test_refund_rejects_negative_amount():
+-     with pytest.raises(ValueError):
+-         refund(-5)
++ def _test_refund_rejects_negative_amount():
++     with pytest.raises(ValueError):
++         refund(-5)
+```
+
+**F3.2 HA002 skip-added (high)**
+- Flags a new skip or expected failure on a test:
+  - `@pytest.mark.skip`, `@pytest.mark.skipif`, `@pytest.mark.xfail`,
+  - `pytest.skip()` or `pytest.xfail()` inside a test,
+  - `@unittest.skip`, `@unittest.skipIf`, `@unittest.skipUnless`, `@unittest.expectedFailure`,
+  - a test path newly added to `--ignore` / `--deselect` (in pytest config or CI commands) or to `collect_ignore` in `conftest.py`.
+- Not flagged: a skip that was already there at base.
+
+```diff
++ @pytest.mark.skip(reason="TODO")
+  def test_invoice_total_with_discount():
+      assert invoice_total(items, discount=0.1) == 90.0
+```
+
+**F3.3 HA003 assertion-weakened (high; expected-value rewrite: medium)**
+- Looks only at test functions that exist at both base and head. Flags when:
+  - **F3.3a** the test has fewer asserts than before (`assert` statements and `self.assert*` calls);
+  - **F3.3b** an assert is replaced by a trivial one: `assert True`, `assert x`, or `assert x is not None` where an equality check was;
+  - **F3.3c** `pytest.raises(SomeError)` is widened to `pytest.raises(Exception)` or `BaseException`;
+  - **F3.3d** a `pytest.approx` tolerance (`rel` / `abs`) is raised;
+  - **F3.3e** (medium) an expected literal value in an assert changed, **and** the same change edits a source file that this test file imports.
+
+```diff
+  def test_parse_date():
+-     assert parse_date("2026-10-24") == date(2026, 10, 24)
++     assert parse_date("2026-10-24") is not None
+```
+
+```diff
+  def test_gst_amount():                      # src/billing/tax.py also changed
+-     assert gst_amount(100) == 18.0
++     assert gst_amount(100) == 17.5          # HA003, medium
+```
+
+**F3.4 HA004 coverage-lowered (high)**
+- Flags when `fail_under` or `--cov-fail-under` is lowered or removed in `pyproject.toml`,
+  `setup.cfg`, `.coveragerc`, `tox.ini`, `pytest.ini`, or a CI workflow command.
+
+```diff
+  [tool.coverage.report]
+- fail_under = 90
++ fail_under = 75
+```
+
+**F3.5 HA005 ci-or-lint-weakened (medium)**
+- In CI and lint config (F2.4), flags:
+  - a step or command that runs tests or lint is removed;
+  - `continue-on-error: true` or `|| true` is added to such a step;
+  - rules are added to an ignore list (for example ruff `ignore`, flake8 `extend-ignore`, mypy `ignore_errors`).
+- In changed lines of any Python file, flags new inline `# noqa`, `# type: ignore`, `# pragma: no cover`.
+
+```diff
+-     total = compute_total(items)
++     total = compute_total(items)  # type: ignore
+```
+
+```diff
+      - run: uv run pytest
++       continue-on-error: true
+```
+
+**F3.6 HA006 snapshot-rewritten (medium)**
+- Flags a changed snapshot file (F2.5) when the same change also edits a source file.
+- Not flagged: snapshot changes with no source change (for example a new snapshot test).
+
+```diff
+  # src/report/render.py changed, and:
+  # tests/__snapshots__/test_render.ambr
+- 'Total: 1,180.00'
++ 'Total: 1,175.00'
+```
+
+**F3.7 HA007 gate-config-weakened (medium)**
+- An agent could switch the gate off by editing its config. So the config is read from the base side (F7.6),
+  and any change in the diff to `[tool.honestagent]` in `pyproject.toml` or to `.honestagent.toml` that does one
+  of these is a finding:
+  - adds a rule to `disable`;
+  - lowers a rule's severity in `severity` (high -> medium, medium -> low);
+  - adds an entry to `allow`;
+  - loosens `fail_on` (`has_problems` -> `never`, `take_a_look` -> `has_problems` or `never`).
+  A removed key (or a removed config file) counts as going back to the default value.
+- Not flagged: changes that make the gate stricter, or changes to `test_paths` and `mutation.*`.
+- New inline allow markers added in the change are not HA007 findings. They still allow their finding,
+  but they are always listed in the report's "Allowed" section so a human sees them.
+
+```diff
+  [tool.honestagent]
+- disable = []
++ disable = ["HA002"]                         # HA007, medium
+```
+
+**F3.8 HA000 honestagent-note (low)**
+- Not a tamper rule. Tool notes that need a rule ID use HA000:
+  - an allow marker with no reason (F4.2);
+  - a Python file that did not parse, so it was skipped (F3.0c);
+  - a changed file skipped because it is binary or too large.
+- Low, so it never changes the verdict. It can be turned off with `disable = ["HA000"]`.
+
+```text
+HA000 low  tests/test_tax.py:12  Allow marker has no reason, so it was ignored.
+```
+
+**F3.9 Rules registry**
+- Every rule above can be turned off (`disable`) or have its severity changed (`severity`) in config (F7).
+- No other rule IDs exist in v1.
+
+### F4. Allow a finding with a reason (Must, M1)
+- **F4.1 Inline marker.** On the flagged line or the line above:
+  `# honestagent: allow HA002 -- flaky on CI, see issue #12`
+- **F4.2 Reason required.** The text after `--` is the reason. A marker with no reason does not allow anything,
+  and is itself reported as an HA000 note (low).
+- **F4.3 Rule must match.** A marker for HA002 does not allow an HA003 finding on the same line.
+- **F4.4 Config form.** `allow = [{ rule = "HA005", path = "tox.ini", reason = "..." }]` allows every finding of
+  that rule in that path. `reason` is required; an entry without it is a config error (exit `2`).
+- **F4.5 Deleted files.** Use the config form, since there is no line to put a marker on. Config is read from
+  the base side (F7.6), so a new config entry takes effect once it is on the base branch; in the same change it
+  is an HA007 finding.
+- **F4.6 Still shown.** An allowed finding stays in every report with `allowed: true` and its reason.
+  It does **not** change the verdict.
+- **F4.7 One rule ID per marker** in v1. For two rules on one line, use two markers (the line and the line above).
+- **F4.8 Markers added in the change** still count as allowed, but they are always listed in the "Allowed"
+  section, so a human sees every marker the agent added.
+
+### F5. Verdict (Must, M1)
+
+| Verdict | JSON value | When |
+|---|---|---|
+| **Has problems** | `has_problems` | At least one not-allowed **high** finding |
+| **Take a look** | `take_a_look` | No not-allowed high, but at least one not-allowed **medium** finding |
+| **Looks good** | `looks_good` | No not-allowed high or medium findings |
+
+- **F5.1** Low findings never change the verdict.
+- **F5.2** Allowed findings never change the verdict.
+- **F5.3** The verdict depends only on the findings. It is unit tested for every row above.
+- **F5.4** No 0-100 score in v1.
+
+### F6. Reports (Must, M1)
+- **F6.1 Formats.** `--format text` (default), `markdown`, `json`. `--output FILE` writes the report to FILE
+  instead of standard output.
+- **F6.2 Same content.** All three formats hold the same verdict, counts and findings.
+- **F6.3 No time stamps.** Reports hold no date or time, so the same input gives the same bytes.
+
+**F6.4 text** - for terminals.
+- First line: the verdict. Then a one-line summary. Then findings grouped by file.
+- Colour only when output is a terminal.
+
+```
+Has problems  - 2 findings: 1 high, 1 medium. 1 allowed.
+
+tests/test_invoice.py
+  42  high    HA002 skip-added          New @pytest.mark.skip on test_invoice_total_with_discount.
+tests/test_tax.py
+  18  medium  HA003 assertion-weakened  Expected value changed from 18.0 to 17.5 while src/billing/tax.py changed.
+
+Allowed (1)
+src/billing/report.py
+  88  medium  HA005 ci-or-lint-weakened  New "# noqa: E501". Reason: long URL in docstring.
+```
+
+**F6.5 markdown** - the PR comment (F10) and the proof report.
+- Order: hidden marker `<!-- honestagent -->`; verdict line with an emoji; one-line summary; findings table
+  (rule, file:line, message); before/after snippets in a collapsed `<details>`; an "Allowed" section;
+  footer with the HonestAgent version and how to allow a finding.
+- Emojis: 🔴 Has problems, 🟡 Take a look, 🟢 Looks good.
+- Must stay under 65,536 characters (GitHub's comment limit). If longer, drop snippets first, then
+  rows, and add a note "N more findings not shown; run `honestagent check` locally for the full list".
+
+Sample:
+
+````markdown
+<!-- honestagent -->
+## 🔴 HonestAgent: Has problems
+
+2 findings: 1 high, 1 medium. 1 allowed.
+
+| Rule | Where | What |
+|---|---|---|
+| HA002 skip-added (high) | `tests/test_invoice.py:42` | New `@pytest.mark.skip` on `test_invoice_total_with_discount`. |
+| HA003 assertion-weakened (medium) | `tests/test_tax.py:18` | Expected value changed from `18.0` to `17.5` while `src/billing/tax.py` changed. |
+
+<details><summary>Before / after</summary>
+
+**HA002** `tests/test_invoice.py:42`
+```python
++ @pytest.mark.skip(reason="TODO")
+  def test_invoice_total_with_discount():
+```
+
+**HA003** `tests/test_tax.py:18`
+```python
+- assert gst_amount(100) == 18.0
++ assert gst_amount(100) == 17.5
+```
+</details>
+
+**Allowed (1)**
+| Rule | Where | Reason |
+|---|---|---|
+| HA005 ci-or-lint-weakened | `src/billing/report.py:88` | long URL in docstring |
+
+<sub>HonestAgent 0.1.0 · deterministic, no LLM · To allow a finding on purpose, add
+`# honestagent: allow <RULE> -- <reason>` on the line or the line above.</sub>
+````
+
+**F6.6 json** - for tools.
+- Fields: `schema_version` (always `1` in v1), `honestagent_version`, `verdict`, `mode` (`refs`, `staged` or
+  `working`), `base`, `head`, `counts`, `findings[]`, `skipped[]` (files not checked, with the reason).
+- `counts` has `high`, `medium`, `low` (not-allowed findings only), `allowed` and `total`.
+- Each finding has the fields listed in F3. Field names do not change within `schema_version: 1`.
+
+```json
+{
+  "schema_version": 1,
+  "honestagent_version": "0.1.0",
+  "verdict": "has_problems",
+  "mode": "refs",
+  "base": "3f2a91c...full sha",
+  "head": "8be04d7...full sha",
+  "counts": { "high": 1, "medium": 1, "low": 0, "allowed": 1, "total": 3 },
+  "findings": [
+    {
+      "rule_id": "HA002", "name": "skip-added", "severity": "high",
+      "file": "tests/test_invoice.py", "line": 42,
+      "message": "New @pytest.mark.skip on test_invoice_total_with_discount.",
+      "before": "def test_invoice_total_with_discount():",
+      "after": "@pytest.mark.skip(reason=\"TODO\")\ndef test_invoice_total_with_discount():",
+      "allowed": false, "allow_reason": null
+    }
+  ],
+  "skipped": []
+}
+```
+(The other two findings are left out of this sample.)
+
+### F7. Config (Must, M1)
+- **F7.1 Where.** `[tool.honestagent]` in `pyproject.toml`, or the same keys at the top level of `.honestagent.toml`
+  (no `[tool.honestagent]` header; mutation keys go under `[mutation]`). If both exist, `.honestagent.toml` wins.
+- **F7.2 No config needed.** With no config, the defaults apply.
+- **F7.3 Keys (v1):**
+
+| Key | Meaning | Default |
+|---|---|---|
+| `test_paths` | Test file globs (F2) | see F2.1 |
+| `fail_on` | Gate level (same as `--fail-on`) | `"has_problems"` |
+| `disable` | Rule IDs to turn off | `[]` |
+| `severity` | Severity per rule, e.g. `{ HA005 = "high" }` | rule defaults (F3) |
+| `allow` | Allow entries (F4.4) | `[]` |
+| `mutation.enabled` | Run F12 without the flag | `false` |
+| `mutation.max_mutants` | Max mutants per run | `50` |
+| `mutation.timeout_sec` | Time limit for the mutation run | `300` |
+
+```toml
+[tool.honestagent]
+test_paths = ["tests/**/*.py", "**/test_*.py", "**/*_test.py", "**/conftest.py"]
+fail_on = "has_problems"
+disable = []                       # e.g. ["HA006"]
+severity = { HA005 = "high" }      # override per rule
+allow = [{ rule = "HA005", path = "tox.ini", reason = "py3.9 env dropped on purpose" }]
+
+[tool.honestagent.mutation]
+enabled = false
+max_mutants = 50
+timeout_sec = 300
+```
+
+- **F7.4 Errors.** An unknown key, an unknown rule ID, a bad value, or an `allow` entry without a reason exits `2`
+  and names the key.
+- **F7.5 Flags win.** A CLI flag beats the same setting in both config files.
+- **F7.6 Config is read from the base side** of the change, so an agent cannot switch the gate off in the same
+  change. With `--base/--head` it is read from the base ref; with `--staged` / `--working` the base is `HEAD`.
+  If the base has no config, the defaults are used. Any change to the config that weakens the gate is an
+  HA007 finding (F3.7).
+
+### F8. CLI commands and exit codes (Must, M1)
+
+```
+honestagent check [--base REF] [--head REF] [--staged | --working]
+                  [--format text|markdown|json] [--output FILE]
+                  [--fail-on has_problems|take_a_look|never] [--mutation]
+honestagent rules                 # list all rules, their severity and on/off state
+honestagent explain HA003         # what the rule catches, an example, how to allow it
+honestagent version
+```
+
+- **F8.1 `check`** runs F1-F6 (and F12 with `--mutation`) and prints the report.
+- **F8.2 `rules`** lists every rule: ID, name, severity after config, on/off.
+- **F8.3 `explain <ID>`** prints what the rule catches, one before/after example, and how to allow it.
+  Works for every ID in F3, including HA000 and HA100. An unknown ID exits `2`.
+- **F8.4 `version`** prints the HonestAgent version.
+
+| Exit code | Meaning |
+|---|---|
+| `0` | Gate passed: the verdict is better than `--fail-on` (or `--fail-on never`). |
+| `1` | Gate failed: the verdict is at or worse than `--fail-on` (default `has_problems`). |
+| `2` | Tool error: not a git repo, bad ref, no default branch found, bad config (unknown key or rule ID, `allow` entry without a reason), bad flags, `--mutation` without mutmut, `--mutation` with `--staged` / `--working`. |
+
+- **F8.5** Order, worst first: `has_problems`, `take_a_look`, `looks_good`.
+  With `--fail-on take_a_look`, both Has problems and Take a look exit `1`.
+- **F8.6** The report is still printed when the exit code is `1`.
+
+### F9. pre-commit hook (Must, M2)
+- **F9.1** The HonestAgent repo has a `.pre-commit-hooks.yaml` with hook id `honestagent`.
+- **F9.2** The hook runs `honestagent check --staged --format text`.
+- **F9.3** A failed gate (exit `1`) stops the commit and shows the findings.
+- **F9.4** A user adds it in their `.pre-commit-config.yaml` like any other hook. No other setup.
+
+### F10. GitHub Action with one sticky PR comment (Must, M2)
+- **F10.1** A composite action `action.yml` in the HonestAgent repo root.
+- **F10.2 Inputs:** `fail-on`, `mutation`, `comment` (default `true`), `python-version`.
+- **F10.3** It installs HonestAgent and runs
+  `honestagent check --base <PR base sha> --head <PR head sha> --format markdown`.
+- **F10.4 One comment.** It creates **one** PR comment, found later by the hidden marker
+  `<!-- honestagent -->`. Each new push updates that same comment. It never posts a second one.
+- **F10.5** The comment is posted for every verdict, including Looks good, so a fixed PR shows it is fixed.
+- **F10.6** The job ends with the CLI exit code, so branch protection can block the merge.
+- **F10.7** Works on `pull_request` events. Needs `permissions: pull-requests: write`.
+- **F10.8 Forks.** If the token is read-only (fork PRs), the job still runs and gives its result,
+  with no comment and no error from the comment step.
+- **F10.9** `comment: false` skips the comment; the job result stays the same.
+- **F10.10** The user's workflow must use `actions/checkout` with `fetch-depth: 0`, so both SHAs and the
+  merge-base are present. The action docs say so. Snippet: `uses: ankitraj20616/HonestAgent@v0`.
+
+### F11. Claude Code hook (Must, M2)
+- **F11.1** A sample `hooks/claude-code/settings.json` snippet with a `Stop` hook that runs
+  `honestagent check --working --format text`.
+- **F11.2** Optional: a `PostToolUse` hook on `Edit|Write` that runs the same check when the agent edits a test file.
+- **F11.3 Exit code mapping.** The CLI never exits `2` for a failed gate; the hook script maps the codes:
+  - CLI exit `0` (gate passed) -> hook exit `0`.
+  - CLI exit `1` (gate failed) -> hook exit `2` on the first stop. The findings go to standard error. Claude Code
+    then does not let the agent stop; the agent sees the findings and must fix the code or add an allow marker
+    with a reason.
+  - CLI exit `1` and the hook input has `stop_hook_active: true` -> hook exit `1` (does not block). The user sees
+    the findings, the agent may stop, and the PR gate (F10) still catches it. So the agent cannot loop forever.
+  - CLI exit `2` (tool error) -> hook exit `1`. A tool bug never blocks the agent.
+- **F11.4** With `PostToolUse`, exit `2` only shows the findings to the agent (the edit already happened).
+- **F11.5** With the default `--fail-on has_problems`, Take a look and Looks good do not block the agent.
+- **F11.6** A README next to the sample says how to install it and what the agent will see.
+- **F11.7** A Claude Code plugin listing ships with the launch (M4).
+
+### F12. Mutation check on changed lines (Should, M3)
+- **F12.1 Opt-in.** Runs only with `--mutation` or `mutation.enabled = true`.
+- **F12.1a Real refs only.** Mutation runs only in `--base/--head` mode. `--mutation` with `--staged` or
+  `--working` exits `2` with a clear message.
+- **F12.2 Optional install.** Needs `pip install honestagent[mutation]` (mutmut). Without it,
+  `--mutation` exits `2` with an install message.
+- **F12.3 Changed lines only.** Mutates only source lines changed in the change set, never the whole project.
+- **F12.4 Limits.** At most `max_mutants` mutants and `timeout_sec` seconds. If a limit is hit,
+  the report says how many mutants were run and how many were skipped.
+- **F12.5 Safe.** Runs in a temporary git worktree of the head ref. The user's working tree is never touched.
+  The temporary worktree is removed afterwards, also on error.
+- **F12.6 HA100 mutant-survived (medium).** Each surviving mutant is a finding with file, line and the mutation.
+
+```diff
+  # src/billing/tax.py, line 7 (changed in this PR)
+- return amount * 0.18
++ return amount * 0.19      # mutant: tests still pass -> HA100
+```
+
+- **F12.7** In the Action, `mutation: true` turns it on.
 
 ---
 
-## 7. Non-functional requirements
+## 6. User stories (end to end)
 
-- **NF1 Speed**
-  - App opens in under 2 seconds.
-  - Agent events show in the UI in under 300 ms.
-- **NF2 Scale**
-  - 10 projects, 500 tasks, 4+ parallel runs without lag.
-- **NF3 Reliability**
-  - If the app UI closes, runs keep going (the daemon keeps them alive).
-  - If the daemon restarts, unfinished runs are marked `Interrupted` and can be resumed.
-  - No data loss: every event is saved to disk as it comes.
-- **NF4 Privacy**
-  - All data stays on the machine. No telemetry.
-  - Code only goes to the agent providers the user already uses.
-- **NF5 Resource use**
-  - When no run is active, the app and the daemon do almost no work: no polling (Jira refresh is by hand, F23.6).
-  - Agent CLI processes (`claude`, `codex`, `gemini`) and check commands are not counted in Saarthi's numbers.
-  - The size and RAM limits are in NF7.
-- **NF6 Platform**
-  - One app for Linux, macOS and Windows, from one codebase and one release pipeline.
-  - v1 test targets: Ubuntu 24.04+, macOS 14+, Windows 11.
-  - Native installers: `.AppImage` + `.deb` (Linux), `.dmg` (macOS), `.msi` (Windows).
-  - Nothing in the UI depends on the OS.
-  - One known gap: Windows v1 has no OS sandbox, so "Full access" is not offered there (F15.3).
-- **NF7 Lightweight**
-  - Installer under 40 MB.
-  - App open in under 2 s.
-  - Idle RAM under 150 MB for the window plus under 150 MB for the daemon.
-  - No Electron, no bundled browser, no VS Code.
-  - The browser kit (F24.1) is not in the installer. It is optional and downloaded on demand, so the installer budget does not change.
-  - Checked on all three OSes before a release (M9).
+### 6.1 Claude Code skips a failing test; the Stop hook catches it
+1. The author asks Claude Code to add a discount to `invoice_total`. One test keeps failing.
+2. The agent adds `@pytest.mark.skip(reason="TODO")` to `test_invoice_total_with_discount` and tries to stop.
+3. The `Stop` hook runs `honestagent check --working --format text`.
+   HA002 fires (high). Verdict: Has problems. The hook exits `2`.
+4. Claude Code keeps the agent working and shows it the finding.
+5. The agent removes the skip and fixes the discount code. The hook runs again: Looks good. The agent stops.
+6. (Other path) If the skip is really needed, the agent adds
+   `# honestagent: allow HA002 -- needs a live payment sandbox, see issue #31`.
+   The finding is now allowed, and the author sees it and the reason in the report.
+
+### 6.2 A PR in CI gets a sticky "Has problems" comment
+1. An agent opens a PR that changes `src/billing/tax.py`, lowers `fail_under` from 90 to 75,
+   and rewrites an expected value in `tests/test_tax.py`.
+2. The HonestAgent Action runs on the PR. It finds HA004 (high) and HA003 (medium).
+3. It posts one comment: "🔴 HonestAgent: Has problems - 2 findings: 1 high, 1 medium."
+   The job fails, so the PR cannot merge.
+4. The reviewer opens the `<details>` block and sees the before/after lines at once.
+5. The agent (or a developer) restores `fail_under = 90` and fixes the code. On the next push the
+   **same** comment changes to "🟢 Looks good". The job passes.
+
+### 6.3 A freelancer makes a proof report for a client
+1. A freelancer finishes a client job, mostly written with an agent, on branch `feature/export`.
+2. They run `honestagent check --base main --head feature/export --format markdown --output proof.md`.
+3. `proof.md` says "🟢 Looks good", lists one allowed finding with its reason, and the HonestAgent version.
+4. They attach `proof.md` to the invoice or the handover note. The client can run the same command
+   on the same refs and get the same file.
 
 ---
 
-## 8. Out of scope (v1)
-
-- Being a full code editor (no LSP, no debugger, no extensions). Files (F17) is for exploring and reviewing, with tiny edits only.
-- Our own AI model or our own cloud server.
-- Team / multi-user features.
-- Mobile app (only a read-only phone page, later).
-- Jira Data Center, creating Jira tickets (v1).
-- Live tests with production accounts or against production hosts. Saved logins are for test accounts only (F24.6).
-- A browser bundled in the installer (F24.1). Firefox and WebKit engines for Live tests.
-
----
-
-## 9. Open questions
-
-- Q1: Rebase or merge for "Update from main"? (Default: rebase, setting to change.)
-- Q2: Where to keep worktrees? Inside the Saarthi data folder (`worktrees/`) or next to the repo? (Default: first one.)
-- Q3: Should Race Mode count as one task or two? (Default: one task, two runs.)
-- Q4: How to sandbox agents on Windows after v1? (v1: no OS sandbox, so no "Full access" on Windows. Options to study: AppContainer, a restricted token + Job Object, or running the agent in WSL2.)
-- Q5: Browser kit packaging (M11 spike): how to ship Playwright MCP and its Node runtime when the user has no `node`, where to download the Chromium headless shell from, and how big each part really is on each OS.
-- Q6: Video size (M11 spike): which video size and length keep See it work useful but small? (Cap: `EVIDENCE_MAX_MB`; video is dropped first when over.)
-- Q7: Agent drives the preview window (M12 spike): does it pass on Linux (WebKitWebDriver) and Windows (WebView2 CDP) without opening the main Saarthi window to the driver? macOS has no driver.
+## 7. Later (not v1)
+- JavaScript / TypeScript rules (Jest, Vitest).
+- Hosted GitHub App and paid team tier (org policy, history, private-repo app).
+- Trust score 0-100.
+- Optional LLM second opinion.
+- HTML proof report.
+- Hooks for Codex and other agents.
+- Web dashboard.
+- SARIF output for GitHub code scanning.

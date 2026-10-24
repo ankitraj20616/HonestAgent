@@ -1,396 +1,220 @@
 # Milestones
-## Saarthi - Agentic Development Environment
+## HonestAgent v1 - test-integrity gate for agent pull requests
 
-**Version:** 0.2
-**Date:** 2026-10-23
+**Version:** 1.0 (plan for v1 only)
+**Date:** 2026-10-24
 **Team:** 1 developer + Claude + Codex
-**UI:** screen names follow `design/2026-10-23-simple-ui-design.md`.
-**Pace:** Side project. About 8-10 hours per week. Weeks below are rough.
+**Pace:** Side project. About 10 hours per week. Hours below are estimates.
 
-> Rule: Each milestone ends with something I can **use**. No milestone is only "internal work".
-> Rule: From **M2**, build Saarthi **using** Saarthi (dogfood).
+> Rule: Each milestone ends with something I can **use** or a written answer. No milestone is only "internal work".
+> Rule: From **M1**, run `honestagent check` on HonestAgent's own pull requests (dogfood).
+> Rule: Tests first. Every rule is tested with recorded PR fixtures in `tests/fixtures/prs/<case>/`. No real GitHub, no real agents, no network in tests.
+
+What each F-number means: `core_docs/FUNCTIONAL_SPECIFICATIONS.md`. How it is built: `core_docs/TDD-tech-design-doc.md`.
 
 ---
 
 ## Overview
 
-| # | Milestone | Main result | Rough time |
-|---|---|---|---|
-| M0 | Spike + skeleton | Proof that we can drive Claude and Codex from Python and show it in Tauri, on Linux, macOS and Windows | 1 week |
-| M1 | Daemon core + CLI | Projects, tasks, briefs, events - from the CLI | 2 weeks |
-| M2 | Agent runs + worktrees | Run Claude / Codex on a task in its own worktree from the CLI (PTY and paths on every OS) | 2 weeks |
-| M3 | Desktop UI v1 | Home (many projects) + Board view + Task page + Files | 3 weeks |
-| M4 | Checks (Check and ship, part 1) | Auto checks, verdict, "Let Claude fix it" loop | 1.5 weeks |
-| M5 | Review + ship (Check and ship, part 2) | What changed, comments, Ask Codex to review, Approve and create pull request, Files review marks | 2 weeks |
-| M6 | Research + Lessons + Saved instructions | Just research, What Claude reads from core_docs, lessons learned | 2 weeks |
-| M7 | Side by side + Gemini CLI | Two agents on one goal; Gemini CLI as the third agent | 1.5 weeks |
-| M8 | Safety + cost + undo | Sandbox per OS, what agents may do, Safety and cost, History -> Restore | 1.5 weeks |
-| M9 | Polish + package (v1.0) | Installers for Linux, macOS and Windows, daemon sidecar, background service per OS, docs | 2 weeks |
-| M10 | Jira tickets | Jira tickets screen, start task from ticket, write back | 2 weeks |
-| M11 | Browser testing | Live test in a real browser after the checks, saved logins of test accounts, See it work (screenshots, video, trace) | 2 weeks |
-| M12 | Live preview | Watch the agent's browser in the task page; a preview window for the task's app (agent drives it only where the spike passes) | 1.5 weeks |
-| Later | Phone glance, voice capture, more agents, team mode | - | - |
+| # | Milestone | Main result | F-numbers | Hours |
+|---|---|---|---|---|
+| M0 | Evidence check | 30 agent-written PRs hand-checked; go or kill answer | none (no product code) | ~15 |
+| M1 | Core + CLI | `honestagent check` works locally with rules HA000-HA007 | F1-F8 | ~30 |
+| M2 | Integrations | pre-commit hook, GitHub Action with one sticky comment, Claude Code hook | F9, F10, F11 | ~15 |
+| M3 | Mutation add-on | `--mutation` on changed lines; HA100 findings | F12 | ~20-30 |
+| M4 | Launch v0.1 | On PyPI and GitHub Marketplace; data post; launch posts | none (release) | ~15 |
 
-Total for v1: about **23.5 weeks** of side-project time (plus buffer: plan for ~6 months).
+Total for v1: about **95-105 hours** (about 10-11 weeks at 10 hours a week). Keep the rest of the ~130-hour budget as buffer.
 
-> M10 needs M1-M6. Build it after M6 (it may come before M7).
-> M11 needs M4 and M5, and uses the per-workspace ports of M7. Build it after M7. M12 needs M11 and M3. M7-M10 keep their numbers.
+> M1 needs M0 to say "go". M2 and M3 need M1. M3 can come after M4 if launch is more urgent, but the plan is M3 first.
 
 ---
 
-## M0 - Spike + skeleton
+## M0 - Evidence check
 
-**Goal:** Remove the biggest unknowns before building anything big.
+**Goal:** Prove with real PRs that agents really weaken tests, before writing any product code.
+**Hours:** ~15
+**Delivers:** no F-numbers. It delivers the evidence, the counts for the launch post, and the first real fixture cases.
 
-**Build:**
-- [ ] Create repo `saarthi/` with `daemon/` and `desktop/` folders (see TECH_STACK.md section 4).
-- [x] Add `CLAUDE.md` and `AGENTS.md` with project rules (first draft done with core_docs).
-- [ ] Spike 1 - Claude: Python script runs `claude -p --output-format stream-json --input-format stream-json --verbose` in a temp git repo. Print every event.
-  - [ ] Record 3 real streams to `tests/fixtures/agents/`: simple edit, a run that asks a question, a run that fails.
-  - [ ] Find how a question / permission request looks in the stream.
-  - [ ] Test `--resume <session-id>`.
-- [ ] Spike 2 - Codex: same with `codex exec --json -C <dir>`.
-  - [ ] Record 3 streams.
-  - [ ] Test `codex exec resume`.
-  - [ ] Test `--output-schema` with a small findings schema.
-  - [ ] Try `codex review` once.
-- [ ] Spike 3 - PTY: run interactive `claude` in a PTY from Python and pipe it to a WebSocket.
-- [ ] Spike 4 - Tauri: Tauri 2 window loads a React page with xterm.js + CodeMirror. Check that it runs smoothly on Ubuntu (WebKitGTK).
-- [ ] Spike 5 - Worktree: create / remove a worktree from Python; make a checkpoint with a temp index (TDD 4.5.1).
-- [ ] Spike 6 - Cross-platform: a GitHub Actions matrix (Ubuntu, macOS, Windows) builds the Tauri window and starts the daemon on each OS. Note the WebView per OS (WebKitGTK / WKWebView / WebView2) and any gaps.
-- [ ] Write findings in `core_docs/decisions/ADR-001-agent-integration.md`.
+**Do:**
+- [ ] Write the counting rules first, in `core_docs/reports/M0_evidence.md`: what counts as "tampering" for each of HA001-HA006 (rule table in `core_docs/FUNCTIONAL_SPECIFICATIONS.md`), and what counts as a fair reason (for example the feature was removed on purpose).
+- [ ] Add a counting table to the same file. One row per PR: link, agent (Claude Code / Codex / Copilot / other), repo, lines changed, HA001-HA006 seen (yes/no each), fair reason (yes/no), mutmut result, notes.
+- [ ] Pick 5-10 of my own agent-written PRs (client and side work).
+- [ ] Find public agent-written Python PRs until there are 30 in total. Ways to search:
+  - [ ] Commits: GitHub search for `"Co-Authored-By: Claude"`, or `gh search commits '"Co-Authored-By: Claude"' --limit 100`, then open the PR of each commit.
+  - [ ] PRs: `gh search prs '"Generated with Claude Code"' --language python --merged`.
+  - [ ] Copilot coding agent PRs (author is the Copilot agent account) and Codex PRs (PR body or branch name mentions Codex).
+  - [ ] Prefer PRs that touch both source and test files. Skip docs-only PRs.
+  - [ ] Mix merged and open PRs, and at least 3 different agents.
+- [ ] Hand-check each PR's diff against the counting rules. Fill one row per PR. Time-box: about 15 minutes per PR.
+- [ ] Run mutmut on 5 of the 30 PRs (pick ones with a changed test):
+  - [ ] Clone the repo at the PR head commit in a temp folder (never in my own repos).
+  - [ ] Limit mutmut to the changed source files only.
+  - [ ] Write down: mutants made, mutants that survived, and whether a survivor shows a weak test that matters.
+  - [ ] Note the time each run took and any setup pain (this feeds M3).
+- [ ] Save at least 10 real cases as fixture candidates:
+  - [ ] For each case, save the before and after versions of only the changed files, cut down to the smallest part that still shows the problem.
+  - [ ] Write down the PR link, the repo license, and which rule should fire, in `M0_evidence.md`.
+  - [ ] Only copy code when the license allows it. Otherwise rewrite the case by hand with the same shape.
+  - [ ] Include at least 2 clean cases (no tampering) so M1 can test for false positives.
+- [ ] Write the summary at the top of `M0_evidence.md`: X of 30 showed tampering, split by rule and by agent, and mutmut results. Plain numbers, no guesses.
+- [ ] Decide go or kill (below) and add a line to `core_docs/timeline/timeline.md`.
 
 **Done when:**
-- I have 6+ recorded agent streams in the fixtures folder.
-- I know how to detect "needs input" for both agents (or I have a written workaround).
-- A Tauri window shows a live terminal running `claude`.
-- The CI matrix shows the Tauri window and the daemon start on Linux, macOS and Windows.
+- `core_docs/reports/M0_evidence.md` has 30 filled rows and a summary with counts.
+- mutmut was tried on 5 PRs and the results are written down.
+- At least 10 fixture candidates are saved and listed with their expected rule.
+
+**Kill signal:** fewer than 1 in 30 PRs show tampering. Stop and rethink before M1.
+**Go signal:** 3 or more of 30 PRs show tampering.
+**1 or 2 of 30:** no clear signal. Write down why, and decide on purpose before starting M1.
 
 ---
 
-## M1 - Daemon core + CLI
+## M1 - Core + CLI
 
-**Goal:** The brain of the app works without any UI.
+**Goal:** `honestagent check` gives a correct verdict on a local repo, from the terminal.
+**Hours:** ~30
+**Delivers:** F1, F2, F3, F4, F5, F6, F7, F8.
 
-**Build:**
-- [ ] `daemon/` Python package with uv, ruff, pyright, pytest set up.
-- [ ] `config.py`: all settings and constants in one place.
-- [ ] SQLite + SQLAlchemy models: projects, tasks, briefs, research_items, runs, events, settings (TDD section 5).
-- [ ] Alembic first migration.
-- [ ] Event Bus + Event Store (SQLite + JSONL).
-- [ ] Task Engine with the stage table `ALLOWED_MOVES` + unit tests for every move.
-- [ ] FastAPI app: health, projects, tasks, stage, brief, research endpoints.
-- [ ] WebSocket with subscribe + `last_event_id` replay.
-- [ ] Token auth, bind to 127.0.0.1.
-- [ ] Typer CLI: `daemon start|stop|status`, `project add|list`, `task new|list|show|move`, `brief edit` (opens `$EDITOR`).
-- [ ] `.saarthi/project.toml` reader with defaults.
+**Build (tests first for every item):**
+- [ ] Package setup: `pyproject.toml`, `src/honestagent/` layout, uv, ruff, pyright, pytest. `uv run pytest`, `uv run ruff check .` and `uv run pyright` all pass on an empty package.
+- [ ] `config.py`: all defaults and constants in one place (test globs `["tests/**/*.py", "**/test_*.py", "**/*_test.py", "**/conftest.py"]`, severities, `fail_on`).
+- [ ] `models.py`: `Finding`, `Report`, `Severity`, `Verdict` as Pydantic models.
+- [ ] Test helper: turn a fixture's `before/` and `after/` folders into a temp git repo with two commits.
+- [ ] Turn the M0 fixture candidates into `tests/fixtures/prs/<case>/` with `before/`, `after/` and `expected.json`.
+- [ ] `git.py`: git calls through `subprocess` with a list of args. Tests for a bad ref and "not a git repo".
+- [ ] `changes.py` (F1): build a change set for `--base`/`--head`, `--staged` and `--working`. Default base is the merge-base of `HEAD` with the default branch (`origin/HEAD`, then `main`, then `master`; none found -> exit 2, ask for `--base`); default head is `HEAD`.
+- [ ] `changes.py` (F2): sort changed files into test files and source files with the default globs; globs come from config.
+- [ ] `rules/__init__.py`: the `RULES` registry. Each rule is a pure function `(ChangeSet, Config) -> list[Finding]`. HA000 and HA100 are registered with `check=None` so `rules` and `explain` list them.
+- [ ] HA000 honestagent-note (low): tool notes for a skipped file (binary, too large), a Python file that did not parse, and an allow marker with no reason. Tests for each.
+- [ ] HA001 test-deleted: failing fixture tests first, then the rule (removed test function, class or file; rename that stops collection).
+- [ ] HA002 skip-added: fixtures first, then the rule (skip/xfail marks and calls, `--ignore`, `--deselect`, `collect_ignore`).
+- [ ] HA003 assertion-weakened: fixtures first, then the rule (fewer asserts, trivial assert, wider `pytest.raises`, bigger `pytest.approx` tolerance; expected-value rewrite is medium).
+- [ ] HA004 coverage-lowered: fixtures first, then the rule (`fail_under` / `--cov-fail-under` lowered or removed, in every listed file type).
+- [ ] HA005 ci-or-lint-weakened: fixtures first, then the rule (removed steps, `continue-on-error: true`, `|| true`, new ignore entries, new inline `# noqa` / `# type: ignore` / `# pragma: no cover`).
+- [ ] HA006 snapshot-rewritten: fixtures first, then the rule (snapshot files changed together with source code).
+- [ ] HA007 gate-config-weakened (`rules/gate_config_weakened.py`): fixtures first, then the rule (a change to `[tool.honestagent]` or `.honestagent.toml` that disables a rule, lowers a severity, adds an `allow` entry or loosens `fail_on`).
+- [ ] `allow.py` (F4): inline allow marker on the line or the line above, and the config `allow` list. One rule ID per marker. A marker with no reason is ignored and reported as an HA000 note. Allowed findings still show; markers added in the change are listed in the "Allowed" section.
+- [ ] `verdict.py` (F5): pure function. One unit test for every row of the verdict table, plus "low never changes the verdict".
+- [ ] Config loading (F7): `[tool.honestagent]` in `pyproject.toml`, or the same keys at the top level of `.honestagent.toml` (it wins if both exist; CLI flags beat both). Read from the **base** ref (`HEAD` for `--staged` / `--working`); defaults if the base has none. Tests for `disable`, `severity`, a head-only config change (no effect, HA007 fires) and a bad config (unknown key or rule ID, `allow` without a reason: exit 2).
+- [ ] `report/text.py`, `report/markdown.py`, `report/json.py` (F6). Snapshot-style tests of each output for 3 fixtures. Markdown is cut with a note when it gets near the GitHub comment limit.
+- [ ] `cli.py` (F8): `check`, `rules`, `explain`, `version`. Tests for exit codes 0, 1 and 2 and for every `--fail-on` value.
+- [ ] `honestagent explain` text for each rule (HA000-HA007; HA100 gets its text in M3): what it catches, one example, how to allow it.
+- [ ] Run `honestagent check` on all M0 cases. Fix the rules until every real case is caught and every clean case says "Looks good".
+- [ ] Run it on 3 of my own recent PRs and write down any false positives as new fixtures.
 
 **Done when:**
-- `saarthi project add ~/OFFICE/<some-project>` works.
-- `saarthi task new "test task"` -> `saarthi task move T-0001 ready` blocks without a brief, works after `saarthi brief edit T-0001`.
-- `saarthi task show T-0001 --json` prints the task and its events.
-- Test coverage of `core/` above 80%.
+- `honestagent check` works on a local repo with base/head, `--staged` and `--working`.
+- HA000-HA007, allow markers, verdict, text/markdown/json output, config and exit codes all work.
+- Every rule has fixture tests, and all M0 real cases are caught.
+- `uv run pytest`, `uv run ruff check .` and `uv run pyright` pass, and the output is shown.
 
 ---
 
-## M2 - Agent runs + worktrees
+## M2 - Integrations
 
-**Goal:** Run real agents on real tasks, in isolation. **Start dogfooding here.**
+**Goal:** The gate runs by itself before a commit, on every PR, and when Claude Code finishes.
+**Hours:** ~15
+**Delivers:** F9, F10, F11.
 
 **Build:**
-- [ ] `AgentAdapter` protocol + `FakeAdapter` (replays fixtures).
-- [ ] `ClaudeAdapter`: start, events (mapping), send, stop, resume.
-- [ ] `CodexAdapter`: same.
-- [ ] Event mapping tests using M0 fixtures.
-- [ ] Workspace Manager: create worktree, setup script, status, diff, checkpoint, remove.
-- [ ] Run Manager: queue, max parallel, start/stop, end-of-run checkpoint.
-- [ ] "Needs You" flow: detect, set stage, accept answer.
-- [ ] Daemon restart -> mark runs `interrupted` + resume.
-- [ ] Simple Context Pack v0: brief only -> `.saarthi/context/TASK.md`.
-- [ ] Plan run saves its plan as a doc (F22.2) + docs list/show API and CLI (F22.3, F22.4).
-- [ ] Notifier: sends to the UI; `notify-send` only as a Linux fallback when no UI is open.
-- [ ] PTY works on every OS: stdlib `pty` on Linux / macOS, ConPTY via `pywinpty` on Windows.
-- [ ] All paths (config, data, DB, worktrees, logs) come from `platformdirs`, not a fixed `~/.config`.
-- [ ] CLI: `run <task> --agent --mode`, `run watch <run>` (pretty live stream with Rich), `run say <run> "text"`, `run stop`, `run resume`.
+- [ ] F9: `.pre-commit-hooks.yaml` with hook id `honestagent` that runs `honestagent check --staged --format text`.
+- [ ] Try the hook on a scratch repo with `pre-commit try-repo`: one clean commit passes, one commit with a new skip is blocked.
+- [ ] F10: composite `action.yml` with inputs `fail-on`, `mutation`, `comment` (default true) and `python-version`.
+- [ ] The Action docs say the user's workflow needs `actions/checkout` with `fetch-depth: 0`. Snippet: `uses: ankitraj20616/HonestAgent@v0`.
+- [ ] The Action installs the package and runs `honestagent check --base <PR base sha> --head <PR head sha> --format markdown`.
+- [ ] The Action creates or updates **one** PR comment, found by the hidden marker `<!-- honestagent -->`, using `gh` and `GITHUB_TOKEN`. It exits with the CLI exit code.
+- [ ] Make a sandbox GitHub repo. Open 3 PRs: clean, tampered, and tampered with an allow marker. Check the verdict and the comment on each.
+- [ ] Push a second commit to one PR and check that the same comment is updated (not a new one).
+- [ ] Check a fork PR: the job result shows, and the run does not fail just because the token cannot comment.
+- [ ] F11: read the current Claude Code hooks docs (https://code.claude.com/docs/en/hooks) before writing anything. Do not guess the JSON or the exit-code behaviour.
+- [ ] Write the sample `hooks/claude-code/settings.json`: a `Stop` hook that runs `honestagent check --working --format text` and maps the exit codes: CLI 1 -> hook 2 on the first stop (the agent sees the findings); `stop_hook_active` true -> hook 1 (no block, no loop); CLI 2 -> hook 1.
+- [ ] Try the hook in a real Claude Code session on a scratch repo: ask the agent to "make the failing test pass" and check that the hook stops it when it skips the test.
+- [ ] Docs: a short section for each of the three integrations in `README.md`, plus `hooks/claude-code/README.md`.
 
 **Done when:**
-- `saarthi run T-0002 --agent claude --mode build` creates a worktree, runs Claude, and streams clean events in the terminal.
-- Two tasks run at the same time (one Claude, one Codex) without touching each other's files.
-- Killing the daemon mid-run and restarting it shows the run as `interrupted`; `saarthi run resume` continues it.
-- `saarthi docs show T-0002 1` prints the plan of the last plan run.
-- Unit and integration tests pass on the CI matrix (Linux, macOS, Windows).
-- At least **3 real Saarthi tasks** were done using this CLI.
+- The pre-commit hook blocks a tampered commit and passes a clean one.
+- The Action posts one sticky comment on the sandbox repo and updates it on a new push.
+- The Claude Code `Stop` hook sample works in a real session.
+- Docs exist for all three.
 
 ---
 
-## M3 - Desktop UI v1
+## M3 - Mutation add-on
 
-**Goal:** Daily use from a window, not the terminal.
+**Goal:** Show tests that pass but do not really check the changed code.
+**Hours:** ~20-30
+**Delivers:** F12.
 
-**Build:**
-- [ ] Tauri 2 shell: starts / connects to the daemon, reads the token, native notifications.
-- [ ] TypeScript API client generated from OpenAPI.
-- [ ] WebSocket client with reconnect + replay. Subscribes to the events of all projects.
-- [ ] Daemon: a simple `status` per task (F2.9) and the Files API (tree, file content, diff vs main, per task and per project; TDD 4.14).
-- [ ] App frame: top bar (logo, project picker with project tools, search or jump `Ctrl K`, Needs-you pill, Settings). No sidebar, no dock.
-- [ ] Home: project tabs + **All projects**, groups Needs you / Working / To do, Done this week (F1.5, F2.9).
-- [ ] Board view (project menu): 4 columns, "Show detailed stages", drag and drop with stage rules, filters.
-- [ ] New task: pick the project, the goal, agent picker, More options. Quick capture with `Ctrl Alt N` from any app.
-- [ ] Task page:
-  - [ ] Goal card: view and edit the brief (markdown).
-  - [ ] Activity tab: agent cards (message, tool call, command output, file changed).
-  - [ ] Message box: send follow-up, answer "Claude has a question", stop.
-  - [ ] More -> Terminal: xterm.js (PTY adapter).
-  - [ ] More -> Docs: plans, changed .md files, pinned docs, outline (F22.1).
-  - [ ] More -> History (simple list of events).
-  - [ ] More -> Details: branch, path, behind main, runs list.
-- [ ] Files (IDE view): folder tree, file tabs, CodeMirror code view, find a file, "Show changes / Full file" with inline changes against `main`, tiny edits, "Open in my editor" (F17.1-F17.5).
-- [ ] Project files: the same view on the main repo of any project (F17.8).
-- [ ] Settings (General, Agents, Project) + Health page.
-- [ ] Dark theme (default) + light theme.
+**Build (tests first):**
+- [ ] Add mutmut as an optional extra: `pip install honestagent[mutation]`.
+- [ ] If mutmut is not installed, `--mutation` exits 2 with a clear install message. Test it.
+- [ ] `--mutation` with `--staged` or `--working` exits 2 with a clear message (mutation needs `--base/--head`). Test it.
+- [ ] `honestagent explain HA100` text.
+- [ ] Mutation settings in `config.py` defaults and config: `mutation.enabled`, `max_mutants`, `timeout_sec`.
+- [ ] Create a temp git worktree of the head ref; remove it at the end, also on error or timeout. Test that the user's working tree is unchanged after a run.
+- [ ] Mutate only the changed source lines from the diff, not the whole project. Stop at `max_mutants` and `timeout_sec`.
+- [ ] Each surviving mutant becomes an HA100 finding with file, line and the mutation.
+- [ ] Fixture: a tiny project with a weak test, where a known mutant survives. A second fixture where all mutants are killed.
+- [ ] Show HA100 findings in all three report formats.
+- [ ] Action: `mutation: true` passes `--mutation`. Try it on the sandbox repo and note the run time.
+- [ ] Use the M0 mutmut notes to set sensible defaults; write the numbers in the docs.
 
 **Done when:**
-- I do a full day of real work starting tasks and watching agents only from the Saarthi window.
-- I work on tasks in 2+ repos from one window, and the Needs-you count covers both.
-- I read a task's changes against `main` in Files without opening an IDE.
-- The UI shows an agent event in under 300 ms.
-- Closing the window does not stop running agents.
+- `honestagent check --mutation` runs mutmut only on changed lines in a temp worktree, within the limits.
+- Surviving mutants show as HA100 findings.
+- It works in the Action with `mutation: true`.
 
 ---
 
-## M4 - Checks (Check and ship, part 1)
+## M4 - Launch v0.1
 
-**Goal:** No task reaches Review without proof.
+**Goal:** Other people can find, install and try HonestAgent in 5 minutes.
+**Hours:** ~15
+**Delivers:** no new F-numbers. It ships F1-F12 as v0.1.
 
-**Build:**
-- [ ] Check Runner: run checks from `project.toml`, timeout, kill process group, save output.
-- [ ] Auto-run checks after build / fix runs.
-- [ ] Proof Card model + "What done looks like" coverage. The agent fills it; the user answers only the "Not sure" ones ("That's fine" / "Ask Claude to add it"). No "Confirm all".
-- [ ] Trust score + verdict (F7.7). `TRUST_GOOD_MIN = 70` in `config.py`.
-- [ ] Stage rule: Verifying -> Review only if required checks pass, or override with reason ("Review anyway").
-- [ ] "Let Claude fix it" button: new fix run with failing output. Max rounds setting; at the limit it stops and asks.
-- [ ] Check and ship screen, checks part: verdict, tests and checks, "Show output", "How we decided" (shows the score). Status dot on Board cards.
-- [ ] CLI: `saarthi checks <task>`, `saarthi proof <task>` (prints the verdict and the score).
+**Do:**
+- [ ] Final check: `uv run pytest`, `uv run ruff check .`, `uv run pyright` pass; run the gate on its own repo.
+- [ ] Publish `honestagent` 0.1.0 on PyPI. Install it in a clean virtual env and run `honestagent version`.
+- [ ] Tag the release and list the Action on GitHub Marketplace.
+- [ ] README: a real PR-comment example (from the sandbox repo), install steps for all three integrations, and the rule table.
+- [ ] Data post from the M0 numbers ("I checked 30 agent-written PRs: X weakened or deleted tests").
+- [ ] Posts: Show HN, r/Python, and an X thread with a short demo.
+- [ ] Claude Code plugin listing for the hook.
+- [ ] Open a GitHub Discussion "Team plan - interested?" and link it from the README. No website.
+- [ ] Add a line to `core_docs/timeline/timeline.md` with the launch date. Day 60 is counted from here.
 
 **Done when:**
-- A broken change auto-moves to `Failed` (verdict "Has problems"), I click "Let Claude fix it", and after the fix it moves to `Review` with all green.
-- Override needs a typed reason, and the reason shows on Check and ship.
-- Verdict rule tests cover all three verdicts.
+- `pip install honestagent` works and the Action is on GitHub Marketplace.
+- The README shows a real PR comment.
+- The data post and the launch posts are live, and the Discussion link is in the README.
 
 ---
 
-## M5 - Review + ship (Check and ship, part 2)
+## After v1 - the day-60 check
 
-**Goal:** Review fast and create the PR from Saarthi.
+Nothing for v2 is planned now. About 60 days after launch, look at the numbers and decide if there is pull for a paid team tier.
 
-**Build:**
-- [ ] Review Builder: diff parse, rule-based risk flags, agent grouping (JSON Schema) with a one-line "why" per file, fallback "group by folder".
-- [ ] Check and ship, what changed part: groups, explanations, risk tags, diff viewer (CodeMirror merge view). Plain file list = Files -> "Show changes".
-- [ ] Comments: open a group, comment on a line or the group, "Send to Claude".
-- [ ] Ask Codex to review: optional card, cross agent, read-only, findings JSON, shown in the groups, "Fix these".
-- [ ] Files: "Why Claude changed this", "Mark as looked at" (kept per task), "Next change" (F17.6, F17.7).
-- [ ] Approve / Reject.
-- [ ] Ship: **Approve and create pull request** with no dialog. Default commit and PR text from the agent; optional "Edit pull request text". Push (default-branch guard in code), `gh pr create` with goal + what changed + checks.
-- [ ] Done screen: PR link. The worktree is removed after `WORKTREE_CLEANUP_DAYS` (7); a link removes it now.
+- **Go signal (all three):**
+  1. 300 or more stars, **or** 50 or more repos using the Action; **and**
+  2. 5 or more issues or PRs from outside people; **and**
+  3. 3 or more teams asking for org features or clicking the "Team plan - interested?" link.
+- **Kill signal:** fewer than 100 stars and fewer than 10 installs after launch plus 2 posts. Keep HonestAgent as a portfolio piece and stop adding features.
 
-**Done when:**
-- I ship a real PR for a client project fully from Saarthi.
-- Ask Codex to review finds at least one real issue in a test task and the fix loop works.
-- Pushing to `main` is impossible even if I try from the API directly (test proves it).
+Source: the 90-day plan in the research, summed up in `decisions/ADR-001-pivot-to-test-integrity-gate.md`.
 
 ---
 
-## M6 - Research + Lessons and notes + Saved instructions
+## Later (not v1)
 
-**Goal:** Keep the context and the learning.
+One line each. Do not design or build these now.
 
-**Build:**
-- [ ] Research on the task page: notes, links (title fetch), snippets, "send to agent" toggle.
-- [ ] "Just research" (New task -> More options) and "Research this": read-only agent run -> finding saved.
-- [ ] "Make a goal from this" from research, and a drafted goal on New task (F3.2).
-- [ ] Brief versions (Goal card -> Edit -> History).
-- [ ] Lessons and notes screen: core_docs tree, markdown view, simple edit.
-- [ ] Context Pack v1: brief + research + matched memory files (ripgrep) + playbook. Preview at More -> What Claude reads.
-- [ ] Lessons learned card on Done: drafts for memory / learnings / timeline, approve each.
-- [ ] Saved instructions: library screen, built-in 5 playbooks, variables, global + project scope. Picked in New task -> More options.
-- [ ] Research findings in Docs; latest plan in the Context Pack (F22.5).
-- [ ] Import my current `quick-prompts.md` files from client projects as saved instructions.
-
-**Done when:**
-- A new task gets a good goal from "Just research" + "Make a goal from this" in under 5 minutes.
-- After shipping, `core_docs/memory/project_memory.md` and `timeline/timeline.md` are updated with my approval.
-
----
-
-## M7 - Side by side + Gemini CLI
-
-**Goal:** Use more than one agent together for hard tasks, and add Gemini CLI as the third agent.
-
-**Build:**
-- [ ] Gemini spike: run headless `gemini -p` with JSON output in a temp repo. Check the exact flags (output format, resume, approval mode). Record 3 streams to `tests/fixtures/agents/`.
-- [ ] `GeminiAdapter` behind `AgentAdapter`: start, events (mapping), send, stop, resume (if the CLI supports it). Unknown lines become raw events.
-- [ ] Event mapping tests with the Gemini fixtures. "Needs you" detection (or a written workaround).
-- [ ] `gemini` in Health, Settings -> Agents, the agent picker, and `saarthi run --agent gemini`.
-- [ ] Side by side: one goal -> two runs (any two installed agents, default Claude + Codex) in two worktrees. Started from New task -> More options.
-- [ ] Compare screen: checks, verdict, diff size, cost, time, what changed side by side.
-- [ ] Pick winner -> keep branch, delete the other worktree.
-- [ ] Per-workspace port numbers (avoid dev server clashes).
-- [ ] Home: Working rows show live mini status.
-
-**Done when:**
-- I run a real task side by side and pick the winner in under 2 minutes of review.
-- A real task runs with Gemini CLI from the CLI and the UI. Tests use only recorded Gemini fixtures.
-
----
-
-## M8 - Safety + cost + undo
-
-**Goal:** Trust the agents more, spend less, undo anything.
-
-**Build:**
-- [ ] "What agents may do" (Read only / Safe / Full access) in Settings -> Safety and cost, and per task in Details.
-- [ ] Blocked actions list + "always ask" list (TDD 4.9). An ask shows as a Needs-you card on the task page.
-- [ ] Sandbox per OS (TDD 4.9): only the worktree is writable, secret folders hidden.
-  - [ ] Linux: `bwrap` wrapper.
-  - [ ] macOS: `sandbox-exec` profile.
-  - [ ] Windows v1: no OS sandbox. "Full access" is not offered on Windows (UI and API).
-- [ ] Secret masking in events and UI (with tests).
-- [ ] Cost meter: per run, per task, per day, on the Safety and cost screen and in Details; budget alert.
-- [ ] Undo points list in More -> History + Restore (save current first, confirm).
-
-**Done when:**
-- In Full access inside the sandbox, an agent cannot read `~/.ssh` on Linux (`bwrap`) and on macOS (`sandbox-exec`) (tests prove it).
-- On Windows, the API refuses Full access (test proves it).
-- I restore a task to an undo point and come back to the latest again with no loss.
-
----
-
-## M9 - Polish + package (v1.0)
-
-**Goal:** Install it like a normal app and use it every day.
-
-**Build:**
-- [ ] Daemon as a Tauri **sidecar**: one-file binary per OS (PyInstaller or Nuitka). The app starts the daemon.
-- [ ] Installers from one GitHub Actions matrix: `.AppImage` + `.deb` (Linux), `.dmg` (macOS), `.msi` (Windows).
-- [ ] "Keep running in the background" option, the OS way: systemd user service (Linux), launchd agent (macOS), Tauri autostart plugin / per-user Startup entry (Windows).
-- [ ] Notifications through the Tauri notification plugin on every OS (`notify-send` only as a Linux fallback).
-- [ ] Size budget check per OS in CI: installer < 40 MB; app open < 2 s and idle RAM (window < 150 MB, daemon < 150 MB) measured and written in `reports/`.
-- [ ] First-run wizard: pick a project, "All set" or "One thing to fix".
-- [ ] Keyboard shortcut sheet (`?`).
-- [ ] Empty states, error states (background service down, agent missing, reconnecting, version mismatch), loading states.
-- [ ] Playwright tests for the 3 main flows.
-- [ ] User guide `docs/USER_GUIDE.md` (install steps per OS).
-
-**Done when:**
-- Fresh install on clean Ubuntu 24.04, macOS 14 and Windows 11 works in under 10 minutes on each.
-- The size budget is met on all three OSes, or an ADR records the miss and the fallback (see TECH_STACK.md, Size budget).
-- I use Saarthi for 2 full weeks without opening an IDE for agent work.
-- Tag `v1.0.0`.
-
----
-
-## M10 - Jira tickets
-
-**Goal:** Start a client task from a Jira ticket, and keep the Jira status in step.
-
-> Build order: M10 needs M1-M6. Build it after M6 (it may come before M7). M7-M9 keep their numbers.
-
-**Build:**
-- [ ] `TicketProvider` protocol + `FakeTicketProvider` + recorded JSON in `tests/fixtures/jira/` (F23).
-- [ ] `JiraCloudProvider` with `httpx`: myself, search (POST, `nextPageToken`), issue, transitions, comment, remote link. Retry on 429.
-- [ ] ADF -> markdown and markdown -> ADF (`adf.py`) with golden tests. Unknown nodes are kept.
-- [ ] Jira site setup: token file `chmod 600`, `saarthi jira login`, `saarthi jira status` (F23.1).
-- [ ] Migration: `tickets` cache, `ticket_views`, `ticket_actions`, `tasks.ticket_key`.
-- [ ] Ticket cache + views (Mine, Sprint, saved JQL) + stale refresh + offline view (F23.2, F23.6).
-- [ ] Start a task from a ticket: brief draft, comments as research, branch and PR name (F3.3, F23.3).
-- [ ] Link an existing task: `saarthi task edit T-0012 --ticket ACME-142`.
-- [ ] Write back: stage mapping, pending actions, send / skip, `auto_send` (F23.5).
-- [ ] API: `/jira/sites`, tickets, start, link, ticket-actions.
-- [ ] CLI: `tickets list|show|start`, `ticket actions|send|skip`.
-- [ ] UI: Jira tickets screen (project menu), start dialog, ticket chip on the task page and Board cards, write-back as a Needs-you row and a card on Done, offline view, Settings -> Jira (F23.4).
-- [ ] Events: `ticket.*`.
-
-**Done when:**
-- I start a real client task from a Jira ticket, and its Jira status moves to In Review after my OK.
-- A 401 shows the fix command.
-- No test calls the real Jira.
-
----
-
-## M11 - Browser testing
-
-**Goal:** The agent proves UI work live in a real browser, once per build, and shows it.
-
-> Build order: M11 needs M4 (Check Runner) and M5 (Check and ship), and uses M7's per-workspace ports. Build it after M7. If M7 is not done, M11 builds the port part.
-
-**Build:**
-- [ ] Spike first (about 2.5 h): browser kit packaging (Playwright MCP, its Node runtime, Chromium headless shell), Playwright MCP flags with Claude / Codex / Gemini, `storageState` save and load, video size. Write the results into `decisions/ADR-003-browser-testing.md`.
-- [ ] Browser finder: Chrome -> Edge -> Chromium -> browser kit (F24.1). One engine: Chromium.
-- [ ] Browser kit download on demand into the data folder: headless shell first, full Chromium only when needed. `saarthi browser status`, `saarthi browser kit install`.
-- [ ] `[browser]` in `project.toml`, off by default (F24.2). Settings -> Browser testing.
-- [ ] Dev server per task on the task's port, ready check, timeout, stop at the end (F24.3). `saarthi devserver start|stop`.
-- [ ] Browser MCP endpoint in the daemon: proxies Playwright MCP, guards allowed hosts, counts steps, takes a screenshot per step, writes `browser.*` events (F24.7).
-- [ ] `RunRequest.mcp_servers`: each adapter turns it into its own flags. No browser code outside `browser/` and `agents/`.
-- [ ] Live test = a `live_test` side run + a check of kind `live` after the required checks pass. Optional by default, required with `live_test_required` (F24.4).
-- [ ] `e2e` check kind: dev server first, artifacts collected (F24.5).
-- [ ] Saved logins: headed browser, user logs in, `storageState` saved (owner-only file), expiry -> Needs-you "Log in again" (F24.6). `saarthi browser login save <name>`.
-- [ ] Evidence store + API; See it work card on Check and ship; cleaned up with the worktree (F7.5).
-- [ ] UI: `settingsBrowser`, `loginSave`, `liveTest`, `evidence`, `loginExpired`, the See it work card on `check`.
-- [ ] Events: `browser.*`, `login.*`, `devserver.*`.
-
-**Done when:**
-- A real UI task in a web project gets a Live test after green checks, and Check and ship shows See it work with steps, screenshots, a video and a trace.
-- A Live test with a saved test login works without the agent ever seeing the session or a password (test proves it).
-- A page outside `allowed_hosts` is blocked and shows a Needs-you card.
-- An expired login shows "Log in again".
-- The installer size does not change (the kit is downloaded, not bundled).
-- No unit test starts a real browser or a real agent.
-
----
-
-## M12 - Live preview
-
-**Goal:** Watch the agent test the app, and click around in the task's running app, without leaving Saarthi.
-
-> Build order: M12 needs M11 (browser, dev server, Live test) and M3 (task page). It starts with a go/no-go spike per OS for "agent drives the preview window".
-
-**Build:**
-- [ ] Spike first (about 3 h): per OS, can the agent drive a Saarthi preview window? Linux: WebKitWebDriver. Windows: WebView2 remote debugging (CDP). macOS: no driver, so no-go. The main Saarthi window must never be reachable by the driver. Results go into ADR-003.
-- [ ] Live browser: a screencast of the agent's Chromium (CDP `Page.startScreencast`) in the task page, on every OS (F25.1). Streams only while someone watches.
-- [ ] Preview window: a separate Tauri WebView window on the task's dev server URL, with no IPC and no capabilities (F25.2). Only allowed hosts.
-- [ ] Agent drives the preview window, only on the OSes where the spike passed (F25.3). Else the agent keeps using its own Chromium.
-- [ ] UI: the live browser in `liveTest`, `livePreview` with "Let the agent use this window" only where supported.
-- [ ] CLI / API: `saarthi preview open|close <task>`.
-
-**Done when:**
-- I watch a Live test click through my app in the task page, on Linux, macOS and Windows.
-- I open the preview window for a task and use the app by hand.
-- A test proves the preview window cannot call any Saarthi command.
-- The go/no-go result per OS is written in ADR-003, and "Let the agent use this window" shows only on the OSes that passed.
-
----
-
-## Later (after v1)
-
-- **Phone glance:** read-only web page on the phone (LAN + token) to see status and answer "Needs you".
-- **Voice capture:** speak a task, it goes to To do.
-- **More agents:** Aider, local models (Gemini CLI is M7).
-- **GitHub Issues** and other ticket providers (Jira is M10).
-- **PR status:** CI and review comments from GitHub on the task page.
-- **API recordings:** request + response as proof on Check and ship (F7.8). Screenshots, video and trace are M11.
-- **Agent drives the preview window on macOS** (no WKWebView driver today).
-- **Smart memory:** search memory by meaning (embeddings).
-- **Team mode:** share saved instructions and memory with 2-5 devs.
-- **Windows sandbox** (FSD Q4), so "Full access" can be offered on Windows.
-- **Go or Rust rewrite of the daemon** - only if the size budget is missed in M9 or the signs in TECH_STACK.md 2.3 show up.
-
----
-
-## How to track progress
-
-- Tick boxes in this file as work is done.
-- After each milestone:
-  - Add an entry to `timeline/timeline.md` (date + what shipped).
-  - Add big problems + fixes to `memory/project_memory.md`.
-  - Add new rules to `learnings/`.
-  - Write a short review in `code_reviews/` (what is good, what is debt).
+- JavaScript / TypeScript rules (Jest, Vitest).
+- Hosted GitHub App and paid team tier (org policy, history, private-repo PR checks).
+- Trust score 0-100.
+- Optional LLM second opinion.
+- HTML proof report.
+- Codex and other agent hooks.
+- Web dashboard.
+- SARIF output for GitHub code scanning.

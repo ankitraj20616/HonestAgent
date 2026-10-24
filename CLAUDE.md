@@ -1,6 +1,6 @@
-# Saarthi - rules for AI agents
+# HonestAgent - rules for AI agents
 
-Saarthi is a task-first Agentic Development Environment for Linux, macOS and Windows, with a built-in IDE-style file view. Not built on VS Code.
+HonestAgent is an open-source, deterministic test-integrity gate for pull requests, mostly ones written by AI coding agents. It answers one question: "Are the tests real, or did the agent cheat to make them pass?" It is a stateless Python CLI that reads git and prints a report. Integrations (pre-commit, GitHub Action, Claude Code hook) only call the CLI.
 
 ## Read first
 - `core_docs/README.md` - idea and doc map
@@ -10,23 +10,25 @@ Saarthi is a task-first Agentic Development Environment for Linux, macOS and Win
 - `core_docs/TECH_STACK.md` - with what
 
 ## Stack
-- `daemon/`: Python 3.12+, uv, FastAPI, Pydantic v2, SQLAlchemy 2 + Alembic, SQLite, Typer, pytest.
-- `desktop/`: Tauri 2, React, TypeScript, Vite, Tailwind, shadcn/ui, xterm.js, CodeMirror 6.
+- One Python package in `src/honestagent`: Python 3.12+, uv, Typer + Rich, Pydantic v2, stdlib `ast` + `tomllib`, PyYAML, pytest, ruff, pyright. mutmut is an optional extra (M3).
 
 ## Rules
-1. All logic lives in the daemon. UI and CLI only call the API.
-2. CLI first: a feature works in `saarthi` CLI before it gets a screen.
-3. Agents only through the `AgentAdapter` interface. No agent-specific code outside `agents/`.
-4. Every action is an event (TDD section 6). Unknown agent lines become raw events, never dropped.
-5. Stage rules live in one table (`ALLOWED_MOVES`).
-6. Git: subprocess with a list of args. Never push to the default branch.
-7. Settings and constants only in `config.py` / `project.toml`. No hard-coded values.
-8. Tests first for core logic. Use `FakeAdapter` + recorded fixtures; never call real agents in tests.
+1. One Python package, `honestagent`, in a `src/` layout. No daemon, no server, no database, no UI. A stateless CLI that reads git and prints a report.
+2. CLI first: every feature works as `honestagent ...` before any integration wraps it. The pre-commit hook, the GitHub Action and the Claude Code hook only call the CLI.
+3. Deterministic core. No LLM calls in v1. No network calls in the core (only the GitHub Action wrapper talks to GitHub, through `gh`).
+4. Read-only on the user's repo. Never edit, commit or push the user's code. Mutation testing runs in a temp `git worktree` that is removed afterwards.
+5. Git through `subprocess` with a list of args, never a shell string.
+6. All rules live in one registry (`RULES` in `rules/__init__.py`). Each rule is a pure function: `(ChangeSet, Config) -> list[Finding]`.
+7. Settings and constants only in `config.py` (defaults) and the user's config file. No hard-coded values elsewhere.
+8. Tests first for every rule. Use recorded PR fixtures (`tests/fixtures/prs/<case>/`). Never real GitHub, never real agents, never the network.
 9. Before saying "done", run `uv run pytest`, `uv run ruff check .`, `uv run pyright` and show the output.
-10. Simple English in docs. Keep it small; do not build "Later" features early.
+10. Simple English in docs. Keep it small. Do not build "Later" features early.
 
 ## Commands
 ```bash
-cd daemon && uv sync && uv run pytest
-cd desktop && npm install && npm run tauri dev
+uv sync
+uv run pytest
+uv run ruff check .
+uv run pyright
+uv run honestagent check
 ```

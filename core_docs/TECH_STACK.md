@@ -1,9 +1,9 @@
 # Tech Stack
-## Saarthi - Agentic Development Environment
+## HonestAgent - test-integrity gate for agent pull requests
 
-**Version:** 0.2
-**Date:** 2026-10-23
-**Platforms:** Linux, macOS and Windows, one codebase (`decisions/ADR-002-cross-platform-lightweight.md`).
+**Version:** 1.0 (v1 docs)
+**Date:** 2026-10-24
+**Platforms:** Linux, macOS and Windows. A pure-Python CLI that shells out to `git`.
 
 ---
 
@@ -11,223 +11,131 @@
 
 | Layer | Choice | Why (short) |
 |---|---|---|
-| Backend daemon | **Python 3.12+** | I know it best. The work is mostly waiting on processes and I/O. Python asyncio is enough. |
-| Web framework | **FastAPI + Uvicorn** | REST + WebSocket. Already used in my client projects. |
-| Data models | **Pydantic v2** | Same models for API, events, and config. |
-| Database | **SQLite** (WAL mode) | One file. No server. Perfect for a local app. |
-| DB layer | **SQLAlchemy 2.0 + Alembic** | Known tools. Easy migrations. |
-| CLI | **Typer + Rich** | Fast to build, nice output. |
-| Process / PTY | **asyncio subprocess**; PTY: **stdlib `pty`** on Linux / macOS, **ConPTY via `pywinpty`** on Windows | Run `claude` / `codex` / `gemini` and stream output. One small PTY wrapper hides the OS. |
-| Paths | **`platformdirs`** | Config, data, logs and worktree folders in the right place on each OS. Never a fixed `~/.config`. |
-| File watch | **watchfiles** | Live "files changed" in a worktree. |
-| Logs | **structlog** | JSON logs, easy to search. |
-| Package manager | **uv** | Fast, already installed. |
-| Desktop shell | **Tauri 2** on all three OSes: WebKitGTK (Linux), WKWebView (macOS), WebView2 (Windows) | Small, uses the system WebView, low RAM. Not Electron, not VS Code. |
-| UI | **React + TypeScript + Vite** | Big ecosystem, agents write it well. |
-| UI styling | **Tailwind CSS + shadcn/ui** | Fast, clean UI. |
-| UI state | **Zustand + TanStack Query** | Simple client state + server cache. |
-| Terminal in UI | **xterm.js** | The standard web terminal. |
-| Code / diff view | **CodeMirror 6 + @codemirror/merge** | Light. Powers the Files (IDE view): code view, tabs, inline diff vs main, tiny edits. (Not Monaco.) |
-| Markdown | **react-markdown** + **remark-gfm** + **Milkdown** (editor, later) | View and edit briefs and core_docs. `react-markdown` + `remark-gfm` also show the Docs tab (read-only). |
-| Agents | **Claude Code CLI** (default) + **Codex CLI** + **Gemini CLI** (M7) | Use my existing logins and subscriptions. All behind `AgentAdapter`. |
-| Git | **system `git`** (called as a subprocess) | Most reliable. Worktrees fully supported. |
-| GitHub | **`gh` CLI** | PRs, CI status. Already logged in. |
-| Jira (M10) | **`httpx`** (already a dependency) + own small ADF converter | Jira Cloud REST API v3. No new library. If the ADF code grows past ~300 lines, switch to `atlas-doc-parser`. |
-| Search | **ripgrep (`rg`)** | Fast code search. |
-| Browser for Live tests (M11) | **Chromium only**, lightest path first: system **Google Chrome** -> system **Microsoft Edge** -> system **Chromium** -> the **browser kit** (Playwright's **Chromium headless shell**, downloaded once into the data folder; the full Chromium only if a window is needed and no system browser exists) | One engine, same behaviour on all 3 OSes. CDP for the M12 screencast. Playwright MCP uses Chromium by default. Windows usually needs no download (Edge is built in). Never in the installer. Sizes measured in the M11 spike. |
-| Browser MCP server (M11) | **Playwright MCP** (`@playwright/mcp`, pinned in `PLAYWRIGHT_MCP_PACKAGE`), run by the daemon and reached by the agent through Saarthi's MCP endpoint | The agent drives the browser with tools it already knows. Saarthi stays in the middle for allowed hosts, step limits, screenshots and events. Flags checked in the M11 spike. Needs Node: the user's `node`, else a Node runtime in the kit. |
-| CDP client (M11, M12) | **own small client** over WebSocket (`websockets`, already pulled in by Uvicorn) | Save a login (cookies + local storage -> `storageState`) and the M12 screencast (`Page.startScreencast`). No Playwright Python package in the daemon. |
-| Live preview window (M12) | **Tauri `WebviewWindow`** with no capabilities (no IPC) | Shows the task's app inside Saarthi. Agent driving it is spike-gated: WebKitWebDriver (Linux), WebView2 CDP (Windows), none on macOS. |
-| Sandbox (M8) | Linux: **bubblewrap (`bwrap`)**. macOS: **`sandbox-exec` profile**. Windows v1: **none**, so "Full access" is not offered there. | Light OS tools, no containers. |
-| Notifications | **Tauri notification plugin** on every OS (fallback `notify-send` on Linux only) | Native desktop alerts. |
-| Tests (backend) | **pytest + pytest-asyncio** | Standard. |
-| Tests (UI) | **Vitest + Playwright** | Unit + end-to-end. |
-| Lint / format | **ruff**, **pyright**; **eslint**, **prettier** | Fast and strict. |
-| Packaging | **Tauri bundler**: `.AppImage` + `.deb` (Linux), `.dmg` (macOS), `.msi` (Windows). Daemon as a Tauri **sidecar**: a one-file binary per OS (**PyInstaller** or **Nuitka**). All built in one **GitHub Actions matrix**. | Normal install on each OS. The app starts the daemon. Dev still uses `uv`. |
-| Run as service | Optional "keep running in the background": **systemd user service** (Linux), **launchd agent** (macOS), **Tauri autostart plugin** / per-user Startup entry (Windows) | Daemon starts at login, keeps runs alive if the UI closes. |
+| Language | **Python 3.12+** | I know it best. The first target is Python + pytest, so the tool reads Python with Python's own parser. |
+| Package manager | **uv** | Fast. One tool for venv, lock file, run, build and publish. |
+| CLI | **Typer** | Commands and flags from type hints. Little code. |
+| Terminal output | **Rich** | Clear colored text report, tables, no extra work. |
+| Data models | **Pydantic v2** | `Finding`, `Report` and `Config` models with checks. The JSON report comes straight from the model. |
+| Python parsing | **stdlib `ast`** | Compares before and after test code by structure, not by text. No extra dependency. |
+| TOML | **stdlib `tomllib`** | Reads `pyproject.toml` and `.honestagent.toml`. Read-only is all we need. |
+| YAML | **PyYAML** (`safe_load`) | Reads CI files (`.github/workflows/*`, `.pre-commit-config.yaml`) for HA005. |
+| INI files | **stdlib `configparser`** | Reads `setup.cfg`, `tox.ini`, `.coveragerc`, `pytest.ini` for HA004 / HA005. |
+| Git | **system `git`** via `subprocess` (list args) | Most reliable. Works the same on all three OSes. Gives before / after file text and temp worktrees. |
+| GitHub | **`gh` CLI** (Action only) | Creates or updates the one PR comment. Already on GitHub runners. Never used by the core. |
+| Mutation (M3) | **mutmut** (optional extra) | Plants small bugs in changed lines and checks that the tests fail. Python-native, works with pytest. |
+| Tests | **pytest** | Standard. Rules are tested on recorded PR fixtures. |
+| Lint / format | **ruff** | One fast tool for lint and format. |
+| Types | **pyright** | Strict type checks catch mistakes in agent-written code early. |
+
+No other runtime dependencies in v1. Adding one needs a line in this file with a "why".
 
 ---
 
-## 2. The big question: Python, Go, or Rust for the backend?
+## 2. Why Python (and no other language)
 
-### 2.1 What the backend really does
-- Starts agent processes (`claude`, `codex`) and reads their output line by line.
-- Runs git commands and check commands (`pytest`, `npm run build`).
-- Saves events to SQLite.
-- Sends events to the UI over WebSocket.
-- Builds text (Context Pack, Change Story).
+- The tool checks Python projects first. Python's `ast` module is the most exact way to read
+  Python test code, and it ships with the language.
+- The work is small and fast: read a few files from git, compare trees, print a report.
+  Speed is not a problem.
+- I review Python best. Agents write most of the code, but I still review all of it.
+- When JavaScript support comes (Later), it will be a new set of rules, not a rewrite.
 
-So the backend is mostly **waiting**: on processes, on disk, on the network.
-It does **not** do heavy number crunching. The heavy "thinking" is done by Claude / Codex, not by us.
+---
 
-### 2.2 Score (1 = bad, 5 = great)
+## 3. Runtime dependencies
 
-| Point | Python | Go | Rust |
-|---|---|---|---|
-| My speed to build | **5** | 3 | 2 |
-| Agents (Claude/Codex) writing it well | 5 | 5 | 4 |
-| Handling many processes at once | 4 (asyncio) | **5** (goroutines) | 5 (tokio) |
-| Single binary, easy install | 2 | **5** | **5** |
-| RAM / start time | 3 | 5 | 5 |
-| Works with Tauri (Rust) | 3 (sidecar) | 3 (sidecar) | **5** (same process) |
-| Libraries for this job (FastAPI, Pydantic, AI SDKs) | **5** | 4 | 3 |
-| Learning curve for me | **5** | 4 | 2 |
-| **Total** | **32** | **34** | **31** |
+| Package | Used in | Notes |
+|---|---|---|
+| `typer` | `cli.py` | Pulls in `click` |
+| `rich` | `report/text.py`, CLI errors | Plain text when output is not a terminal |
+| `pydantic` (v2) | `models.py`, `config.py` | JSON report via `model_dump_json` |
+| `pyyaml` | HA005 | Always `safe_load`, never `load` |
 
-### 2.3 Decision
+Stdlib only for the rest: `ast`, `tomllib`, `configparser`, `subprocess`, `pathlib`,
+`tempfile`, `json`.
 
-**v1: Python.** Go wins the raw score by 2 points, but only on install size and RAM. Those matter more now that we have a size budget (2.5), see the cross-platform note below. Reasons:
-1. I am a Python dev. With agents writing code, **I still must review it**. I review Python best.
-2. The backend is I/O-bound. asyncio can handle 10+ agent processes easily.
-3. Go wins on packaging and RAM. That matters for a product sold to many users. It matters less for my personal tool on my own machine.
-4. We are not stuck. See 2.4.
+Optional extra `[mutation]`: `mutmut`. Installed with `pip install "honestagent[mutation]"`.
+If `--mutation` is used without it, the CLI exits with code `2` and a clear install message.
 
-**Plan B: Go or Rust** if we hit real limits. Signs to switch:
-- Daemon RAM goes over 300 MB with normal use.
-- PTY / process handling becomes buggy with asyncio.
-- We want to share Saarthi with others as a single-file download.
-- The size budget (2.5) is missed in M9.
+---
 
-Go vs Rust for plan B: Go is simpler, compiles fast, and goroutines fit "many processes + streams" very well. Rust is better if we want to merge the daemon into the Tauri app, which would save the most size and RAM. We pick only if plan B is needed.
+## 4. Dev tooling
 
-**Cross-platform cost (added 2026-10-23).** v1 ships the Python daemon as a sidecar binary on three OSes. A one-file PyInstaller or Nuitka build adds about 25-40 MB to the installer and some idle RAM, which is tight against the size budget (section 2.5). We keep Python for v1 and measure in M9. If the budget is missed, the fallback is to port the daemon to Rust or Go later. We do not decide that now. The API rules in 2.4 keep that port possible without touching the UI.
+| Tool | Command | Why |
+|---|---|---|
+| uv | `uv sync` | Install the package and dev tools from the lock file |
+| pytest | `uv run pytest` | All tests, offline, on fixtures in `tests/fixtures/prs/<case>/` |
+| ruff | `uv run ruff check .` / `uv run ruff format .` | Lint and format |
+| pyright | `uv run pyright` | Type checks |
+| the tool itself | `uv run honestagent check` | Dogfood on this repo |
 
-**Where Rust is used anyway:** the Tauri shell. But this is a **thin** layer (start the window, start the daemon, notifications). Almost no Rust code to write.
+All four checks (`pytest`, `ruff check`, `pyright`, plus a self-check) run in this repo's own CI.
+Dev tools live in a uv dev group, not in the runtime dependencies.
 
-### 2.4 How we keep the switch easy
-- The UI talks to the daemon **only** through HTTP + WebSocket with a written API (see TDD section 9). No Python-specific magic.
-- The CLI also uses the same API.
-- Event and data formats are plain JSON, defined in one place (`schemas/`), and exported as JSON Schema.
-- So later we can rewrite the daemon in Go (or Rust) **without touching the UI**.
+---
 
-### 2.5 Size budget
+## 5. Packaging and release
 
-From the Simple UI spec (P4). Checked per OS in M9.
+- **PyPI name:** `honestagent`. Import name: `honestagent`. Command: `honestagent`.
+- **Layout:** `src/` layout, one package (`src/honestagent`), entry point `honestagent = "honestagent.cli:app"`.
+- **Build and publish:** `uv build`, then `uv publish` (M4).
+- **Optional extra:** `[mutation]` adds mutmut.
+- **pre-commit:** `.pre-commit-hooks.yaml` in the repo root (hook id `honestagent`).
+- **GitHub Action:** composite `action.yml` in the repo root. It installs the package with
+  the chosen Python and calls the CLI. Listed on GitHub Marketplace in M4.
+- **Claude Code hook:** a sample `hooks/claude-code/settings.json` in v1. A Claude Code plugin
+  listing comes with the launch (M4).
+- **Versions:** semantic versions, starting at `0.1.0`. The JSON report has its own
+  `schema_version` (starts at `1`).
 
-| What | Budget |
+---
+
+## 6. Supported Python versions
+
+- HonestAgent itself runs on **Python 3.12 and newer**. CI tests 3.12 and 3.13.
+- It only **reads** the user's files with `ast`; it does not import or run them. So it can
+  check projects that target older Python 3 versions, as long as the code parses with the
+  3.12+ parser.
+- The GitHub Action installs its own Python (`python-version` input, default 3.12), so the
+  user's project Python does not matter there.
+- The mutation check (M3) runs the user's tests, so the project's test dependencies must
+  be installed in the same environment.
+
+---
+
+## 7. Supported operating systems
+
+| OS | Status | Notes |
+|---|---|---|
+| Linux | Supported | Main dev and CI platform |
+| macOS | Supported | Same code; tested in CI |
+| Windows | Supported | Same code; tested in CI. Paths are handled with `pathlib` and shown with `/` in reports. |
+
+- Needs `git` on the `PATH`. Nothing else.
+- No OS-specific code in the core. Git is the only outside program the core calls.
+- mutmut on Windows may need WSL. Checked in M3; if so, the docs say it plainly.
+
+---
+
+## 8. What was removed from the old stack, and why
+
+This repo used to plan a different, much bigger product (see
+`decisions/ADR-001-pivot-to-test-integrity-gate.md`). Its stack is gone:
+
+| Removed | Why |
 |---|---|
-| Installer | under 40 MB |
-| App open (window visible) | under 2 s |
-| Idle RAM, window | under 150 MB |
-| Idle RAM, daemon | under 150 MB |
-
-- Agent CLIs (`claude`, `codex`, `gemini`) are installed by the user and are not counted.
-- No Electron, no bundled browser, no VS Code.
-- The browser kit (M11) is optional and downloaded on demand into the data folder. It is not in the installer and not counted, so the budget does not change. A system Chrome, Edge or Chromium needs no download at all.
-- The biggest risk is the Python sidecar (see 2.3). M9 measures it and writes the numbers in `reports/`.
+| FastAPI, Uvicorn | No server. HonestAgent is a CLI that runs and exits. |
+| SQLAlchemy, Alembic, SQLite | No database. Each run is stateless; the report is the output. |
+| Tauri, React, TypeScript, Vite | No UI. The outputs are text: terminal, Markdown, JSON. |
+| Tailwind, shadcn/ui, xterm.js, CodeMirror | No UI, so no UI libraries. |
+| Node.js | No UI build and no JS tools. |
+| structlog, watchfiles, platformdirs, PTY wrappers | Nothing long-running to log, watch or manage. |
+| Agent CLIs as dependencies | HonestAgent never runs an agent. It only reads what the agent changed. |
 
 ---
 
-## 3. Agent integration details
+## 9. Later (not v1)
 
-### 3.1 Claude Code
-- Binary: `claude` (checked: version 2.1.x installed).
-- Headless mode: `claude -p --output-format stream-json --input-format stream-json --verbose`
-  - Gives one JSON event per line: messages, tool calls, results, cost, session id.
-  - `--input-format stream-json` lets us send follow-up messages while it runs.
-- Resume: `claude -p --resume <session-id>`.
-- Permissions: `--permission-mode`, `--allowedTools`, `--disallowedTools`.
-- Option for later: **Claude Agent SDK for Python** (`claude-agent-sdk`) for deeper control (hooks, custom tools). It wraps the same CLI.
-- Interactive fallback: run plain `claude` inside a PTY, show it in xterm.js.
-
-### 3.2 Codex
-- Binary: `codex` (checked: version 0.152.x installed).
-- Headless mode: `codex exec --json -C <worktree> "<prompt>"`
-  - Gives JSONL events on stdout.
-- Resume: `codex exec resume <session-id>`.
-- Sandbox: `--sandbox read-only | workspace-write`.
-- Structured answers: `--output-schema <file>` - useful for review findings (Second Opinion) in a fixed JSON shape.
-- Built-in reviewer: `codex review` - test it in M0 for Second Opinion.
-- Later: `codex app-server` (experimental JSON-RPC) for deeper control.
-
-### 3.3 Gemini CLI (M7)
-- Binary: `gemini`.
-- Headless mode: `gemini -p "<prompt>"` with JSON output (`--output-format json`, or a streaming JSON format if the installed version has one).
-- Approval and resume flags: to check in the M7 spike.
-- Unknown lines become raw events, like for the other agents.
-
-### 3.4 Browser MCP server (M11)
-- Package: Playwright MCP (`@playwright/mcp`), one pinned version (`PLAYWRIGHT_MCP_PACKAGE`, part of `BROWSER_KIT_VERSION`).
-- The daemon starts it with the found browser (`--browser` / `--executable-path`), a temp profile, the saved login (`--storage-state`), video and trace on, and the allowed origins. The exact flag names come from the M11 spike.
-- The agent never starts it. The agent gets an HTTP MCP endpoint of the daemon through `RunRequest.mcp_servers` (TDD 4.4). Each adapter maps it to its own flags.
-- Tests use a `FakeBrowser` that replays recorded MCP JSON-RPC lines from `tests/fixtures/browser/`. Never a real browser in unit tests.
-
-### 3.5 Rule
-- **Spike first (M0, and M7 for Gemini).** The Claude and Codex flags above were checked with `--help` on 2026-10-11. The Gemini flags are not checked yet. CLI flags change often. M0 must record real sample event files for Claude and Codex in `tests/fixtures/agents/`; M7 does the same for Gemini.
-
----
-
-## 4. Project repo layout (code)
-
-```
-saarthi/
-├── core_docs/                 # these docs
-├── CLAUDE.md                  # rules for Claude when building Saarthi
-├── AGENTS.md                  # same rules for Codex (points to CLAUDE.md)
-├── daemon/                    # Python backend (saarthid)
-│   ├── pyproject.toml
-│   ├── src/saarthi/
-│   │   ├── api/               # FastAPI routes + WebSocket
-│   │   ├── core/              # task engine, state machine, event bus
-│   │   ├── agents/            # adapters: base.py, claude.py, codex.py, gemini.py, pty_shell.py
-│   │   ├── workspace/         # git + worktrees
-│   │   ├── checks/            # check runner + proof card
-│   │   ├── review/            # change story builder (+ "why" per file)
-│   │   ├── files/             # Files API: tree, content, diff vs main, looked-at marks
-│   │   ├── memory/            # core_docs reader, context pack
-│   │   ├── safety/            # permission profiles, secret masking
-│   │   ├── browser/           # M11: browser finder, kit, dev server, logins, evidence, MCP endpoint; M12 screencast
-│   │   ├── db/                # SQLAlchemy models + Alembic
-│   │   ├── schemas/           # Pydantic models (single source of truth)
-│   │   ├── cli/               # Typer CLI (saarthi ...)
-│   │   └── config.py          # all settings + constants in one place
-│   └── tests/
-│       ├── unit/
-│       ├── integration/
-│       ├── fixtures/agents/   # recorded claude / codex / gemini streams
-│       └── fixtures/browser/  # recorded MCP / browser JSON-RPC lines (FakeBrowser)
-├── desktop/                   # Tauri 2 + React app
-│   ├── src-tauri/             # thin Rust shell (starts the daemon sidecar)
-│   └── src/                   # React UI
-│       ├── screens/
-│       ├── components/
-│       ├── api/               # typed client (generated from OpenAPI)
-│       └── stores/
-├── .github/workflows/         # CI matrix: Ubuntu, macOS, Windows (tests, sidecar, installers)
-└── scripts/                   # dev helpers (dev.sh, gen-types.sh)
-```
-
----
-
-## 5. Dev setup (target)
-
-```bash
-# backend
-cd daemon && uv sync && uv run saarthi daemon start --dev
-
-# UI
-cd desktop && npm install && npm run tauri dev
-
-# tests
-cd daemon && uv run pytest
-cd desktop && npm test
-```
-
----
-
-## 6. Things we will NOT use (and why)
-
-| Not using | Why |
-|---|---|
-| VS Code / Code-OSS / Theia | The whole point is a task-first tool. Our Files view is for reading and review, not a full editor. |
-| Monaco editor | It is VS Code's editor and heavy. CodeMirror 6 powers the Files view (code view, tabs, inline diff, tiny edits). |
-| Electron | Heavy RAM and a big installer. Breaks the size budget (2.5). Tauri is lighter. |
-| LSP servers, debugger, extension host | Out of scope (FSD section 8). Files is not a full editor. |
-| LangChain / big agent frameworks | We drive existing agent CLIs. We do not build our own agent loop in v1. |
-| PostgreSQL / Redis | Overkill for a local single-user app. SQLite is enough. |
-| GitPython | Plain `git` subprocess is simpler and supports everything (worktrees). |
-| Docker for sandbox | Too heavy for every run. `bwrap` (Linux) and `sandbox-exec` (macOS) are faster and built in. |
-| A bundled Chromium | 100-200 MB, breaks the 40 MB installer budget. The system browser or a one-time kit download is used instead (M11). |
-| Firefox or WebKit for Live tests | No CDP screencast for M12, and two more engines to test on three OSes. Chromium only. |
-| The Tauri WebView as the main test browser | No WebView driver on macOS, and it would run untrusted app code next to Saarthi. Kept only as the spike-gated M12 extra (agent drives the preview window). |
-| Playwright Python package in the daemon | It brings its own Node driver into the sidecar. A small CDP client does the login save and the screencast. |
+- Parsers for JavaScript / TypeScript tests (Jest, Vitest).
+- SARIF output for GitHub code scanning.
+- Anything hosted (GitHub App, team tier) would need its own stack decision then, in a new ADR.

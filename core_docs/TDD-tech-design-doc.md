@@ -1,1030 +1,1122 @@
 # Technical Design Document (TDD)
-## Saarthi - Agentic Development Environment
+## HonestAgent - test-integrity gate for agent pull requests
 
-**Version:** 0.2 (draft)
-**Date:** 2026-10-23
-**Related:** `FUNCTIONAL_SPECIFICATIONS.md` (what), `TECH_STACK.md` (with what), `design/2026-10-23-simple-ui-design.md` (UI), `decisions/ADR-002-cross-platform-lightweight.md` (platforms), `decisions/ADR-003-browser-testing.md` (browser testing, live preview)
+**Version:** 1.0 (draft, v1 only)
+**Date:** 2026-10-24
+**Related:** `FUNCTIONAL_SPECIFICATIONS.md` (what, F1-F12), `MILESTONES.md` (when, M0-M4), `TECH_STACK.md` (with what), `decisions/ADR-001-pivot-to-test-integrity-gate.md` (why)
 
-> Simple English. This doc says **how** Saarthi is built.
-
----
-
-## 1. Design goals
-
-1. **Daemon owns everything.** All logic lives in one background process (`saarthid`). The UI and the CLI are only "remote controls".
-2. **Agents are plugins.** Claude, Codex and Gemini sit behind one `AgentAdapter` interface.
-3. **Everything is an event.** Every action becomes an event saved to disk. The UI is built from events.
-4. **Git is the safety net.** Worktrees for isolation, checkpoints for rewind.
-5. **Boring tech.** SQLite, subprocess, HTTP, WebSocket. No magic.
-6. **One codebase, three OSes.** Linux, macOS and Windows. OS differences live in a few small wrappers (section 3.2), never in the UI.
-7. **Light.** Keep the size budget (`TECH_STACK.md` 2.5).
-
-## 2. Non-goals
-
-- We do not build our own agent loop (the LLM calling tools). Claude Code and Codex already do that.
-- We do not build a full code editor. Files (FSD F17) is a read and review view with tiny edits: no LSP, no debugger, no extensions.
-- We do not run a cloud server.
+> Simple English. This doc says **how** HonestAgent v1 is built. No code exists yet.
+> Anything past v1 is in section 17, one line each.
 
 ---
 
-## 3. Big picture
+## 1. Overview
+
+HonestAgent is one Python package with one CLI command that matters: `honestagent check`.
+It reads two versions of a repo from git, compares the test files, test config and CI
+files, and prints a report with a **verdict**. It answers one question: "Are the tests
+real, or did the agent cheat to make them pass?"
+
+It is stateless. No server, no database, no UI. Every run starts from git and ends with
+a report and an exit code.
 
 ```
-┌──────────────────────────────┐      ┌──────────────────────────┐
-│  Saarthi Desktop (Tauri 2)   │      │  saarthi CLI (Typer)     │
-│  React UI · daemon sidecar   │      │                          │
-└──────────────┬───────────────┘      └────────────┬─────────────┘
-               │  HTTP (REST) + WebSocket (events) │
-               │  127.0.0.1:7878 + token           │
-               ▼                                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     saarthid  (Python daemon)                    │
-│                                                                  │
-│  API layer (FastAPI)                                             │
-│     │                                                            │
-│  ┌──┴───────────┐  ┌─────────────┐  ┌────────────┐  ┌─────────┐  │
-│  │ Task Engine  │  │ Run Manager │  │ Check      │  │ Review  │  │
-│  │ (stages,     │  │ (start/stop │  │ Runner     │  │ Builder │  │
-│  │  rules)      │  │  agents)    │  │ (proof)    │  │ (story) │  │
-│  └──────┬───────┘  └──────┬──────┘  └─────┬──────┘  └────┬────┘  │
-│         │          ┌──────┴──────┐        │              │       │
-│         │          │ Agent       │        │              │       │
-│         │          │ Adapters    │        │              │       │
-│         │          │ claude codex│        │              │       │
-│         │          │ gemini pty  │        │              │       │
-│         │          └──────┬──────┘        │              │       │
-│  ┌──────┴────────┐ ┌──────┴──────┐ ┌──────┴──────┐ ┌─────┴─────┐ │
-│  │ Memory +      │ │ Workspace   │ │ Safety      │ │ Notifier  │ │
-│  │ Context Pack  │ │ Manager(git)│ │ Guard       │ │           │ │
-│  └───────────────┘ └─────────────┘ └─────────────┘ └───────────┘ │
-│                                                                  │
-│  ┌──────────────┐ ┌───────────────────────┐ ┌──────────────┐     │
-│  │ Docs Finder  │ │ Ticket Provider (jira)│ │ Files        │     │
-│  └──────────────┘ └───────────────────────┘ └──────────────┘     │
-│  ┌──────────────────────────────────────────┐                    │
-│  │ Browser (M11): finder, kit, dev server,  │──► Chromium        │
-│  │ logins, evidence, MCP endpoint           │   (system or kit)  │
-│  └──────────────────────────────────────────┘                    │
-│                                                                  │
-│  Event Bus  ──►  Event Store (SQLite + JSONL per run)            │
-└──────────────────────────────────────────────────────────────────┘
-               │                     │
-               ▼                     ▼
-   claude / codex / gemini        git worktrees on disk
-   processes                      (many repos)
+  pre-commit (F9)   GitHub Action (F10)   Claude Code hook (F11)   you, in a terminal
+        |                   |                      |                       |
+        +-------------------+----------+-----------+-----------------------+
+                                       |
+                                       v
+                          honestagent check  (cli.py, F8)
+                                       |
+                    config.py  <-------+  load + validate config from the base ref (F7)
+                                       |
+                                       v
+                 git.py  -- subprocess, list args, read-only (F1)
+                                       |
+                                       v
+                 changes.py  -> ChangeSet: ChangedFile[] with before/after text (F1, F2)
+                                       |
+                                       v
+                 rules/  RULES registry: HA001 ... HA007  -> Finding[] (F3)
+                 (HA000 notes come from changes.py, the engine and allow.py)
+                 mutation.py (only with --mutation)        -> HA100 Finding[] (F12)
+                                       |
+                                       v
+                 allow.py   mark findings allowed (marker or config) (F4)
+                                       |
+                                       v
+                 verdict.py pure function -> Verdict (F5)
+                                       |
+                                       v
+                 report/text.py | report/markdown.py | report/json.py (F6)
+                                       |
+                                       v
+                       stdout or --output FILE, then exit code 0 / 1 / 2
 ```
-
-### 3.1 Runtime and many projects
-- **Sidecar.** The desktop app ships `saarthid` as a Tauri sidecar binary (one file per OS, built in M9). On open, the app starts it, or connects to the one already running (for example the background service). It reads the token, then calls `/health` and compares versions. A mismatch shows the "version mismatch" screen. In dev, the daemon runs with `uv run`.
-- **Many projects at once.** The daemon already owns every project: one database, one event bus, one run queue. The UI subscribes to the events of all projects (section 9.2), so Home (All projects) and the Needs-you count stay live for every repo. One window, no window per repo.
-- Each task still has its own worktree in its own repo. The max parallel runs limit counts all projects together.
-
-### 3.2 Cross-platform notes
-| Topic | Linux | macOS | Windows |
-|---|---|---|---|
-| Paths (config, data, logs, worktrees) | `platformdirs` (`~/.config/saarthi`, `~/.local/share/saarthi`) | `platformdirs` (`~/Library/Application Support/saarthi`) | `platformdirs` (`%LOCALAPPDATA%\saarthi`) |
-| PTY | stdlib `pty` | stdlib `pty` | ConPTY via `pywinpty` |
-| Stop a process tree | process group (`killpg`) | process group (`killpg`) | Job Object / `taskkill /T` |
-| Background service (optional) | systemd user service | launchd agent | Tauri autostart plugin / per-user Startup entry |
-| Sandbox (M8) | `bwrap` | `sandbox-exec` profile | none in v1: "Full access" is not offered |
-| Notifications | Tauri plugin; `notify-send` fallback | Tauri plugin | Tauri plugin |
-| WebView | WebKitGTK | WKWebView | WebView2 |
-| Browser for Live tests (M11) | Chrome -> Edge -> Chromium on `PATH` / `/opt` -> browser kit | Chrome -> Edge -> Chromium in `/Applications` -> browser kit | Chrome -> Edge (built in, so usually no download) -> Chromium -> browser kit |
-| Live browser screencast (M12) | CDP `Page.startScreencast` | same | same |
-| Agent drives the preview window (M12, spike-gated) | WebKitWebDriver (if the spike passes) | not supported (no WKWebView driver) | WebView2 remote debugging, CDP (if the spike passes) |
-
-- Code never builds paths by hand from `~`. It asks `config.py`, which uses `platformdirs`.
-- Every OS-specific branch lives in one small module per topic (`core/paths.py`, `agents/pty_shell.py`, `safety/sandbox.py`, `core/notify.py`, `browser/finder.py`). Tests run on all three OSes in CI.
 
 ---
 
-## 4. Components
+## 2. Design principles
 
-Each component: **job**, **input**, **output**.
+1. **One package, no services.** `honestagent` in a `src/` layout. A stateless CLI that reads
+   git and prints a report.
+2. **CLI first.** The pre-commit hook, the GitHub Action and the Claude Code hook only call
+   `honestagent check`. They hold no logic of their own except "post the comment" and
+   "map the exit code".
+3. **Deterministic.** Same input, same output, byte for byte. No LLM. No network in the core.
+   No clock or random values in the report. Findings are always sorted.
+4. **Read-only.** We never edit, commit or push the user's code. The only exception is the
+   mutation check (M3), which writes only inside a temp `git worktree` that we remove.
+5. **Git through `subprocess` with a list of args.** Never a shell string.
+6. **One rule registry.** `RULES` in `rules/__init__.py`. Each rule is a pure function
+   `(ChangeSet, Config) -> list[Finding]`.
+7. **Constants live in `config.py`.** Defaults, limits, globs, file names. No magic values
+   in other modules.
+8. **Tests first.** Every rule gets recorded PR fixtures before it gets code.
+9. **Show, do not hide.** Allowed findings still appear in every report. Skipped files are
+   listed with the reason.
 
-### 4.1 API layer (`api/`)
-- **Job:** Gives REST endpoints and one WebSocket.
-- **Input:** HTTP requests from the UI / CLI.
-- **Output:** JSON responses. Live events on WebSocket.
-- **Notes:**
-  - Binds only to `127.0.0.1`.
-  - Every request needs a token (file `token` in the config folder, for example `~/.config/saarthi/token` on Linux; made on first start).
-  - OpenAPI schema is exported. The UI's TypeScript client is generated from it.
+---
 
-### 4.2 Task Engine (`core/tasks.py`)
-- **Job:** Create / update tasks, move stages, enforce stage rules (FSD F2.5).
-- **Input:** User actions, run results, check results.
-- **Output:** Task updates + `task.*` events.
-- **Notes:** The stage machine is in one file with a clear table of allowed moves (see section 7).
-- **Status:** The engine also gives each task a simple UI status (`needs_you` / `working` / `todo` / `done`, FSD F2.9). It comes from the stage map `STAGE_STATUS` (next to `ALLOWED_MOVES`), plus one rule: a pending ticket action, a sync conflict, an expired saved login or a blocked browser host (M11) makes the status `needs_you`. The status is returned with every task. It does not change any stage rule.
+## 3. Package layout
 
-### 4.3 Run Manager (`core/runs.py`)
-- **Job:** Start, watch, stop, and resume agent runs.
-- **Input:** "start run" request (task, agent, mode, playbook).
-- **Steps when starting a run:**
-  1. Ask Workspace Manager for the task's worktree (create if missing).
-  2. Ask Memory for the Context Pack.
-  3. Ask Safety Guard for the permission profile -> agent flags.
-  4. Call the adapter's `start()`.
-  5. Read the adapter's event stream. Send each event to the Event Bus.
-  6. On end: make a git checkpoint, save the summary, trigger the Check Runner (for `build` / `fix` modes).
-- **Limits:** Max parallel runs (default 4, across all projects). Extra runs wait in a queue.
-- **Output:** `run.*` and `agent.*` events.
+```
+HonestAgent/
+  pyproject.toml                  # package, deps, [project.scripts] honestagent = "honestagent.cli:app"
+  action.yml                      # F10 composite GitHub Action
+  .pre-commit-hooks.yaml          # F9 pre-commit hook definition
+  hooks/claude-code/              # F11 sample settings.json snippet + README
+  src/honestagent/
+    __init__.py                   # __version__ only
+    cli.py                        # Typer app: check, rules, explain, version; exit codes (F8)
+    config.py                     # all defaults and limits; load + validate config (F7)
+    git.py                        # every git call; returns plain Python values or raises GitError
+    changes.py                    # build the ChangeSet: file list, before/after text, changed lines, is_test (F1, F2)
+    models.py                     # Pydantic models: ChangedFile, ChangeSet, Finding, Severity, Verdict, Report
+    rules/
+      __init__.py                 # Rule dataclass + RULES registry + run_rules()
+      _pyast.py                   # shared AST helpers: parse, collect tests, resolve import aliases
+      test_deleted.py             # HA001
+      skip_added.py               # HA002
+      assertion_weakened.py       # HA003
+      coverage_lowered.py         # HA004
+      ci_lint_weakened.py         # HA005
+      snapshot_rewritten.py       # HA006
+      gate_config_weakened.py     # HA007
+    allow.py                      # parse allow markers + config allow list; mark findings; HA000 for markers with no reason (F4)
+    verdict.py                    # pure verdict function (F5)
+    report/
+      text.py                     # Rich terminal output (F6)
+      markdown.py                 # PR comment and proof report (F6)
+      json.py                     # JSON report, schema_version 1 (F6)
+    mutation.py                   # mutmut on changed lines in a temp worktree; HA100 (F12, M3)
+  tests/
+    fixtures/prs/<case>/          # before/, after/, expected.json
+    golden/                       # expected markdown and json output
+    test_rules_*.py  test_verdict.py  test_cli.py  test_git.py  test_allow.py ...
+```
 
-### 4.4 Agent Adapters (`agents/`)
-- **Job:** Hide the differences between Claude, Codex, and others.
-- **Interface (Python):**
+`_pyast.py` is a private helper, not a rule. It keeps the "find the test functions" code
+in one place, so HA001, HA002 and HA003 agree on what a test is.
+
+---
+
+## 4. Data models (`models.py`)
+
+All models are Pydantic v2, `frozen=True`. Paths are POSIX strings relative to the repo
+root (git always gives `/`, also on Windows).
 
 ```python
-class AgentAdapter(Protocol):
-    name: str                                   # "claude" | "codex" | "gemini"
+class FileStatus(StrEnum):
+    added = "added"; modified = "modified"; deleted = "deleted"; renamed = "renamed"
 
-    async def check_ready(self) -> ReadyStatus: ...        # installed? logged in?
-    async def start(self, req: RunRequest) -> RunHandle: ... # start the process
-    def events(self, h: RunHandle) -> AsyncIterator[AgentEvent]: ...  # normalized events
-    async def send(self, h: RunHandle, text: str) -> None: ...         # follow-up / answer
-    async def stop(self, h: RunHandle) -> None: ...
-    async def resume(self, req: RunRequest, session_id: str) -> RunHandle: ...
+class ChangedFile(BaseModel):
+    path: str                     # path on the after side (for deleted: the old path)
+    status: FileStatus
+    old_path: str | None = None   # only for renamed
+    before_text: str | None       # None when added, binary or skipped
+    after_text: str | None        # None when deleted, binary or skipped
+    is_test: bool                 # matches test_paths (F2), checked on path (and old_path)
+    changed_lines: frozenset[int] # after-side line numbers added or changed (empty for deleted)
+    skipped_reason: str | None = None   # "binary", "too large", "not utf-8"
+
+class ChangeSet(BaseModel):
+    mode: Literal["refs", "staged", "working"]
+    base: str                     # full SHA
+    head: str                     # full SHA, or "index" / "working-tree"
+    repo_root: str
+    files: tuple[ChangedFile, ...]   # sorted by path
+
+    def tests(self) -> Iterator[ChangedFile]: ...     # is_test and .py
+    def sources(self) -> Iterator[ChangedFile]: ...   # .py, not test, not snapshot
+    def by_path(self, path: str) -> ChangedFile | None: ...
+
+class Severity(StrEnum):
+    high = "high"; medium = "medium"; low = "low"
+
+class Verdict(StrEnum):
+    has_problems = "has_problems"; take_a_look = "take_a_look"; looks_good = "looks_good"
+
+class Finding(BaseModel):
+    rule_id: str                  # "HA000" ... "HA007", "HA100"
+    name: str                     # "test-deleted"
+    severity: Severity
+    file: str
+    line: int | None              # None = whole file (deleted file, config-level change)
+    message: str                  # one plain sentence
+    before: str | None = None     # short snippet, see SNIPPET_MAX_LINES
+    after: str | None = None
+    allowed: bool = False
+    allow_reason: str | None = None
+
+class Report(BaseModel):
+    schema_version: Literal[1] = 1
+    honestagent_version: str
+    verdict: Verdict
+    mode: Literal["refs", "staged", "working"]
+    base: str
+    head: str
+    counts: Counts                # high, medium, low, allowed, total
+    findings: tuple[Finding, ...] # sorted
+    skipped: tuple[SkippedFile, ...]   # path + reason
+
+class Counts(BaseModel):
+    high: int; medium: int; low: int     # not-allowed findings only
+    allowed: int; total: int
+
+class SkippedFile(BaseModel):
+    path: str
+    reason: str                   # "binary", "too large", "syntax error on line 12", ...
 ```
 
-- **`RunRequest`** (in `agents/base.py`) carries everything an adapter needs, agent-neutral: `cwd`, `prompt`, `mode`, `env` (ports, M7), `output_schema` (M4), `extra_allowed_tools` (M2), and **`mcp_servers`** (M11): a list of `McpServerSpec {name, url}` (an HTTP MCP endpoint), or `{name, command, args}` for the stdio fallback. Each adapter turns it into its own flags in `mcp_args()` (for example Claude `--mcp-config`, Codex `-c mcp_servers.<name>...`, Gemini settings). The exact flags are checked in the M11 spike. Browser code never lives in `agents/`; adapters only pass the config through.
-- **ClaudeAdapter**
-  - Command: `claude -p --output-format stream-json --input-format stream-json --verbose [--resume ID] [--permission-mode ...] [--allowedTools ...]`
-  - Working dir = task worktree.
-  - Prompt and follow-ups go in through stdin as stream-json messages.
-  - Maps Claude JSON lines -> `AgentEvent`.
-- **CodexAdapter**
-  - Command: `codex exec --json -C <worktree> --sandbox <mode> "<prompt>"`, follow-ups through `codex exec resume <id>`.
-  - Maps Codex JSONL -> `AgentEvent`.
-  - For Second Opinion: use `--output-schema review_findings.schema.json` to get findings in a fixed shape.
-- **GeminiAdapter** (M7)
-  - Command: headless `gemini -p "<prompt>"` with JSON output, working dir = task worktree.
-  - The exact flags (output format, resume, approval mode) are checked in the M7 spike and recorded as fixtures. Do not trust this line over the spike.
-  - Maps Gemini JSON -> `AgentEvent`. Unknown lines become raw events (section 6.3).
-  - If the CLI cannot take follow-ups mid-run, "Needs you" works like Codex: the run ends with a question, and we resume with the answer.
-- **PtyShellAdapter**
-  - Runs any command (plain `claude`, `codex` or `gemini` interactive) in a pseudo-terminal: stdlib `pty` on Linux / macOS, ConPTY (`pywinpty`) on Windows.
-  - Sends raw bytes to the UI terminal (xterm.js). No structured events, only `terminal.output`.
-- **FakeAdapter** (tests only)
-  - Replays a recorded JSONL file. Used in all tests so we never call real agents in CI.
+Sort order for findings everywhere: `(file, line or 0, rule_id, message)`.
 
-### 4.5 Workspace Manager (`workspace/`)
-- **Job:** All git work.
-- **Functions:**
-  - `create_worktree(task)` -> `git worktree add <root>/<project>/<task-id> -b saarthi/<task-id>-<slug> <base>`
-  - `run_setup_script(task)` -> runs `.saarthi/setup.sh` once.
-  - `status(task)` -> changed files, ahead/behind.
-  - `diff(task)` -> diff against the base branch.
-  - `checkpoint(task, label)` -> saves a snapshot without touching the branch (see 4.5.1).
-  - `rewind(task, checkpoint_id)` -> checkpoint current state first, then restore.
-  - `sync_with_base(task)` -> rebase or merge.
-  - `remove_worktree(task)` -> `git worktree remove`. Shipped and archived tasks are removed after `WORKTREE_CLEANUP_DAYS` (7) by a sweep at daemon start and once a day. The branch is kept.
-- **4.5.1 Checkpoint method:**
-  - Use a temp index: `GIT_INDEX_FILE=<tmp> git add -A && git write-tree && git commit-tree`.
-  - Save the commit under a hidden ref: `refs/saarthi/checkpoints/<task-id>/<n>`.
-  - The task branch history stays clean.
-- **Rule:** Use subprocess `git`, never shell strings. Always pass args as a list.
+---
 
-### 4.6 Check Runner (`checks/`)
-- **Job:** Run the project's checks in a worktree and build the Proof Card.
-- **Input:** Checks from `.saarthi/project.toml`.
-- **Steps:**
-  1. Run checks one by one (or in parallel if `parallel = true`).
-  2. Save exit code, time, last 200 lines of output (full output saved to a file).
-  3. Ask the agent (cheap, read-only call) to fill "Brief coverage" (UI: "What done looks like"): each acceptance criterion -> met / not sure / not met. The user only answers "not sure" ones: "That's fine" sets it to met (`by_user = true`), "Ask Claude to add it" starts a `fix` run.
-  4. Build the `ProofCard` and save it.
-  5. Compute the trust score and the verdict (4.6.1).
-- **Check kinds (M11):** `cmd` (default), `e2e` (the project's own E2E command) and `live` (the Live test, made by Saarthi, never written in `[[checks]]`). With `[browser] enabled = true` the steps become:
-  1. Run the `cmd` checks.
-  2. If an `e2e` check exists, or the Live test will run: start the dev server on the task's port and wait until `base_url` answers (`DEV_SERVER_READY_TIMEOUT_S`). Events `devserver.started` / `devserver.failed`.
-  3. Run the `e2e` checks. Copy their artifacts (`artifacts` globs) into the evidence folder.
-  4. If every required check passed and `live_test = "auto"`: run the **Live test** as a `live_test` side run (4.15). Its result is one `check_results` row, kind `live`, name "Live test", `required = live_test_required`.
-  5. Stop the dev server. Then coverage (step 3 above, now with the Live test steps as extra input), the Proof Card and the verdict.
-- A failed optional Live test does not change the gate. A failed required one sends the task to `Failed`, like any required check.
-- **Output:** `check.*` events + a `ProofCard`.
+## 5. Git layer (`git.py`, `changes.py`)
 
-#### 4.6.1 Trust score and verdict (`checks/verdict.py`)
-- **Trust score** (0-100, FSD F7.7): required checks 50 points by the share that pass; criteria 35 points by the share met; second opinion 15 / 8 / 0.
-- **Verdict**, computed right after the score, from data we already have (`check_results`, coverage, `review_findings`, the score):
-  1. A required check failed, or a high finding is open -> `has_problems`.
-  2. Else, a criterion is `not_met`, a medium finding is open, or score < `TRUST_GOOD_MIN` -> `take_a_look`.
-  3. Else -> `looks_good`.
-- `not_sure` criteria do not change the verdict.
-- `TRUST_GOOD_MIN = 70` and the point weights live in `config.py`.
-- Score and verdict are recomputed when checks, coverage or findings change, and sent in `proof.ready`.
-- The verdict never blocks a move. `ALLOWED_MOVES` still decides.
-- Pure function, unit tested for every row of the verdict table.
+### 5.1 Rules for every git call
 
-### 4.7 Review Builder (`review/`)
-- **Job:** Make the Change Story.
-- **Steps:**
-  1. Get the diff (per file, per hunk).
-  2. Run rule-based risk flags (no AI): migrations, deleted files, auth paths, dependency files, CI/config, big files. Patterns live in `config.py` and can be changed per project.
-  3. Ask the agent to group hunks by purpose and write 1-2 lines per group. In the same call it writes a one-line "why" per changed file (FSD F17.6). Output in a fixed JSON shape (JSON Schema).
-  4. If the agent output is invalid -> fall back to "group by folder", with no "why" notes.
-- **Output:** `ChangeStory` object (groups, risk flags, file notes). Files (4.14) reads the file notes.
+- `subprocess.run(["git", "-C", repo_root, ...], capture_output=True, check=False)`.
+  Never `shell=True`.
+- Env: `LC_ALL=C`, `GIT_TERMINAL_PROMPT=0`, `GIT_OPTIONAL_LOCKS=0` (no lock files, so we
+  stay read-only even for `git status`-style calls).
+- Every user ref is resolved once to a full SHA with
+  `git rev-parse --verify --end-of-options <ref>^{commit}`. After that only SHAs go to git.
+  This stops a ref like `--output=x` from being read as an option.
+- File lists use `-z` (NUL separated), so paths with spaces or new lines are safe.
+- A non-zero git exit raises `GitError(message, hint)`. The CLI turns it into exit code `2`.
 
-### 4.8 Memory + Context Pack (`memory/`)
-- **Job:** Read `core_docs/`, choose what is relevant, build the Context Pack, draft memory updates.
-- **Context Pack build (v1, simple):**
-  1. Always include: brief, CLAUDE.md / AGENTS.md (the agent reads them itself; we only list them), the playbook.
-  2. Include research items where "send to agent" = yes.
-  3. Include memory files that match brief keywords (ripgrep score), max 5 files, max ~20k characters total.
-  4. Write the pack to `<worktree>/.saarthi/context/TASK.md` (git-ignored).
-  5. The prompt tells the agent: "Read `.saarthi/context/TASK.md` first."
-- **Why a file and not a long prompt:** the agent can re-read it any time, and we can show the exact same file to the user.
-- **Memory update (on ship):** agent drafts text for `memory/`, `learnings/`, `timeline/`. Saved as "pending" and shown as the Lessons learned card on Done. User approves -> written to the files (see 8.5).
+### 5.2 Exact commands per mode (F1)
 
-### 4.9 Safety Guard (`safety/`)
-- **Job:** Turn a permission profile into agent flags, and check commands.
-- **Profiles -> flags:**
-
-| Profile | Claude | Codex | Gemini (M7) |
+| Step | `--base/--head` (mode `refs`) | `--staged` | `--working` |
 |---|---|---|---|
-| Read-only | `--permission-mode plan` + only read tools allowed | `--sandbox read-only` | read-only approval mode (flags from the M7 spike) |
-| Safe build | allowed tools list + blocked commands list | `--sandbox workspace-write` | default approval + blocked commands list |
-| Full | `--dangerously-skip-permissions` (only inside the OS sandbox, M8) | `--sandbox workspace-write` + no approvals | auto approve (only inside the OS sandbox, M8) |
+| Repo root | `git rev-parse --show-toplevel` | same | same |
+| Base SHA | `--base`, or default (5.3) | `HEAD` | `HEAD` |
+| Head | `--head` (default `HEAD`) | the index | the working tree |
+| Changed files | `git diff --name-status -z -M --no-ext-diff <base>...<head>` | `git diff --cached --name-status -z -M --no-ext-diff <base>` | `git diff --name-status -z -M --no-ext-diff <base>` + untracked: `git ls-files --others --exclude-standard -z` (status added) |
+| Changed lines | `git diff -U0 --no-color --no-ext-diff -M <base>...<head> -- <path>` | `git diff --cached -U0 ... <base> -- <path>` | `git diff -U0 ... <base> -- <path>` (untracked: all lines) |
+| Binary check | `git diff --numstat -z -M ...` (same range); `-\t-` means binary | same | same + NUL byte check for untracked |
+| Before text | `git cat-file --batch` with `<base>:<old_path or path>` | same | same |
+| After text | `git cat-file --batch` with `<head>:<path>` | `git cat-file --batch` with `:<path>` (index) | read from disk: `repo_root / path` |
 
-- `Full` needs an OS sandbox. On Windows v1 there is none, so the API refuses `full` with `400 sandbox_unavailable` and the UI does not offer it.
+Notes:
+- **Three dots** (`<base>...<head>`) means "diff from the merge-base of base and head".
+  So a PR base SHA that moved ahead still gives only the PR's own changes.
+- **Rename detection** is `-M` (git's default 50% similarity). A rename gives status `R`,
+  so the file is `renamed` with `old_path`. Copies (`C`) are treated as `added`.
+- **Empty repo** (no `HEAD` yet, `--staged` on the first commit): base is the empty tree,
+  from `git hash-object -t tree --stdin` with empty input. All files are `added`.
+- `git cat-file --batch` reads all blobs in one process. This is the main speed trick
+  (section 15). Before reading, `git cat-file --batch-check` gives the size; files over
+  `MAX_FILE_BYTES` are not read.
+- Changed lines come from the `@@ -a,b +c,d @@` hunk headers: lines `c .. c+d-1` on the
+  after side. A hunk with `d = 0` (pure delete) adds line `c` (the line after the cut), so a
+  rule can still point near the removed code.
 
-- **Secret masking:** Before an event is saved or sent, values from the project `.env` files and patterns (keys, tokens) are replaced with `****`.
-- **Sandbox (M8, `safety/sandbox.py`):** wrap the agent command so only the worktree is writable and secret folders are hidden. Linux: `bwrap`. macOS: a `sandbox-exec` profile. Windows v1: no wrapper.
-- **Live tests and the sandbox (M11):** the `live_test` side run is sandboxed like any run. It needs the network on (M8 already keeps it on) to reach the daemon's browser endpoint on `127.0.0.1`. The browser, the browser kit and the saved logins run with the daemon, **outside** the agent sandbox, so the sandbox never binds `browser-kit/` or `logins/`. If the spike forces the stdio fallback, only the small `saarthi mcp-bridge` runs inside the sandbox (read-only binary path + loopback network). Every Live test uses a fresh temp browser profile, deleted after the run.
+### 5.3 Default base
 
-### 4.10 Event Bus and Event Store (`core/events.py`)
-- **Job:** One place for all events.
-- **Flow:** component -> `bus.publish(event)` -> (1) save to SQLite, (2) append to the run's JSONL file, (3) push to WebSocket subscribers.
-- **Why two stores:** SQLite for fast queries. JSONL as the full raw log (easy to debug, easy to replay).
+When `--base` is not given in `refs` mode:
+1. Default branch = `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`
+   (for example `origin/main`).
+2. If that fails, the first of `DEFAULT_BRANCH_CANDIDATES = ("main", "master")` that exists
+   (`git rev-parse --verify --quiet refs/heads/<name>`).
+3. Base = `git merge-base <default branch> <head>`.
+4. If nothing is found: exit `2` with "Could not find the default branch. Pass --base."
 
-### 4.11 Notifier (`core/notify.py`)
-- **Job:** Desktop notifications.
-- Listens for `agent.needs_input`, `run.finished`, `check.finished`, for every project.
-- Sends to the UI. Tauri shows a native alert with its notification plugin on every OS. If no UI is open, Linux uses `notify-send`; see open question 7 for macOS and Windows.
+If the head is on the default branch itself, the merge-base equals the head, the change set
+is empty, and the verdict is "Looks good" with the note "No changes to check."
 
-### 4.12 Docs Finder (`docs/`)
-- **Job:** List and read the markdown docs of a task (FSD F22). Docs are files. There is no docs table.
-- **Input:** Task id. A doc id (`plan:<run_id>`, `wt:<path>`, `pin:<path>`, `research:<item_id>`).
-- **Output:** A doc list (`doc_id`, kind, title, path, source, size, change, pinned) and the markdown of one doc.
-- **Files:** `finder.py` lists docs, `reader.py` reads safely, `plans.py` writes plan docs. This is Saarthi's own module, not the repo's docs folder.
-- **Notes:**
-  - Four kinds: `plan`, `changed`, `pinned`, `research` (M6).
-  - A `plan` run that ends `done` writes its final answer to `<data>/tasks/<task_id>/docs/plan-<run_id>.md` (`<data>` = the Saarthi data folder from `platformdirs`, `~/.local/share/saarthi` on Linux; not the worktree). Event `doc.saved`.
-  - Changed files: `git diff --name-status <base>...HEAD -- '*.md'` and `git status --porcelain -- '*.md'` in the worktree (list args, no shell).
-  - Pinned list: `[docs] pinned` in `project.toml`. Default is `DEFAULT_PINNED_DOCS` in `config.py`. Missing files are skipped. If the worktree does not exist yet, read from the main checkout.
-  - A file that is pinned and changed shows once, as `changed`.
-  - Files under `.saarthi/context/` are never listed.
-  - Limits: `DOCS_MAX_LIST` (200 docs), `DOCS_MAX_BYTES` (1 MB). A bigger doc returns `too_big`.
-  - Paths must stay inside the worktree or the data folder. `..` and symlinks out are refused.
-  - Order: plans (newest first), changed (by path), pinned (config order), research.
-  - M6: the latest plan doc goes into the Context Pack of `build` and `fix` runs, max `CONTEXT_PLAN_MAX_CHARS` (15,000).
+### 5.4 Reading text
 
-### 4.13 Ticket Provider (`tickets/`)
-- **Job:** Read tickets from Jira Cloud and write back status, comment, and link (FSD F23). Behind one interface, like `AgentAdapter`.
-- **Input:** Project ticket settings, a JQL view, a ticket key, or a write-back action.
-- **Output:** Cached `tickets` and `ticket_views` rows, brief drafts, `ticket_actions`, `ticket.*` events.
-- **Files:** `base.py` (protocol + models), `jira_cloud.py` (httpx), `fake.py`, `adf.py`, `brief.py`, `sync.py`, `actions.py`.
+- Decode as UTF-8 (`utf-8-sig`, so a BOM is dropped). If decoding fails, the side is
+  `None` and `skipped_reason = "not utf-8"`.
+- Normalize line endings to `\n` on both sides before any rule sees the text. CRLF changes
+  alone are never findings.
+- Binary files and files over `MAX_FILE_BYTES` are kept in the ChangeSet (so HA001 still
+  sees a deleted test file and HA006 still sees a changed snapshot) but with no text. They
+  are listed in `Report.skipped`, and `changes.py` emits one HA000 note (low) per skipped
+  file: "File skipped: binary." / "File skipped: too large."
+- More than `MAX_CHANGED_FILES` changed files: we keep the first ones in path order, list
+  the rest as skipped ("too many changed files"), and say so in the report.
+
+### 5.5 `is_test` (F2)
+
+- `test_paths` globs (default from F2: `tests/**/*.py`, `**/test_*.py`, `**/*_test.py`,
+  `**/conftest.py`) are matched with our own small glob function in `changes.py`, because
+  `fnmatch` lets `*` cross `/` and `**/` cannot match zero folders.
+- Glob meaning: `*` = any chars except `/`; `**/` = zero or more folders; a pattern with
+  no `/` matches the file name in any folder (`setup.cfg` matches `a/b/setup.cfg`).
+- A renamed file is a test if the new path **or** the old path matches. HA001 uses the
+  difference (test before, not a test after) to catch "renamed out of collection".
+
+---
+
+## 6. Rule engine (`rules/`)
+
+### 6.1 Registry
 
 ```python
-class TicketProvider(Protocol):
-    name: str                                                      # "jira"
-    async def check_ready(self) -> ReadyStatus: ...                # site reachable, token valid, who am I
-    async def search(self, jql: str, page_token: str | None) -> TicketPage: ...
-    async def get(self, key: str) -> Ticket: ...
-    async def transitions(self, key: str) -> list[Transition]: ...
-    async def transition(self, key: str, transition_id: str) -> None: ...
-    async def comment(self, key: str, markdown: str) -> None: ...
-    async def add_link(self, key: str, url: str, title: str) -> None: ...
+RuleFn = Callable[[ChangeSet, Config], list[Finding]]
+
+@dataclass(frozen=True)
+class Rule:
+    id: str                    # "HA001"
+    name: str                  # "test-deleted"
+    default_severity: Severity
+    summary: str               # one line for `honestagent rules`
+    explain: str               # text for `honestagent explain` (what, example, how to allow)
+    check: RuleFn | None       # None for HA000 (notes from changes.py, the engine, allow.py)
+                               # and HA100 (findings from mutation.py)
+
+RULES: dict[str, Rule] = {r.id: r for r in
+                          (HA000, HA001, HA002, HA003, HA004, HA005, HA006, HA007, HA100)}
 ```
 
-- **JiraCloudProvider** (only provider in v1): Jira Cloud, REST API v3.
+`run_rules(changes, config)`:
+1. For each rule in `RULES` order, skip it if its ID is in `config.disable` or `check` is
+   `None`. HA000 and HA100 are registered with `check=None` only so that `rules` and
+   `explain` list them.
+2. Call `check(changes, config)`. A rule that raises is a bug: we let it crash (exit `2`)
+   in tests, and in the CLI we print "Internal error in HA00x" and exit `2`. We never return
+   a half verdict.
+3. Add the HA000 notes collected while building the ChangeSet and parsing (skipped files,
+   syntax errors), unless HA000 is in `config.disable`.
+4. If `config.severity` has the rule ID, every finding of that rule gets that severity.
+5. Return all findings, sorted.
 
-| Need | Call |
+Rules never read files or call git. They only read the ChangeSet. That makes them pure and
+easy to test.
+
+### 6.2 How AST comparison works (`_pyast.py`)
+
+1. `parse(text)` = `ast.parse(text)`, cached by text hash. A `SyntaxError` means "this side
+   cannot be compared": the file goes to `Report.skipped` with "syntax error on line N", the
+   AST rules skip it, and the engine adds one HA000 note (low) for the file. (pytest would
+   fail to collect it anyway, so CI will show it.)
+2. `aliases(tree)` maps local names to full names from the imports:
+   `import pytest as pt` -> `pt` = `pytest`; `from pytest import mark` -> `mark` =
+   `pytest.mark`; `from unittest import skip` -> `skip` = `unittest.skip`.
+   `dotted(node, aliases)` turns `pt.mark.skip` or `mark.skip(...)` into `pytest.mark.skip`.
+3. `collect_tests(tree)` returns `{qualname: TestItem}` using pytest's default collection
+   rules:
+   - module-level `def test*` / `async def test*` -> `test_login`
+   - methods `test*` in classes named `Test*` that have no `__init__` ->
+     `TestApi::test_login`
+   - methods `test*` in classes that inherit from `unittest.TestCase` (by alias) ->
+     `ApiTests::test_login`
+   - nested classes are walked the same way (`TestA::TestB::test_x`).
+   Each `TestItem` keeps: the node, the start line, the decorator full names, a
+   `body_key` (`ast.dump` of the body without line numbers), and the class decorators.
+4. Tests are matched between before and after **by qualname**. Then each rule compares the
+   two `TestItem`s. A test whose `body_key` and decorators are the same is "unchanged" and
+   most rules skip it.
+
+### 6.3 HA001 test-deleted (high)
+
+Algorithm:
+1. Deleted file whose path is a test file and whose before side had at least one test ->
+   one finding for the file (`line = None`), message "Test file deleted with N tests."
+2. Renamed file that was a test file before and is not a test file after (does not match
+   `test_paths`) -> one finding: "Test file renamed to a path pytest does not collect."
+3. For each test file present on both sides: every qualname in before but not in after is a
+   candidate.
+4. Drop candidates that are really moves or renames:
+   - a test with the same `body_key` appears as a **new** qualname in the same file
+     (`test_foo` -> `test_foo_handles_empty`, body unchanged), or
+   - a test with the same qualname and the same `body_key` appears in another test file of
+     the ChangeSet (moved file to file).
+   A rename to a non-test name (`test_x` -> `_test_x`, `helper_x`) is **not** dropped,
+   because the new name is not a test.
+5. One finding per remaining candidate. `line` is the nearest after-side changed line
+   (from 5.2), `before` is the first lines of the removed test.
+
+Known false positives: a test removed on purpose with its feature (allow it in config with
+a reason); a test whose body changed **and** got renamed in one change.
+Known false negatives: fewer `@pytest.mark.parametrize` cases; custom `python_functions` /
+`python_classes` settings in pytest config (v1 uses pytest defaults).
+
+### 6.4 HA002 skip-added (high)
+
+Python test files, per test present in after:
+1. Count "skip marks" on before and after: decorators (on the function or its class)
+   whose full name is in `SKIP_DECORATORS = {"pytest.mark.skip", "pytest.mark.skipif",
+   "pytest.mark.xfail", "unittest.skip", "unittest.skipIf", "unittest.skipUnless",
+   "unittest.expectedFailure"}`,
+   with or without a call.
+2. Count skip calls in the body: `pytest.skip(...)`, `pytest.xfail(...)`.
+3. Module level: a `pytestmark = ...` assignment that contains a skip mark.
+4. After count > before count (a new test counts as before = 0) -> finding at the new
+   mark's line. A new test that is skipped from day one is also flagged: it adds nothing.
+
+Config and collection files, line level:
+5. `--ignore=` / `--ignore ` / `--deselect` in `addopts` of `pyproject.toml`
+   (`[tool.pytest.ini_options]`), `pytest.ini`, `tox.ini`, `setup.cfg`
+   (`[pytest]` / `[tool:pytest]`), and in `run:` lines of CI workflow files: a path that is
+   in after and not in before -> finding.
+6. `conftest.py`: `collect_ignore` / `collect_ignore_glob` list literals (assign or
+   `+=` / `.append` / `.extend`) that gain an entry -> finding.
+
+Known false negatives: `self.skipTest()`, `pytest.importorskip()`, skips through a custom
+marker or a `pytest_collection_modifyitems` hook, `-k "not x"` filters.
+
+### 6.5 HA003 assertion-weakened (high; expected-value rewrite: medium)
+
+Only for tests present on both sides with a changed `body_key`. Five checks:
+
+1. **Fewer asserts.** `assert_count` = `ast.Assert` nodes + calls to `self.assert*` +
+   `with pytest.raises(...)` / `pytest.warns(...)` blocks. After < before -> finding.
+2. **Trivial replacement.** Split asserts into "strong" (a `Compare` with `==`, `!=`, `<`,
+   `>`, `in`, ..., or `self.assertEqual`-style calls with two args) and "trivial":
+   `assert True`, `assert <truthy constant>`, `assert x` (a bare name or attribute),
+   `assert x is not None`. Strong count goes down **and** trivial count goes up ->
+   finding at the first new trivial assert.
+3. **Wider raises.** `pytest.raises(X)` where before had a specific class and after has
+   `Exception` or `BaseException` (by alias) in the same test -> finding.
+4. **Looser approx.** `pytest.approx(..., rel=a, abs=b)`: matched by position in the test.
+   A literal `rel` or `abs` that grew, or appeared where there was none (pytest default is
+   `rel=1e-6`) -> finding. Non-literal tolerances are skipped.
+5. **Expected value rewritten (medium).** Only when the ChangeSet also changes a source
+   file that this test file imports (`from pkg.mod import f` -> `pkg/mod.py` or
+   `src/pkg/mod.py`). Asserts are paired by the `ast.dump` of their non-constant side
+   (for example the call `total(cart)`). If the pair's constant side changed
+   (`== 120` -> `== 125`) -> medium finding: "Expected value changed in the same change as
+   the code it tests."
+
+Known false positives: real refactors that merge asserts into a helper
+(`assert_valid(resp)`); a fixed wrong expected value (check 5 is medium for this reason).
+Known false negatives: asserts moved into helpers or fixtures; weaker `match=` patterns.
+
+### 6.6 HA004 coverage-lowered (high)
+
+Line-level and config-level, not AST.
+
+| File | Where we look |
 |---|---|
-| Check login | `GET /rest/api/3/myself` |
-| List / search | `POST /rest/api/3/search/jql` with `{jql, fields, maxResults: 50, nextPageToken}`. Paging by `nextPageToken` only. Stop at `TICKETS_MAX_SYNC` (200). |
-| One ticket | `GET /rest/api/3/issue/{key}?fields=summary,status,issuetype,priority,assignee,labels,description,comment,updated` |
-| Transitions | `GET /rest/api/3/issue/{key}/transitions`, then `POST` the same path with `{transition: {id}}`. Match `to.name` with the wanted status, ignoring case. |
-| Comment | `POST /rest/api/3/issue/{key}/comment` with an ADF body |
-| Remote link | `POST /rest/api/3/issue/{key}/remotelink` with `{object: {url, title}}` |
+| `pyproject.toml` | `[tool.coverage.report] fail_under`; `--cov-fail-under` in `[tool.pytest.ini_options] addopts` |
+| `setup.cfg` | `[coverage:report] fail_under`; `--cov-fail-under` in `[tool:pytest] addopts` |
+| `.coveragerc` | `[report] fail_under` |
+| `tox.ini` | `[coverage:report] fail_under`; `--cov-fail-under` anywhere |
+| `pytest.ini` | `--cov-fail-under` in `[pytest] addopts` |
+| CI files (`CI_FILE_GLOBS`) | regex `--cov-fail-under[= ](\d+(\.\d+)?)` and `fail_under` in any line |
 
-  - The old `/rest/api/3/search` is removed. Use POST for search (GET with `nextPageToken=null` gives 400).
-  - Auth: HTTP Basic `email:token`. HTTPS only. Requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
-  - Scoped tokens need `read:jira-work`, `write:jira-work` (for write back) and `read:jira-user` (`/myself`). They only work through `https://api.atlassian.com/ex/jira/<cloudId>/rest/api/3/...`. Login gets `cloudId` from `https://<site>/_edge/tenant_info` when the site URL gives 401.
-  - 429: wait `Retry-After`, max 3 tries.
-- **ADF rules** (`adf.py`, own small code, no new library):
-  - `adf_to_markdown(doc)` handles: paragraph, heading, text marks (strong, em, code, strike, link), bulletList, orderedList, listItem, codeBlock, blockquote, rule, hardBreak, mention, emoji, inlineCard, table (simple GFM), panel (blockquote), media (`[attachment: name]`).
-  - An unknown node is never dropped. Its child text is kept. With no children it becomes `[unsupported: <type>]`.
-  - `markdown_to_adf(text)` is only for comments Saarthi writes: paragraphs and links.
-  - If `adf.py` grows past about 300 lines, switch to `atlas-doc-parser`.
-- **Notes:**
-  - Cache refresh: by hand, or when the panel opens and the cache is older than `TICKETS_STALE_SECONDS` (300). No background polling.
-  - Write-back actions are stored in `ticket_actions` and need my OK unless `auto_send = true`.
-  - One pending transition per task: a newer one replaces the older one (`skipped`).
-  - Transitions only move forward in `on_stage` order (running < review < shipped). A fix run (Review -> Running) proposes nothing.
-  - The cache remembers what each view returned (`ticket_views`), so views work offline.
+Algorithm per file: collect all threshold values on each side (TOML with `tomllib`, INI
+with `configparser`, regex as fallback if parsing fails). Finding when the lowest after
+value is below the lowest before value, or before had a value and after has none (also
+when the file was deleted). Message: "Coverage threshold lowered from 90 to 80."
 
-### 4.14 Files (`files/`)
-- **Job:** Back the Files screen (FSD F17): tree, file content, diff vs main, "why" notes, "looked at" marks, tiny edits.
-- **Input:** A task id (reads the task worktree) or a project id (reads the main checkout of the repo). A path.
-- **Output:** Tree entries (`path`, kind, `change`: added / modified / deleted / none), file text, a unified diff, file notes, marks.
-- **Notes:**
-  - Diff vs main for a task: `git diff <base>...HEAD -- <path>` plus uncommitted changes in the worktree (list args, no shell). For a project: the main checkout's own uncommitted changes against its `HEAD`.
-  - "Why" notes come from the latest `ChangeStory.file_notes` (4.7). No extra agent call.
-  - "Looked at" marks are stored per task in `file_marks` with the file's blob hash. If the file changes later, the mark no longer counts. "Next change" is the next changed file without a valid mark, in tree order.
-  - Tiny edits (F17.3) write one file in a **task worktree** only, with `base_sha` to catch a stale file (409). The main checkout is read-only in v1. Event `file.edited`.
-  - Search uses `rg` with a list of args.
-  - Same path rules as Docs: stay inside the worktree or the repo, refuse `..` and symlinks out. Limits `FILES_MAX_BYTES` and `FILES_MAX_TREE` in `config.py`.
+Known false negatives: thresholds set through env vars or a Makefile.
 
-### 4.15 Browser (`browser/`, M11)
-- **Job:** Everything for browser testing (FSD F24, F7.5): find a browser, download the browser kit, start the dev server, run the browser for the Live test, save and load test logins, keep the evidence.
-- **Input:** `[browser]` from `project.toml`, a task (worktree + port), a saved login name.
-- **Output:** A browser session the agent can drive, `check_results` rows of kind `live`, evidence files, `browser.*` / `login.*` / `devserver.*` events.
-- **Files:**
+### 6.7 HA005 ci-or-lint-weakened (medium)
 
-| File | What |
-|---|---|
-| `finder.py` | Find Chromium: system Chrome -> Edge -> Chromium -> kit (`BROWSER_SEARCH_ORDER`, known paths per OS in `BROWSER_PATHS_BY_OS`). Returns `{kind, path, version, headed_ok}`. |
-| `kit.py` | Download, check and remove the browser kit in `<data>/browser-kit/<BROWSER_KIT_VERSION>/`. Parts: the MCP server (pinned Playwright MCP, plus a Node runtime only if no usable `node` is found), the Chromium headless shell, and the full Chromium only when a window is needed and no system browser exists. Exact packaging from the M11 spike. |
-| `devserver.py` | Start `dev_server` in the worktree (list args, no shell, M4 rule), env `SAARTHI_PORT` / `PORT` (M7) + `SAARTHI_BASE_URL`; poll `base_url` until it answers or `DEV_SERVER_READY_TIMEOUT_S`; stop the process group. |
-| `host.py` | The **browser host**: starts Playwright MCP (stdio child of the daemon) with the found browser, a temp profile, `storageState` of the chosen login, video and trace on, allowed origins. One host per Live test. |
-| `mcp_endpoint.py` | The MCP endpoint the agent talks to (`/browser-mcp/{session}`, HTTP). It forwards each tool call to the host, refuses hosts not in `allowed_hosts` (`browser.host_blocked`), stops after `LIVE_TEST_MAX_STEPS`, takes a screenshot after each action, and writes `browser.step` / `browser.screenshot`. Typed text is never saved, only "Typed 12 characters into Email". |
-| `logins.py` | "Save a login": start a headed browser with a temp profile on `base_url`; when the user clicks "I'm logged in", read cookies and local storage over CDP and write a Playwright `storageState` JSON to `<data>/logins/<project_id>/<name>.json` (file `600`, folder `700`). Expiry check before a run (all session cookies of the host expired) and after it (the agent reports `blocked_by_login`). |
-| `evidence.py` | Folder `<data>/evidence/<task_id>/<proof_card_id>/`: screenshots, `video.webm`, `trace.zip`, e2e artifacts. Cap `EVIDENCE_MAX_MB` (drop the video first, then the oldest screenshots). Removed with the worktree (M5 cleanup). |
-| `cdp.py` | A small CDP client over WebSocket (used by `logins.py` and the M12 screencast). |
-| `live_test.py` | Builds the `live_test` side run: prompt (UI items of "What done looks like", base URL, "you are logged in as `test-admin`"), `RunRequest.mcp_servers`, `output_schema` = `live_test_result.schema.json`. Maps the result to a `check_results` row. |
+1. **Workflow files** (`.github/workflows/*.yml|*.yaml`): parse both sides with
+   `yaml.safe_load`. For each job, a step is a "check step" when its `run` text contains
+   a word from `CHECK_COMMANDS` (`pytest`, `tox`, `nox`, `ruff`, `flake8`, `mypy`,
+   `pyright`, `pylint`, `coverage`, `pre-commit`) or its `uses` starts with an entry of
+   `CHECK_ACTIONS` (`pre-commit/action`). Steps are matched by `name`, else by `run`
+   text, else by `uses`. Findings:
+   - a check step or a job with check steps removed;
+   - `continue-on-error: true` added on a job or step that runs checks;
+   - `|| true` or `|| exit 0` added in a `run` line of a check step.
+   If YAML does not parse, fall back to the line checks only.
+2. **`tox.ini`, `noxfile.py`**: removed lines that contain a `CHECK_COMMANDS` word and are
+   not added back elsewhere in the file; added `|| true` / `ignore_outcome = true`.
+3. **`.pre-commit-config.yaml`**: a hook `id` present before and missing after.
+4. **Lint config ignore lists**: codes added to `LINT_IGNORE_KEYS` - ruff `ignore`,
+   `extend-ignore`, `per-file-ignores` (in `pyproject.toml`, `ruff.toml`, `.ruff.toml`);
+   flake8 `ignore`, `extend-ignore`, `per-file-ignores` (in `setup.cfg`, `tox.ini`,
+   `.flake8`); mypy `disable_error_code`; pyright rules switched to `"none"` / `false`.
+   We compare sets of codes, so reordering is not a finding.
+5. **Inline suppressions** in any changed `.py` file: an added line (from `changed_lines`)
+   with `# noqa`, `# type: ignore` or `# pragma: no cover`, unless the same marker text was
+   already on a removed line of the same hunk (a moved line is not new).
 
-- **Why the browser runs with the daemon, not inside the agent:** the saved login must never be readable by the agent (B6). If the agent started Playwright MCP itself, the `storageState` path would sit in the agent's MCP config and the file would have to be visible inside its sandbox. With the daemon-side host, the agent only sees `http://127.0.0.1:7878/api/v1/browser-mcp/<session>`. It also gives one agent-neutral place for the host guard, the step limit, screenshots and events.
-- **Session token:** each Live test gets a random session id in the endpoint path. It works only while that run is active, and only for MCP calls.
-- **Live test result** (`live_test_result.schema.json`): `{steps: [{criterion, action, expect, result: pass|fail|skip, note}], status: pass|fail|skip, blocked_by_login: bool, summary}`. `skip` when the goal has no UI items. The result is a normal check result: status, seconds, `output_tail` = summary, `artifacts` = evidence paths.
-- **Agent:** the agent of the last build or fix run (same rule as coverage, M4). Profile `read_only` for files; the MCP tools are allowed (flags per adapter, M11 spike).
-- **Config (`config.py`):** `BROWSER_KIT_VERSION`, `BROWSER_KIT_DIR`, `BROWSER_SEARCH_ORDER`, `BROWSER_PATHS_BY_OS`, `PLAYWRIGHT_MCP_PACKAGE`, `DEV_SERVER_READY_TIMEOUT_S`, `LIVE_TEST_TIMEOUT_S`, `LIVE_TEST_MAX_STEPS`, `LIVE_TEST_VIDEO_SIZE`, `EVIDENCE_MAX_MB`, `LOGINS_DIR`, `BROWSER_DEFAULT_ALLOWED_HOSTS` (`["127.0.0.1", "localhost"]`), `E2E_DEFAULT_ARTIFACT_GLOBS`. Values in `milestones/M11_browser_testing/TDD_M11_browser_testing.md`.
+Known false positives: a CI job removed because it moved to another workflow file (we do
+match steps across workflow files in the same ChangeSet to reduce this).
+Known false negatives: `if: false` on a step, a check moved into a script we do not read.
 
-### 4.16 Live preview (`browser/screencast.py` + desktop, M12)
-- **Job:** Show the agent's browser live in the task page, open the task's app in a preview window, and (only where the spike passed) let the agent drive that window (FSD F25).
-- **Live browser (F25.1, all OS):** the daemon attaches to the browser host over CDP and calls `Page.startScreencast` (JPEG, `SCREENCAST_QUALITY`, `SCREENCAST_MAX_WIDTH`). Each `Page.screencastFrame` is acked (`Page.screencastFrameAck`) and sent to the UI on the WebSocket topic `screencast:<task_id>`, capped at `SCREENCAST_MAX_FPS`. Frames are not saved (like `terminal.output`). It runs only while a client is subscribed (NF5).
-- **Preview window (F25.2):** a separate Tauri `WebviewWindow` with label `preview-<task_id>`, loading the dev server URL from `GET /tasks/{id}/preview`. No capability file matches `preview-*`, no `remote.urls` IPC entry, no init scripts. So it has **no IPC** and cannot call any Saarthi command: it loads untrusted app code. An `on_navigation` guard allows only `base_url` and `allowed_hosts`; other links open in the system browser.
-- **Agent drives the preview window (F25.3, spike-gated):** Linux via WebKitWebDriver, Windows via WebView2 remote debugging (CDP, attached by Playwright MCP). macOS has no WKWebView driver, so it is never offered there. The driver must reach only the preview window, never the main window (Windows: a separate WebView2 environment and data folder for the preview). The per-OS result of the spike lives in `PREVIEW_DRIVE_BY_OS` in `config.py`; `GET /browser` returns what this machine supports. Where it is off, the agent uses its own Chromium (F25.1).
-- The preview window uses the system WebView, not Chromium. A Live test result always comes from Chromium.
+### 6.8 HA006 snapshot-rewritten (medium)
+
+1. Snapshot file = path matches `SNAPSHOT_GLOBS = ("**/__snapshots__/**", "**/*.ambr",
+   "**/snapshots/**")`.
+2. If the ChangeSet has at least one changed source file (`ChangeSet.sources()`), then
+   every snapshot file that is `modified`, `deleted` or `renamed` gets one finding
+   (`line = None`): "Snapshot changed in the same change as source code."
+3. New snapshot files (`added`) are not flagged; new tests need new snapshots.
+
+Known false positives: a real UI or output change (allow in config with a reason).
+
+### 6.9 HA007 gate-config-weakened (medium, `rules/gate_config_weakened.py`)
+
+Why: the config is read from the base ref (10.1), so an agent cannot switch the gate off in
+the same change. This rule makes the attempt visible.
+
+1. Gate config files = `pyproject.toml` (only the `[tool.honestagent]` table) and
+   `.honestagent.toml` at the repo root (`GATE_CONFIG_FILES` in `config.py`). Only these
+   paths in the ChangeSet are read.
+2. Parse both sides with `tomllib` into a plain dict (missing file or table = `{}`). A side
+   that does not parse is compared as `{}` (the CLI already fails with exit `2` if the base
+   config is bad). If both files exist on one side, `.honestagent.toml` is the one used,
+   same as 10.1.
+3. Fill missing keys with the defaults from `config.py`, so a removed key means "back to the
+   default".
+4. Compare before -> after. One finding per weakening:
+   - a rule ID in after `disable` that is not in before `disable`;
+   - a rule whose effective severity went down (`high` > `medium` > `low`);
+   - an `allow` entry in after that is not in before (compared as `(rule, path)`);
+   - `fail_on` got looser (order `take_a_look` < `has_problems` < `never`).
+5. `line` = the after-side line of the key when it can be found by a text search, else
+   `None`. Message, for example: "Gate config changed: HA002 added to disable."
+
+Not findings: stricter changes, `test_paths` and `mutation.*` changes, new inline allow
+markers (those are handled by `allow.py` and always listed under "Allowed", 7.3).
 
 ---
 
-## 5. Data model (SQLite)
+## 7. Allow markers and the config allow list (`allow.py`, F4)
 
-> Simple tables. IDs are short readable strings (example: `T-0042`) for tasks and ULIDs for the rest.
+### 7.1 Inline marker
 
-### 5.1 `projects`
-| Field | Type | Note |
-|---|---|---|
-| id | text | ULID |
-| name | text | |
-| repo_path | text | absolute path |
-| default_branch | text | `main` |
-| default_agent | text | `claude` / `codex` / `gemini` |
-| memory_path | text | default `core_docs` |
-| created_at | datetime | |
+```
+# honestagent: allow HA002 -- flaky on CI, see issue #12
+```
 
-### 5.2 `tasks`
-| Field | Type | Note |
-|---|---|---|
-| id | text | `T-0042` |
-| project_id | text | FK |
-| title | text | |
-| stage | text | see section 7 |
-| priority | int | 1/2/3 |
-| labels | json | list of strings |
-| ticket_url | text | optional |
-| ticket_key | text | optional (M10). Example `ACME-142`. Partial unique index `(project_id, ticket_key)` where not null |
-| branch | text | set when the worktree is made |
-| worktree_path | text | |
-| permission_profile | text | `read_only` / `safe_build` / `full` |
-| browser_hosts_ok | json | optional (M11). Extra hosts the user allowed for this task's Live test (F24.7) |
-| total_cost_usd | real | sum of runs |
-| total_seconds | int | sum of runs |
-| created_at, updated_at | datetime | |
+Regex (in `config.py` as `ALLOW_MARKER_RE`):
 
-### 5.3 `briefs`
-| Field | Type | Note |
-|---|---|---|
-| id | text | |
-| task_id | text | FK |
-| version | int | goes up on each save |
-| goal | text | |
-| acceptance | json | list of strings |
-| notes | text | |
-| focus_paths | json | optional |
-| created_at | datetime | |
+```
+#\s*honestagent:\s*allow\s+(HA\d{3})\s*(?:--\s*(?P<reason>\S.*?))?\s*$
+```
 
-### 5.4 `research_items`
-| Field | Type | Note |
-|---|---|---|
-| id | text | |
-| task_id | text | FK |
-| kind | text | `note` / `link` / `snippet` / `agent_finding` |
-| title | text | |
-| body | text | |
-| url | text | for links |
-| send_to_agent | bool | |
-| created_at | datetime | |
+- Searched only in the **after** text, on the finding's line or the line above.
+- Works in any file with `#` comments: Python, YAML, TOML, INI.
+- The rule ID must match the finding's rule.
+- One rule ID per marker in v1 (the regex takes one ID).
+- A marker with no reason (nothing after `--`) is ignored and produces an HA000 note (low)
+  at the marker's line: "Allow marker has no reason, so it was ignored." Low findings never
+  change the verdict.
+- A marker that matches no finding is not reported (it may guard a line for later).
 
-### 5.5 `runs`
-| Field | Type | Note |
-|---|---|---|
-| id | text | |
-| task_id | text | FK |
-| agent | text | `claude` / `codex` / `gemini` / `pty` |
-| mode | text | `plan` / `build` / `fix` / `research` / `review` |
-| playbook_id | text | optional |
-| status | text | `queued` / `running` / `needs_input` / `done` / `failed` / `stopped` / `interrupted` |
-| agent_session_id | text | for resume |
-| pid | int | |
-| started_at, ended_at | datetime | |
-| tokens_in, tokens_out | int | if reported |
-| cost_usd | real | if reported |
-| summary | text | last agent message |
-| checkpoint_ref | text | git ref at end |
-| log_path | text | JSONL file |
+### 7.2 Config allow list
 
-### 5.6 `events`
-| Field | Type | Note |
-|---|---|---|
-| id | integer | auto increment (gives order) |
-| task_id | text | |
-| run_id | text | nullable |
-| type | text | see section 6 |
-| payload | json | |
-| created_at | datetime | |
+```toml
+allow = [{ rule = "HA005", path = "tox.ini", reason = "py3.9 env dropped on purpose" }]
+```
 
-### 5.7 `checks` and `proof_cards`
-- `check_results`: id, task_id, run_id, name, command, required, status (`pass`/`fail`/`skip`/`error`), exit_code, seconds, output_tail, output_path. M11 adds: kind (`cmd` / `e2e` / `live`, default `cmd`), artifacts (json: evidence paths relative to the evidence folder, `{session_id?, screenshots: [...], video?, trace?, files: [...]}`).
-- `proof_cards`: id, task_id, run_id, all_required_passed (bool), files_changed, lines_added, lines_removed, tests_added, coverage (json: list of {criterion, status, note, by_user}), trust_score (int), verdict (`looks_good` / `take_a_look` / `has_problems`), override_reason.
+- `path` is matched with the same glob function as `test_paths`, so an exact path works.
+- `reason` must be non-empty; an empty reason is a config error (exit `2`).
+- Findings with `line = None` (a deleted file, a whole-file finding) cannot carry an
+  inline marker. They are allowed only through this list.
+- Findings on removed code (a removed test, a removed CI step) point to the after-side
+  line where the code used to be (5.2), so a marker on that line or the line above works.
 
-### 5.8 Review tables
-- `change_stories`: id, task_id, run_id, groups (json), risk_flags (json), file_notes (json: {path: why}), created_at.
-- `file_marks`: task_id, path, blob_sha, looked_at. Key `(task_id, path)`.
-- `review_comments`: id, task_id, file, line, group_id, body, status (`open`/`sent`/`resolved`), created_at.
-- `review_findings`: id, task_id, reviewer_agent, file, line, severity, reason, status (`open`/`sent`/`ignored`).
+### 7.3 Effect
 
-### 5.9 Others
-- `playbooks`: id, scope (`global`/`project`), project_id, name, description, prompt, default_agent, default_mode.
-- `memory_updates`: id, task_id, file_path, proposed_text, status (`pending`/`approved`/`rejected`).
-- `settings`: key, value (json).
-
-### 5.10 `tickets` (M10, cache)
-| Field | Type | Note |
-|---|---|---|
-| id | text | ULID |
-| project_id | text | FK |
-| provider | text | `jira` |
-| key | text | `ACME-151`. Unique with `project_id` |
-| summary | text | |
-| status | text | Jira status name |
-| status_category | text | `todo` / `in_progress` / `done` |
-| issue_type | text | |
-| priority | text | |
-| assignee | text | |
-| url | text | |
-| description_md | text | ADF turned into markdown |
-| comments_md | text | |
-| labels | json | list of strings |
-| jira_updated_at | datetime | |
-| fetched_at | datetime | |
-
-### 5.11 `ticket_views` (M10, cache)
-| Field | Type | Note |
-|---|---|---|
-| project_id | text | FK. Key with `view` |
-| view | text | `mine`, `sprint`, a saved view name, or `adhoc` |
-| jql | text | the full JQL that was run |
-| keys | json | ticket keys in the order Jira gave them |
-| truncated | bool | stopped at `TICKETS_MAX_SYNC` |
-| synced_at | datetime | "last synced" for this view |
-
-### 5.12 `ticket_actions` (M10)
-| Field | Type | Note |
-|---|---|---|
-| id | text | ULID |
-| task_id | text | FK |
-| ticket_key | text | |
-| kind | text | `transition` / `comment` / `link` |
-| payload | json | |
-| trigger | text | for example `stage:review`, `ship.pr_created` |
-| status | text | `pending` / `sent` / `skipped` / `failed` |
-| error | text | |
-| created_at | datetime | |
-| decided_at | datetime | |
-
-### 5.13 `saved_logins` (M11)
-| Field | Type | Note |
-|---|---|---|
-| id | text | ULID |
-| project_id | text | FK. Unique with `name` |
-| name | text | `test-admin` |
-| host | text | the host it was saved on, e.g. `127.0.0.1` |
-| path | text | the `storageState` file in the data folder (mode `600`). Never returned by the API |
-| saved_at | datetime | |
-| last_ok_at | datetime | last Live test that worked with it |
-| expired_at | datetime | set when it stops working; cleared after "Log in again" |
+`apply_allows(findings, changes, config) -> list[Finding]` returns copies with
+`allowed = True` and `allow_reason` set, plus the HA000 notes for markers with no reason.
+Allowed findings stay in every report (their own section). The verdict ignores them.
+Markers added in the change itself still count, so a human always sees every marker the
+agent added in the "Allowed" section. The config `allow` list comes from the base ref, so
+an `allow` entry added in the change has no effect and is an HA007 finding.
 
 ---
 
-## 6. Events
+## 8. Verdict (`verdict.py`, F5)
 
-### 6.1 Shape (same for all)
+| Verdict | JSON value | When |
+|---|---|---|
+| Has problems | `has_problems` | At least one not-allowed **high** finding |
+| Take a look | `take_a_look` | No high, but at least one not-allowed **medium** finding |
+| Looks good | `looks_good` | No not-allowed high or medium findings |
+
+```python
+def verdict(findings: Iterable[Finding]) -> Verdict:
+    active = [f for f in findings if not f.allowed]
+    if any(f.severity is Severity.high for f in active):
+        return Verdict.has_problems
+    if any(f.severity is Severity.medium for f in active):
+        return Verdict.take_a_look
+    return Verdict.looks_good
+```
+
+Gate: order is `looks_good < take_a_look < has_problems`. With `--fail-on X`, the gate
+fails when the verdict is at or worse than `X`. `never` never fails. Both are pure
+functions with a test for every row.
+
+---
+
+## 9. Reports (`report/`, F6)
+
+All three formats take the same `Report`. None of them adds a time stamp, so output is
+stable for golden tests.
+
+### 9.1 Text (`report/text.py`)
+
+Rich `Console`. Colour only when stdout is a terminal (Rich's own detection, and
+`NO_COLOR` is honoured). With `--output`, no colour.
+
+```
+Has problems  - 3 findings: 1 high, 2 medium. 1 allowed.
+
+tests/test_cart.py
+  42  high    HA002 skip-added           New @pytest.mark.skip on test_total_with_discount.
+  57  medium  HA003 assertion-weakened   Expected value changed in the same change as the code it tests.
+tox.ini
+  12  medium  HA005 ci-or-lint-weakened  Test command removed from [testenv].
+
+Allowed (1)
+setup.cfg
+   8  high    HA004 coverage-lowered     Coverage threshold lowered from 90 to 85. Reason: legacy module removed.
+
+Allow a finding: add "# honestagent: allow HA002 -- <reason>" on the line or the line above.
+```
+
+### 9.2 Markdown (`report/markdown.py`)
+
+Used for the PR comment and as the **proof report** file. Layout:
+
+1. `<!-- honestagent -->` (first line, always; the Action finds the comment by it).
+2. Verdict line with an emoji: `## 🔴 HonestAgent: Has problems`,
+   `## 🟡 HonestAgent: Take a look`, `## 🟢 HonestAgent: Looks good`.
+3. Summary: "3 findings: 1 high, 2 medium" (not-allowed findings only), plus the base and
+   head short SHAs.
+4. Table: `| Rule | Where | What |` with `HA002 skip-added (high)`,
+   `` `tests/test_cart.py:42` ``, message.
+5. `<details><summary>Before / after</summary>` with one fenced block pair per finding.
+6. "Allowed findings" small table with the reason.
+7. Skipped files, if any, in one line each.
+8. Footer: "HonestAgent 0.1.0 - deterministic, no LLM. To allow a finding: ..."
+
+Safety and size:
+- Table cells escape `|` and new lines. Snippets use a code fence longer than the longest
+  backtick run inside them. The text `<!-- honestagent -->` is removed from snippets.
+- Limit: `MARKDOWN_MAX_CHARS = 65_536` (GitHub's comment limit). We build the full text;
+  if it is too long we drop, in order: the `<details>` snippets, then table rows from the
+  end. Then we add "N more findings not shown. Run `honestagent check` locally or use
+  `--format json` for all of them." The final text is always under the limit
+  (we aim for `MARKDOWN_TARGET_CHARS = 60_000` to leave room for the note).
+
+### 9.3 JSON (`report/json.py`)
+
+`Report.model_dump_json(indent=2)` with sorted findings. Schema version 1:
+
 ```json
 {
-  "id": 1042,
-  "type": "agent.tool_call",
-  "task_id": "T-0042",
-  "run_id": "01JA...",
-  "ts": "2026-10-11T10:22:31Z",
-  "payload": { "tool": "Edit", "path": "app/api/auth.py", "summary": "add reset endpoint" }
+  "schema_version": 1,
+  "honestagent_version": "0.1.0",
+  "verdict": "has_problems",
+  "mode": "refs",
+  "base": "3f2a...full sha",
+  "head": "9c1d...full sha",
+  "counts": { "high": 1, "medium": 2, "low": 0, "allowed": 1, "total": 4 },
+  "findings": [
+    {
+      "rule_id": "HA002",
+      "name": "skip-added",
+      "severity": "high",
+      "file": "tests/test_cart.py",
+      "line": 42,
+      "message": "New @pytest.mark.skip on test_total_with_discount.",
+      "before": null,
+      "after": "@pytest.mark.skip(reason=\"later\")\ndef test_total_with_discount():",
+      "allowed": false,
+      "allow_reason": null
+    }
+  ],
+  "skipped": [ { "path": "assets/logo.png", "reason": "binary" } ]
 }
 ```
 
-### 6.2 Event types
-| Group | Types |
+Rules for the schema:
+- `counts.high/medium/low` count not-allowed findings; `allowed` counts allowed ones;
+  `total` counts all.
+- `head` is a SHA in `refs` mode, `"index"` in `staged` mode, `"working-tree"` in `working`
+  mode.
+- Adding a field is allowed in schema 1. Renaming or removing one needs
+  `schema_version: 2`.
+- A JSON Schema file is generated from the Pydantic model in tests and compared to a golden
+  copy, so a schema change is always a visible diff.
+
+---
+
+## 10. Config (`config.py`, F7)
+
+### 10.1 Where it comes from
+
+1. Find the repo root (`git rev-parse --show-toplevel`).
+2. Pick the **base** ref: the base SHA in `refs` mode; `HEAD` in `staged` and `working`
+   mode. Read the files from it with `git show <base>:<file>`, never from the working tree
+   or the head. So an agent cannot switch the gate off in the same change (HA007, 6.9).
+3. If `.honestagent.toml` exists at the root on that ref, use it. Its keys sit at the top
+   level (no `[tool.honestagent]` header); mutation settings go under `[mutation]`.
+4. Else, if `pyproject.toml` on that ref has `[tool.honestagent]`, use that table.
+5. Else (or if there is no base commit yet, as in an empty repo) use the defaults.
+6. If both files have config, `.honestagent.toml` wins and we print a one-line warning to
+   stderr. We never merge the two.
+7. CLI flags win over both files: `--fail-on` over `fail_on`, `--mutation` over
+   `mutation.enabled`.
+
+### 10.2 Model and validation
+
+```python
+class MutationConfig(BaseModel, extra="forbid"):
+    enabled: bool = False
+    max_mutants: int = Field(DEFAULT_MAX_MUTANTS, ge=1)      # 50
+    timeout_sec: int = Field(DEFAULT_MUTATION_TIMEOUT, ge=1) # 300
+
+class AllowEntry(BaseModel, extra="forbid"):
+    rule: RuleId
+    path: str
+    reason: str = Field(min_length=1)
+
+class Config(BaseModel, extra="forbid"):
+    test_paths: list[str] = list(DEFAULT_TEST_PATHS)
+    fail_on: Literal["has_problems", "take_a_look", "never"] = "has_problems"
+    disable: list[RuleId] = []
+    severity: dict[RuleId, Severity] = {}
+    allow: list[AllowEntry] = []
+    mutation: MutationConfig = MutationConfig()
+```
+
+- `RuleId` is validated against `RULES`. A typo like `HA0O5` is an error.
+- `extra="forbid"`: an unknown key is an error, not a silent no-op.
+- TOML syntax errors and validation errors exit `2` with the file name and the key path,
+  for example `pyproject.toml: tool.honestagent.severity.HA005: must be high, medium or low`.
+
+### 10.3 Constants in `config.py`
+
+All of these live only in `config.py`: `DEFAULT_TEST_PATHS`, `SNAPSHOT_GLOBS`,
+`CI_FILE_GLOBS`, `CHECK_COMMANDS`, `CHECK_ACTIONS`, `LINT_IGNORE_KEYS`, `SKIP_DECORATORS`,
+`ALLOW_MARKER_RE`, `DEFAULT_BRANCH_CANDIDATES`, `GATE_CONFIG_FILES`, `MAX_FILE_BYTES`, `MAX_CHANGED_FILES`,
+`SNIPPET_MAX_LINES`, `SNIPPET_MAX_CHARS`, `MARKDOWN_MAX_CHARS`, `MARKDOWN_TARGET_CHARS`,
+`DEFAULT_MAX_MUTANTS`, `DEFAULT_MUTATION_TIMEOUT`, `CONFIG_FILE_NAME`.
+
+---
+
+## 11. CLI (`cli.py`, F8)
+
+```
+honestagent check [--base REF] [--head REF] [--staged | --working]
+                  [--format text|markdown|json] [--output FILE]
+                  [--fail-on has_problems|take_a_look|never] [--mutation]
+honestagent rules                 # list all rules, their severity and on/off state
+honestagent explain HA003         # what the rule catches, an example, how to allow it
+honestagent version
+```
+
+`check` flow: parse flags -> load config -> build ChangeSet -> `run_rules` -> (mutation) ->
+`apply_allows` -> `verdict` -> render -> write -> exit.
+
+| Exit | Meaning |
 |---|---|
-| Task | `task.created`, `task.updated`, `task.stage_changed` |
-| Brief | `brief.saved` |
-| Research | `research.added`, `research.updated` |
-| Run | `run.queued`, `run.started`, `run.finished`, `run.failed`, `run.stopped`, `run.interrupted` |
-| Agent | `agent.message`, `agent.thinking`, `agent.tool_call`, `agent.tool_result`, `agent.file_changed`, `agent.needs_input`, `agent.cost` |
-| Terminal | `terminal.output` (raw bytes, base64, not saved to SQLite - only to the log file) |
-| Check | `check.started`, `check.finished`, `proof.ready` (has `trust_score` and `verdict`) |
-| Review | `review.story_ready`, `review.finding`, `review.comment`, `review.approved`, `review.rejected` |
-| Ship | `ship.committed`, `ship.pushed`, `ship.pr_created` |
-| Doc | `doc.saved` |
-| Files | `file.edited`, `file.looked_at` |
-| Ticket | `ticket.synced`, `ticket.imported`, `ticket.linked`, `ticket.action_proposed`, `ticket.action_sent`, `ticket.action_failed`, `ticket.action_skipped` |
-| Memory | `memory.update_proposed`, `memory.update_applied` |
-| Workspace | `workspace.created`, `workspace.checkpoint`, `workspace.rewound`, `workspace.removed` |
-| Browser (M11) | `browser.started`, `browser.step`, `browser.screenshot`, `browser.finished`, `browser.host_blocked`, `browser.host_allowed`, `browser.kit_installed`, `browser.kit_removed` |
-| Login (M11) | `login.saved`, `login.expired`, `login.removed` (name and host only, never the session) |
-| Dev server (M11) | `devserver.started`, `devserver.failed`, `devserver.stopped` |
-| Preview (M12) | `preview.opened`, `preview.closed`, `preview.agent_attached` (screencast frames are a stream, not events) |
+| `0` | Gate passed (verdict better than `--fail-on`, or `--fail-on never`) |
+| `1` | Gate failed (verdict at or worse than `--fail-on`; default `has_problems`) |
+| `2` | Tool error. Nothing was judged. |
 
-### 6.3 Mapping rule
-- Each adapter maps its own raw lines to these types.
-- Unknown raw lines are **not dropped**. They become `agent.message` with `payload.raw = true`, so we see them and can add proper mapping later.
+Tool errors (all exit `2`, message on stderr, report not written):
 
----
-
-## 7. Task stage machine
-
-```
-           ┌──────────────────────────── Parked ◄───────────── (any stage)
-           │
- Inbox ──► Research ──► Ready ──► Running ──► Verifying ──► Review ──► Shipped ──► Archived
-                          ▲          │  ▲          │           │
-                          │          ▼  │          ▼           │
-                          │      Needs You      Failed ────────┘ (fix run -> Running)
-                          └──────────────────────────────────── (reject -> Ready)
-```
-
-| From | To | Rule |
-|---|---|---|
-| Inbox | Research / Ready | Ready needs a brief goal |
-| Ready | Running | A run starts |
-| Running | Needs You | Agent emits `agent.needs_input` |
-| Needs You | Running | User answers |
-| Running | Verifying | Build / fix run ends -> checks start |
-| Running | Ready | Plan / research run ends |
-| Verifying | Review | All required checks pass, OR override with reason |
-| Verifying | Failed | A required check fails |
-| Failed | Running | User starts a fix run |
-| Review | Running | User sends comments / findings to the agent |
-| Review | Ready | User rejects |
-| Review | Shipped | Commit done (+ PR if enabled) |
-| Any | Parked | User parks. Running runs are stopped first. |
-| Shipped / Parked | Archived | User archives |
-
-- The table lives in code as data (`ALLOWED_MOVES`), not as many `if` statements.
-- The UI shows 4 statuses (FSD F2.9), from `STAGE_STATUS`:
-
-| Status | Stages |
+| Case | Message |
 |---|---|
-| `needs_you` | `Needs You`, `Failed`, `Review` (+ a pending ticket action, sync conflict, expired saved login or blocked browser host on any stage) |
-| `working` | `Running`, `Verifying` |
-| `todo` | `Inbox`, `Research`, `Ready` |
-| `done` | `Shipped` |
-| hidden (filter) | `Parked`, `Archived` |
+| Not inside a git repo / `git` not on PATH | "Not a git repo" / "git not found" |
+| Bad `--base` / `--head` | "Unknown ref: X" |
+| No default branch (no `origin/HEAD`, `main` or `master`) | "Could not find the default branch. Pass --base." |
+| No merge-base (shallow clone) | "No common history between base and head. In GitHub Actions use `fetch-depth: 0`." |
+| `--staged` with `--working`, or either with `--base/--head` | "Use only one of: --base/--head, --staged, --working" |
+| Bad config: unknown key, unknown rule ID, bad value, `allow` entry without a reason | file + key path + what is wrong |
+| `explain` with an unknown rule ID | "Unknown rule: X" |
+| `--mutation` without mutmut | install hint (section 13) |
+| `--mutation` with `--staged` or `--working` | "--mutation needs --base/--head (real refs)." |
+| `--output` cannot be written | "Cannot write FILE" |
+| Unexpected exception | "Internal error. Please open an issue with this output." + traceback with `-v` |
+
+- The report goes to stdout (or `--output`). Errors and warnings go to stderr. So
+  `honestagent check --format json > r.json` is always clean JSON.
+- `rules` prints a Rich table: ID, name, severity (after config), on/off.
+- `explain HAxxx` prints `Rule.explain`. Unknown ID exits `2`.
+- `version` prints `honestagent 0.1.0`.
 
 ---
 
-## 8. Key flows (step by step)
+## 12. Integrations (F9-F11)
 
-### 8.1 Start a build run
-1. UI: `POST /tasks/T-0042/runs {agent: "claude", mode: "build", playbook_id: "plan-then-build"}`
-2. Task Engine checks: stage is `Ready`, `Failed`, or `Review`.
-3. Run Manager: queue full? -> `run.queued`. Else continue.
-4. Workspace Manager: worktree exists? No -> create + setup script -> `workspace.created`.
-5. Memory: build Context Pack -> write `.saarthi/context/TASK.md`.
-6. Safety Guard: profile `safe_build` -> Claude flags.
-7. ClaudeAdapter.start() -> process starts in the worktree -> `run.started`.
-8. Events stream -> Event Bus -> SQLite + JSONL + WebSocket -> UI updates live.
-9. Process ends -> `checkpoint()` -> `run.finished` -> Task to `Verifying` -> Check Runner starts.
+All three call the CLI. None of them has rule logic.
 
-### 8.2 Agent needs you
-1. Adapter sees a question or permission request -> `agent.needs_input {question, options}`.
-2. Task -> `Needs You`. Notifier -> desktop alert.
-3. User answers in the UI -> `POST /runs/{id}/input {text}`.
-4. Adapter `send()` -> agent continues -> Task -> `Running`.
+### 12.1 pre-commit (F9, `.pre-commit-hooks.yaml`)
 
-### 8.3 Checks and proof
-1. Check Runner reads `.saarthi/project.toml`.
-2. Runs each check in the worktree with a timeout.
-3. Builds the Proof Card -> `proof.ready`.
-4. All required pass -> Task -> `Review` + Review Builder makes the Change Story.
-5. Any required fails -> Task -> `Failed`. UI shows "Let Claude fix it" (auto-fix round counter).
-6. Trust score + verdict are computed (4.6.1) and sent in `proof.ready`.
+```yaml
+- id: honestagent
+  name: honestagent (test-integrity gate)
+  description: Flags deleted, skipped or weakened tests in staged changes.
+  entry: honestagent check --staged --format text
+  language: python
+  pass_filenames: false
+  always_run: true
+  require_serial: true
+```
 
-### 8.4 Second Opinion
-1. Pick another agent than the builder, from `REVIEWER_FOR` in `config.py` (claude -> codex, codex -> claude, gemini -> codex).
-2. Start a run with mode `review`, profile `read_only`, Context Pack = brief + diff.
-3. Codex: `--output-schema review_findings.schema.json`. Claude: prompt asks for the same JSON shape.
-4. Parse findings -> `review_findings` table -> shown in What changed. The verdict is recomputed.
+- `pass_filenames: false`: the CLI reads the index itself; it needs the whole change set
+  (HA003 and HA006 look across files).
+- pre-commit stashes unstaged changes before running, so the index is what gets committed.
+  We read the index through `git cat-file` (`:path`), not the disk, so it is right either way.
+- User side, in `.pre-commit-config.yaml`:
+  `- repo: https://github.com/ankitraj20616/HonestAgent`, `rev: v0.1.0`, `hooks: [{id: honestagent}]`.
 
-### 8.5 Ship
-1. Agent drafts the commit message and the PR text (read-only call) when the task reaches `Review`.
-2. "Approve and create pull request" (`POST /tasks/{id}/ship`) uses them as they are. No dialog. "Edit pull request text" lets the user change them first.
-3. `git add -A && git commit` in the worktree.
-4. `git push -u origin <branch>` (never the default branch - checked in code).
-5. `gh pr create --title ... --body-file <generated.md>`.
-6. Task -> `Shipped`. The worktree is removed later (`WORKTREE_CLEANUP_DAYS`), not now.
-7. Memory updates are drafted and shown as the Lessons learned card on Done. Each approved update is committed to `core_docs/` **on the task branch** and pushed, so the open PR gets it.
+### 12.2 GitHub Action (F10, `action.yml`)
 
-### 8.6 Daemon restart
-1. On start, find runs with status `running` / `needs_input`.
-2. Mark them `interrupted`. Task -> `Failed` with note "interrupted".
-3. UI shows a "Resume" button -> uses `agent_session_id` with the adapter's `resume()`.
+Composite action. Inputs: `fail-on` (default `has_problems`), `mutation` (default
+`false`), `comment` (default `true`), `python-version` (default `3.12`).
 
-### 8.7 Plan saved as doc (M2)
-1. A `plan` run ends with status `done`.
-2. Docs Finder (`plans.py`) takes the agent's final message and adds a header comment (task, run, agent, mode, time).
-3. It writes `<data>/tasks/<task_id>/docs/plan-<run_id>.md` (data folder, never the worktree).
-4. Event `doc.saved {doc_id, kind: "plan", path, run_id, chars}`.
-5. A failed or stopped plan run saves nothing.
-6. M3 UI: the Docs list (task page -> More -> Docs) refreshes on `doc.saved`.
+```yaml
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with: { python-version: "${{ inputs.python-version }}" }
 
-### 8.8 Start task from ticket (M10)
-1. UI: `POST /projects/{id}/tickets/ACME-151/start`.
-2. A ticket already linked to a task -> `409 ticket_linked {task_id}`. The UI opens that task.
-3. Ticket Provider: fetch the ticket fresh (`get`). ADF description -> markdown.
-4. Task Engine: make task `T-0033` with title = summary, `ticket_key`, `ticket_url`, label = issue type. Event `ticket.imported`.
-5. `brief.py` makes brief version 1 (not approved). Goal = summary + description up to the first acceptance heading. Acceptance = bullets under a heading like `acceptance criteria`, `AC`, `definition of done` (case ignored). Notes = the rest + `Ticket: <url>`.
-6. Newest 20 ticket comments become a research item, kind `snippet`, title "Jira comments", `send_to_agent = false`.
-7. Branch is `saarthi/T-0033-ACME-151-<slug>` (key in capitals). PR title will be `ACME-151: <title>`.
-8. Ticket text is marked `<!-- from Jira, not trusted -->` in the Context Pack.
+    - name: Install HonestAgent
+      shell: bash
+      env: { MUTATION: "${{ inputs.mutation }}", ACTION_PATH: "${{ github.action_path }}" }
+      run: |
+        if [ "$MUTATION" = "true" ]; then pip install "$ACTION_PATH[mutation]"
+        else pip install "$ACTION_PATH"; fi
 
-### 8.9 Ticket write back (M10)
-1. A stage move has a mapping in `[tickets.on_stage]` -> one `transition` action, only **forward**:
-   - Stage order is running < review < shipped.
-   - The target stage must come later in that order than the stage that maps to the ticket's current Jira status.
-   - If the current Jira status maps to no stage, the action is proposed.
-   - `ship.pr_created` -> one `comment` action + one `link` action.
-2. Actions are saved as `pending`. Event `ticket.action_proposed`.
-3. The task page shows a card: "Move ACME-151 to In Review? [Send] [Skip]". The task shows as Needs you on Home (section 7, `STAGE_STATUS` rule).
-4. Send -> `POST /ticket-actions/{id}/send`. For a transition: `transitions(key)`, match `to.name` ignoring case, then `transition()`.
-5. Ok -> `sent` + `ticket.action_sent`. Error -> `failed` + `ticket.action_failed` with the reason (example: "No transition to In Review from To Do. Possible: In Progress, Done").
-6. `auto_send = true` sends at once. The card only shows the result.
-7. A newer pending transition replaces the older one (`skipped`, `ticket.action_skipped`).
+    - name: Check
+      id: check
+      shell: bash
+      env:
+        BASE: ${{ github.event.pull_request.base.sha }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        MUTATION: ${{ inputs.mutation }}
+      run: |
+        set +e
+        args=(check --base "$BASE" --head "$HEAD" --format markdown
+              --output "$RUNNER_TEMP/honestagent.md" --fail-on "$FAIL_ON")
+        [ "$MUTATION" = "true" ] && args+=(--mutation)
+        honestagent "${args[@]}"
+        echo "rc=$?" >> "$GITHUB_OUTPUT"
+        cat "$RUNNER_TEMP/honestagent.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+
+    - name: Sticky comment
+      if: inputs.comment == 'true' && github.event_name == 'pull_request' && steps.check.outputs.rc != '2'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        PR: ${{ github.event.pull_request.number }}
+      run: |
+        body="$RUNNER_TEMP/honestagent.md"
+        id=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
+              --jq '.[] | select(.user.login == "github-actions[bot]")
+                        | select(.body | startswith("<!-- honestagent -->")) | .id' | head -n1) || id=""
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$id" -F "body=@$body" > /dev/null
+        else
+          gh api -X POST "repos/$REPO/issues/$PR/comments" -F "body=@$body" > /dev/null
+        fi || echo "::warning::HonestAgent could not post the PR comment (read-only token?)."
+
+    - name: Result
+      shell: bash
+      env: { RC: "${{ steps.check.outputs.rc }}" }
+      run: exit "${RC:-2}"              # no rc means the check step itself broke
+```
+
+Design notes:
+- Workflow values go through `env:`, never pasted into `run:` with `${{ }}`. This blocks
+  script injection from PR titles or branch names.
+- **One comment.** The comment is found by the hidden marker `<!-- honestagent -->` on the
+  first line, posted by the GitHub Actions account. It is updated in place on every push,
+  never duplicated.
+- The report also goes to the job summary, so fork PRs still show it.
+- The job exits with the CLI exit code. So branch protection can require the check.
+- If the CLI exits `2`, no comment is posted; the job fails with the error in the log.
+- Install comes from `github.action_path`, so the action version and the package version
+  are the same.
+
+User workflow (documented in the README):
+
+```yaml
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  honestagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }      # both SHAs and the merge-base must be present
+      - uses: ankitraj20616/HonestAgent@v0
+        with: { fail-on: has_problems }
+```
+
+**Fork PRs:** on `pull_request` from a fork, `GITHUB_TOKEN` is read-only. The comment step
+fails, prints a warning and goes on. The job result (pass/fail) and the job summary still
+work. We document that users must **not** switch to `pull_request_target` to get the
+comment: that runs with a write token, and with `mutation: true` it would run untrusted PR
+code.
+
+### 12.3 Claude Code hook (F11, `hooks/claude-code/settings.json`)
+
+Checked against the official docs (https://code.claude.com/docs/en/hooks, read on
+2026-10-24). Facts we depend on:
+- Hooks live in `.claude/settings.json` (project) or `~/.claude/settings.json` (user), as
+  `hooks -> <event> -> [ { matcher, hooks: [ { type: "command", command, timeout } ] } ]`.
+- The hook gets JSON on stdin. Common fields: `session_id`, `transcript_path`, `cwd`,
+  `permission_mode`, `hook_event_name`.
+- Exit `0` = success; "Claude never sees stderr from a hook that exits 0".
+- Exit `2` on `Stop` = "Prevents Claude from stopping, continues the conversation", and
+  Claude gets the stderr text as the reason to continue.
+- Exit `2` on `PostToolUse` = "Shows stderr to Claude; the tool already ran".
+- Any other exit code is a non-blocking error; the action goes ahead. ("If your hook is
+  meant to enforce a policy, use `exit 2`.")
+- `Stop` input has `stop_hook_active`: "`true` when Claude Code is already continuing as a
+  result of a stop hook. Check this value ... to avoid blocking on a condition that will
+  never resolve." Claude Code also caps stop-hook continuations at 8 in a row.
+- Matcher `"Edit|Write"` matches either tool exactly. `${CLAUDE_PROJECT_DIR}` is the
+  project root. Default command timeout is 600 seconds.
+
+Mapping: the CLI exits `1` when the gate fails, but Claude Code treats `1` as
+"non-blocking". So the hook command maps CLI `1` -> hook `2`, and sends the report to
+stderr so Claude sees it. CLI `2` (tool error) maps to hook `1`: the user sees an error,
+the agent is not blocked by a broken tool.
+
+Loop guard: on the first stop with problems we block. If `stop_hook_active` is already
+`true` and the gate still fails, we exit `1` (non-blocking): the agent stops, the user sees
+the findings, and the PR gate still catches it later. This avoids an agent loop on a
+finding the agent cannot fix.
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 120,
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" || exit 1; input=$(cat); honestagent check --working --format text 1>&2; rc=$?; if [ $rc -eq 0 ]; then exit 0; fi; if [ $rc -eq 1 ] && ! printf '%s' \"$input\" | grep -Eq '\"stop_hook_active\" *: *true'; then exit 2; fi; exit 1"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 60,
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" || exit 1; honestagent check --working --format text 1>&2; rc=$?; if [ $rc -eq 0 ]; then exit 0; fi; if [ $rc -eq 1 ]; then exit 2; fi; exit 1"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- The `Stop` hook is the main one. The `PostToolUse` one is optional (the README says so):
+  it gives faster feedback but runs after every edit, so it is noisy on big repos.
+- `--working` includes untracked files, so a new test file the agent just wrote is seen.
+- On a block, the agent gets the text report. It must fix the tests, or add an allow
+  marker with a reason. The marker then shows in the PR report under "Allowed", so a human
+  still sees it.
+- Windows: Claude Code runs shell-form hooks in Git Bash when it is installed. The README
+  says Git Bash is needed for this snippet.
+- In M4 the same hook ships as a Claude Code plugin; the logic stays in the CLI.
 
 ---
 
-## 9. API (v1)
+## 13. Mutation check (`mutation.py`, F12, M3)
 
-> All under `http://127.0.0.1:7878/api/v1`. Header: `Authorization: Bearer <token>`.
+Opt-in: `--mutation` or `mutation.enabled = true`. Uses `mutmut` from the optional extra
+`honestagent[mutation]`. Some mutmut details below must be confirmed in the M3 spike
+(mutmut 3 changed its CLI); they are marked "verify".
 
-### 9.1 REST
-| Method | Path | What |
-|---|---|---|
-| GET | `/health` | Daemon + tools status + daemon version (the app checks it) |
-| GET | `/tasks?project=&status=` | Tasks of one or all projects (Home, All projects, Needs-you count) |
-| GET / POST | `/projects` | List / add |
-| GET / PATCH / DELETE | `/projects/{id}` | Read / edit / remove |
-| GET / POST | `/projects/{id}/tasks` | List (with filters) / create |
-| GET / PATCH | `/tasks/{id}` | Read / edit (title, priority, labels) |
-| POST | `/tasks/{id}/stage` | Move stage `{to, reason?}` |
-| GET / PUT | `/tasks/{id}/brief` | Latest brief / save new version |
-| POST | `/tasks/{id}/brief/draft` | Ask agent to draft brief |
-| GET / POST | `/tasks/{id}/research` | List / add item |
-| PATCH / DELETE | `/research/{id}` | Edit / delete |
-| GET / POST | `/tasks/{id}/runs` | List / start run |
-| GET | `/runs/{id}` | Run details |
-| GET | `/runs/{id}/events?after=` | Past events (paged) |
-| POST | `/runs/{id}/input` | Answer / follow-up |
-| POST | `/runs/{id}/stop` | Stop |
-| POST | `/runs/{id}/resume` | Resume |
-| GET | `/tasks/{id}/context-pack` | Preview Context Pack |
-| POST | `/tasks/{id}/checks` | Run checks now |
-| GET | `/tasks/{id}/proof` | Latest Proof Card |
-| GET | `/tasks/{id}/review` | Change Story + findings + comments |
-| POST | `/tasks/{id}/review/second-opinion` | Start cross review |
-| POST | `/tasks/{id}/review/comments` | Add comment |
-| POST | `/tasks/{id}/review/send` | Send selected comments / findings to agent |
-| POST | `/tasks/{id}/review/decision` | Approve / reject |
-| GET | `/tasks/{id}/workspace` | Branch, path, status |
-| POST | `/tasks/{id}/workspace/sync` | Update from base |
-| GET | `/tasks/{id}/checkpoints` | List |
-| POST | `/tasks/{id}/checkpoints/{n}/rewind` | Rewind |
-| POST | `/tasks/{id}/ship` | Commit / push / PR `{commit_message, create_pr}` |
-| GET / POST | `/tasks/{id}/memory-updates` | List / approve-reject |
-| GET / POST | `/playbooks` | List / create |
-| GET / PUT | `/settings` | Read / save |
-| GET | `/tasks/{id}/files/tree?changed=` | Files: worktree tree with change marks (`changed=true` = only changed) (M3) |
-| GET | `/tasks/{id}/files/content?path=` | Files: one file's text (M3) |
-| GET | `/tasks/{id}/files/diff?path=` | Files: diff vs main for one file, or all if no path (M3) |
-| PUT | `/tasks/{id}/files/content` | Tiny edit `{path, text, base_sha}`; 409 if the file changed (M3) |
-| GET | `/tasks/{id}/files/notes` | "Why" note per changed file (M5) |
-| GET / PUT / DELETE | `/tasks/{id}/files/marks` | "Looked at" marks `{path}` (M5) |
-| GET | `/tasks/{id}/search?q=` | ripgrep search in the worktree |
-| GET | `/projects/{id}/files/tree`, `/projects/{id}/files/content?path=`, `/projects/{id}/files/diff?path=` | Project files: the main checkout, read-only (M3) |
-| GET | `/projects/{id}/search?q=` | ripgrep search |
-| GET | `/tasks/{id}/docs` | List docs: `[{doc_id, kind, title, path, source, size, updated_at, change, pinned}]` (M2) |
-| GET | `/tasks/{id}/docs/content?doc=<doc_id>` | One doc: `{doc_id, markdown, size, updated_at, too_big}` (M2) |
-| GET | `/jira/sites` | Connected sites + who I am (M10) |
-| POST | `/jira/sites` | `{site, email, token}` -> check with `/myself`, save (M10) |
-| DELETE | `/jira/sites/{site}` | Forget a site, delete the token file (M10) |
-| GET | `/projects/{id}/tickets?view=&q=&refresh=` | List from cache (refresh first if asked or stale) (M10) |
-| POST | `/projects/{id}/tickets/sync` | `{view?, jql?}` -> refresh now (M10) |
-| GET | `/projects/{id}/tickets/{key}` | One ticket (fresh) + linked task id (M10) |
-| POST | `/projects/{id}/tickets/{key}/start` | Body `{dry_run?}`. Make a task -> `201 {task}` (`dry_run` -> `200` preview, nothing saved); 409 `ticket_linked {task_id}` (M10) |
-| POST | `/tasks/{id}/ticket` | `{key}` links an existing task, `{key: null}` unlinks it (M10) |
-| GET | `/tasks/{id}/ticket-actions` | List write-back actions (M10) |
-| POST | `/ticket-actions/{id}/send` or `/skip` | Decide (M10) |
-| GET | `/browser` | Browser found (kind, path, version), kit state, what this machine supports (M11; M12 adds `preview_drive`) |
-| POST / DELETE | `/browser/kit` | Download / remove the browser kit `{parts?}` (M11) |
-| GET | `/projects/{id}/browser` | `[browser]` settings from `project.toml` (read only), checks, the browser in use, saved logins (M11) |
-| GET / POST | `/projects/{id}/logins` | List saved logins (no paths) / start "Save a login" `{name}` -> headed browser opens, `{session_id}` (M11) |
-| POST | `/projects/{id}/logins/{name}/finish` | "I'm logged in": save the session (M11) |
-| DELETE | `/projects/{id}/logins/{name}` | Forget a saved login, delete its file (M11) |
-| GET / POST / DELETE | `/tasks/{id}/devserver` | Status / start / stop the task's dev server (M11) |
-| POST | `/tasks/{id}/browser/hosts` | `{host}` allow one more host for this task (Needs-you OK) (M11) |
-| GET | `/tasks/{id}/evidence` | See it work: per proof card, the steps (from `browser.step`), screenshot, video and trace paths (M11) |
-| GET | `/tasks/{id}/evidence/file?path=` | One evidence file (path must stay in the evidence folder) (M11) |
-| POST | `/tasks/{id}/evidence/trace` | `{proof_card_id}` open the trace in the local Playwright trace viewer (M11) |
-| POST | `/browser-mcp/{session_id}` | MCP endpoint for the agent during a Live test; session id only, not the API token (M11) |
-| GET / POST / DELETE | `/tasks/{id}/preview` | Preview URL / open (starts the dev server if needed) / close (M12) |
-| POST | `/tasks/{id}/preview/agent` | Let the agent use the preview window; 409 `preview_drive_unsupported` where the spike failed (M12) |
+Steps:
+1. **Mode and dependency check.** Mode must be `refs` (`--base/--head`); with `--staged`
+   or `--working`, exit `2`: "--mutation needs --base/--head (real refs)."
+   Then `importlib.util.find_spec("mutmut")`. Missing -> exit `2`:
+   "Mutation check needs mutmut. Install it with: pip install 'honestagent[mutation]'".
+2. **Targets.** From `ChangeSet.sources()`: changed source lines. With `_pyast.py`, map each
+   changed line to the function that holds it. Lines outside functions are skipped
+   (mutmut 3 mutates inside functions; verify).
+3. **Temp worktree.** `tmp = tempfile.mkdtemp(prefix="honestagent-mut-")`, then
+   `git worktree add --detach <tmp> <head SHA>`. The user's working tree is never touched.
+4. **Run.** In `<tmp>`: `mutmut run <mutant name globs for the target functions>`
+   (verify the name format, for example `pkg.mod.x_total__mutmut_*`). The process runs in
+   its own process group with the remaining `timeout_sec` budget. At most `max_mutants`
+   mutants are run, picked in sorted name order so the pick is deterministic.
+5. **Results.** `mutmut results` lists survived mutants; `mutmut show <name>` gives the
+   diff (verify both). We keep only mutants whose changed line is in `changed_lines`.
+6. **Findings.** Each surviving mutant -> HA100 (medium): file, line, message "A mutant
+   survived: `a < b` changed to `a <= b` and no test failed.", `before` / `after` = the
+   original and mutated line.
+7. **Cleanup** (in `finally`): kill the process group if still running,
+   `git worktree remove --force <tmp>`, `git worktree prune`, remove `<tmp>`.
 
-### 9.2 WebSocket
-- `ws://127.0.0.1:7878/api/v1/ws?token=...`
-- Client sends: `{"subscribe": ["board:<project_id>", "task:T-0042", "run:<run_id>"]}`. `board:*` subscribes to every project; the desktop app uses it for Home and the Needs-you count.
-- Server sends events in the shape from section 6.1.
-- M12: topic `screencast:<task_id>` sends live frames `{frame: <base64 jpeg>, ts}` of the agent's browser. Frames are not saved. The daemon streams only while someone is subscribed.
-- On reconnect, client sends `last_event_id`. Server sends missed events first.
+Limits and notes:
+- Timeout reached: kill, keep the results so far, add a skipped note "Mutation check
+  stopped after 300 s; N of M mutants ran."
+- The tests run with the current Python environment, so the project's test dependencies
+  must be installed (in the Action: the user installs them before our step).
+- `git worktree add` writes a small entry under `.git/worktrees/`; step 7 removes it.
+- mutmut support on Windows is limited (verify); M3 targets Linux and macOS first.
 
 ---
 
-## 10. Files on disk
+## 14. Testing strategy
 
-Folders come from `platformdirs`. Below are the Linux paths. On macOS both folders are under `~/Library/Application Support/saarthi/`; on Windows under `%LOCALAPPDATA%\saarthi\`.
+Rule: write the failing test first. No network, no real GitHub, no real agents.
+
+### 14.1 Recorded PR fixtures
 
 ```
-~/.config/saarthi/
-├── config.toml            # global settings (incl. [jira."<site>"] email)
-├── token                  # API token (chmod 600)
-└── secrets/jira-<site>.token      # Jira API token (chmod 600)
-
-~/.local/share/saarthi/
-├── saarthi.db             # SQLite
-├── logs/
-│   ├── daemon.log
-│   └── runs/<run_id>.jsonl        # full raw + normalized events
-├── checks/<task_id>/<check>.log   # full check output
-├── tasks/<task_id>/docs/plan-<run_id>.md  # plan docs (not in the worktree)
-├── browser-kit/<version>/         # M11, downloaded on demand (never in the installer)
-├── logins/<project_id>/<name>.json  # M11 saved logins, storageState (folder 700, file 600)
-├── evidence/<task_id>/<proof_card_id>/  # M11 screenshots, video.webm, trace.zip, e2e artifacts
-└── worktrees/<project>/<task_id>/ # git worktrees
-
-<repo>/.saarthi/           # committed to the project repo
-├── project.toml           # checks, setup script, defaults
-├── setup.sh               # optional, runs after worktree create
-└── playbooks/*.md         # project playbooks
-
-<worktree>/.saarthi/context/TASK.md   # Context Pack (git-ignored)
+tests/fixtures/prs/
+  ha001_test_function_deleted/
+    before/            # the files before the change (only the ones that matter)
+      src/shop/cart.py
+      tests/test_cart.py
+    after/             # the same tree after the change; a missing file = deleted
+      src/shop/cart.py
+      tests/test_cart.py
+    expected.json      # verdict + expected findings
+  ha001_renamed_out_of_collection/
+  ha002_skip_decorator_added/
+  ha003_assert_true/
+  ha003_expected_value_rewrite/
+  ha004_fail_under_lowered/
+  ha005_continue_on_error/
+  ha006_snapshot_with_source/
+  ha007_rule_disabled_in_config/   # also checks the base config is the one used
+  allow_marker_with_reason/
+  allow_marker_without_reason/     # expects an HA000 note
+  clean_refactor_moved_test/       # must stay "Looks good"
+  real_m0_<n>/                     # real cases saved in M0
 ```
 
-### 10.1 `project.toml` example
-```toml
-[project]
-default_branch = "main"
-default_agent = "claude"
-memory_path = "core_docs"
-sync_strategy = "rebase"
-create_pr = true
+`expected.json`:
 
-[[checks]]
-name = "tests"
-cmd = "uv run pytest -q"
-required = true
-timeout_sec = 600
-
-[[checks]]
-name = "lint"
-cmd = "uv run ruff check ."
-required = true
-timeout_sec = 120
-
-[[checks]]
-name = "types"
-cmd = "uv run pyright"
-required = false
-timeout_sec = 300
-
-[risk]
-auth_paths = ["**/auth/**", "**/security/**"]
-migration_paths = ["**/migrations/**", "**/alembic/**"]
-
-[browser]                         # M11, off by default
-enabled = false
-base_url = "http://127.0.0.1:{port}"      # {port} = the task's SAARTHI_PORT (M7)
-dev_server = "npm run dev -- --port {port}"
-allowed_hosts = ["127.0.0.1", "localhost"]
-live_test = "auto"                # "auto" | "off"
-live_test_required = false
-login = "test-admin"              # optional: the saved login the Live test uses
-
-[[checks]]                        # M11: the project's own E2E tests
-name = "e2e"
-cmd = "npx playwright test"
-kind = "e2e"                      # dev server first, artifacts collected
-required = false
-timeout_sec = 900
-artifacts = ["test-results/**", "playwright-report/**"]
-
-[docs]
-pinned = ["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]
-
-[tickets]                         # M10, no secrets here
-provider = "jira"
-site = "acme.atlassian.net"
-project_key = "ACME"
-auto_send = false                 # true = write back without asking
-
-[tickets.views]                   # extra saved JQL (Mine and Sprint are built in)
-"Bugs" = "issuetype = Bug AND statusCategory != Done"
-
-[tickets.on_stage]                # Saarthi stage -> Jira status name ("" = do nothing)
-running = "In Progress"
-review = "In Review"
-shipped = ""
+```json
+{
+  "verdict": "has_problems",
+  "findings": [
+    { "rule_id": "HA001", "severity": "high", "file": "tests/test_cart.py", "line": 12, "allowed": false }
+  ]
+}
 ```
 
-The Jira email is in the global `config.toml`, never in the repo:
-```toml
-[jira."acme.atlassian.net"]
-email = "me@acme.com"
+Helper in `tests/conftest.py`:
+
+```python
+def make_repo(tmp_path, case, mode="refs") -> RepoUnderTest:
+    """git init; copy before/ ; commit; copy after/ (delete missing files);
+    then commit (refs), `git add -A` (staged) or leave it (working)."""
 ```
+
+- It sets `GIT_AUTHOR_*` / `GIT_COMMITTER_*` names and dates, `init.defaultBranch=main`
+  and `core.autocrlf=false`, so SHAs and output are the same on every machine.
+- One parametrized test runs **every** case in all three modes and compares the result to
+  `expected.json` (only the listed fields, so messages can change without breaking it).
+- Each rule also has small unit tests on in-memory `ChangeSet`s built by hand, for edge
+  cases (aliases, nested classes, syntax errors).
+
+### 14.2 Other tests
+
+- **Verdict:** every row of the table, allowed findings ignored, low never counts, every
+  `--fail-on` value.
+- **Allow:** marker on the line, on the line above, wrong rule ID, no reason, config glob.
+- **Git layer:** temp repos for rename, binary, large file, untracked, empty repo,
+  bad ref, shallow clone without merge-base, a path with spaces.
+- **Config:** both files present, unknown key, bad rule ID, `allow` without a reason, CLI
+  override, config read from the base ref (a head-only config change has no effect).
+- **CLI:** Typer's `CliRunner` for every command and every exit code (0, 1, 2), stdout vs
+  stderr split.
+- **Golden files:** `tests/golden/<case>.md` and `<case>.json` for a few fixture cases,
+  plus a long case that triggers markdown truncation. The version is pinned to a test value
+  so goldens do not change on release. `UPDATE_GOLDEN=1 uv run pytest` rewrites them.
+- **No network:** an autouse fixture replaces `socket.socket` with one that raises.
+- **Hook snippet:** a test (Linux/macOS) runs the hook command with fake stdin JSON
+  (`stop_hook_active` true and false) in a fixture repo and checks the exit codes 0 / 1 / 2.
+- **Mutation (M3):** a tiny fixture project with one weak test; marked `mutation` and
+  skipped when mutmut is not installed.
+- **Action and pre-commit:** checked by hand on a sandbox repo in M2 (`pre-commit try-repo`,
+  a test PR). Not in CI.
+- **CI matrix:** Ubuntu, macOS, Windows, Python 3.12 and 3.13. Then `uv run ruff check .`
+  and `uv run pyright`.
 
 ---
 
-## 11. UI design (desktop)
+## 15. Performance and limits
 
-The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, view ids). The prototype is `design/Saarthi Prototype.html`. This section only shows the frame.
-
-### 11.1 Layout
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ Logo · Project picker ▾ · Search or jump (Ctrl K) · ● 2 need you · ⚙ │
-├──────────────────────────────────────────────────────────────────────┤
-│        [ acme-billing | acme-web | saarthi | All projects ]          │
-│                                                                      │
-│        Needs you   (rows from every project)                         │
-│        Working                                                       │
-│        To do                                                         │
-│        Done this week                                                │
-└──────────────────────────────────────────────────────────────────────┘
-```
-- No sidebar, no dock. Content is centred with a max width.
-- The project picker menu holds the project tools: Board view, Lessons and notes, Saved instructions, Jira tickets, Safety and cost, Project files.
-
-### 11.2 Task page
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ T-0012  Add password reset API  [ACME-142]  Working ●   More ▾       │
-├──────────────────────────────────────────────────────────────────────┤
-│ Goal card (goal, what done looks like)                     [Edit]    │
-│ Activity                                  [Files] [Check and ship]   │
-│   (live agent cards)                                                 │
-├──────────────────────────────────────────────────────────────────────┤
-│ Message Claude…                                    [Send] [Stop]     │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-- Files and Check and ship open their own screens (FSD F17, F7, F10).
-- More ▾ holds: Terminal, Docs, History, Details, What Claude reads.
-- The ticket chip (M10) shows the Jira key. It only shows when the task has a ticket.
-- Docs (M3): left list (Plans, Changed, Pinned), center markdown view, right outline.
-
-### 11.3 UI rules
-- The UI never holds business logic. It calls the API and renders events.
-- Live state = load from REST once, then apply WebSocket events.
-- Long lists (events, logs) use virtual scrolling.
-
----
-
-## 12. Error handling
-
-| Case | What we do |
+| What | Target / limit (constant in `config.py`) |
 |---|---|
-| Agent CLI not installed / not logged in | Health page shows it. Run start returns a clear error with the fix command. |
-| Agent process crashes | `run.failed` with the last 50 lines of stderr. Task -> `Failed`. |
-| Agent emits invalid JSON line | Save as raw `agent.message`. Do not crash. |
-| Git worktree create fails (branch exists) | Re-use the branch if it belongs to the same task, else add a suffix. |
-| Check times out | Kill the process group. Mark `error` with "timeout". |
-| WebSocket drops | UI reconnects with `last_event_id`. |
-| Disk full / DB locked | Retry 3 times with backoff, then show an error banner. |
-| Daemon restarts | See flow 8.6. |
-| Jira 401 | "Token wrong or expired. Run `saarthi jira login`." Panel shows the fix command. |
-| Jira 403 | "No permission on ACME". Nothing is changed. |
-| Jira 404 | "Ticket not found or no access". |
-| Jira 429 | Wait `Retry-After`, max 3 tries, then show an error. |
-| Jira offline | Show the cache with "Offline · last synced 12m ago". Write-back actions stay `pending` or become `failed` with the reason. |
-| Doc too big (> `DOCS_MAX_BYTES`) | Show "Too big to show here" + Open in editor. |
-| Doc path outside the worktree / data folder | Refuse (`..`, symlink out). Return 400. |
-| Files path outside the worktree / repo | Refuse. Return 400. |
-| Tiny edit on a file that changed since it was loaded | 409. The UI reloads the file. |
-| Background service not running | The app tries to start the sidecar. If it fails, the "background service" error screen shows the fix. |
-| App and daemon versions differ | "Version mismatch" screen with the fix. |
-| `full` profile asked on Windows | 400 `sandbox_unavailable`. |
-| No browser found, kit not downloaded (M11) | Live test `skip` with "No browser. Download the browser kit in Settings -> Browser testing." If `live_test_required`, it is `error` with the same fix. |
-| Dev server not ready in time (M11) | `devserver.failed` with the last lines of output. Live test and `e2e` checks are `error`. |
-| Live test goes over `LIVE_TEST_TIMEOUT_S` or `LIVE_TEST_MAX_STEPS` (M11) | Stop the side run and the browser. Status `error`, note "timeout" or "too many steps". Evidence so far is kept. |
-| Page outside the allowed hosts (M11) | The call is refused, `browser.host_blocked`, a Needs-you card "Allow it for this task?". |
-| Saved login expired (M11) | `login.expired`, `saved_logins.expired_at` set, Needs-you card "Log in again". |
-| Evidence over `EVIDENCE_MAX_MB` (M11) | Drop the video first, then the oldest screenshots. Note on the check. |
-| Agent asks to drive the preview window on an OS where the spike failed (M12) | 409 `preview_drive_unsupported`. The agent keeps its own Chromium. |
+| `check` on a 50-file PR, no mutation | < 2 s |
+| `check --staged` on a typical commit | < 1 s (pre-commit must feel instant) |
+| Max size of one file we read | `MAX_FILE_BYTES = 512_000` (bigger -> skipped) |
+| Max changed files | `MAX_CHANGED_FILES = 2_000` (rest -> skipped) |
+| Snippet size | `SNIPPET_MAX_LINES = 6`, `SNIPPET_MAX_CHARS = 300` |
+| Markdown size | `MARKDOWN_MAX_CHARS = 65_536`, target `60_000` |
+| Mutation | `max_mutants = 50`, `timeout_sec = 300` (config) |
+
+How: one `git diff --name-status`, one `--numstat`, one `-U0` diff for the whole range
+(split per file in Python), and one `git cat-file --batch` process for all blobs. Each file
+side is parsed once (cached). Rules only touch files they care about (by path).
 
 ---
 
-## 13. Testing strategy
+## 16. Security notes
 
-- **Unit tests** (pytest): stage machine, Context Pack builder, risk flag rules, event mapping for each adapter, secret masking.
-- **Adapter tests:** feed recorded JSONL fixtures (`tests/fixtures/agents/claude_build_ok.jsonl`, `codex_needs_input.jsonl`, ...) into the mapper. Check the normalized events.
-- **Integration tests:** real temp git repos (`tmp_path`) + `FakeAdapter`. Test full flows: create task -> run -> checks -> review -> ship (with a local bare repo as `origin`, no real GitHub).
-- **API tests:** FastAPI `TestClient` + WebSocket tests.
-- **UI tests:** Vitest for components. Playwright for 3 main flows against a daemon running with `FakeAdapter`.
-- **Verdict tests:** every row of the verdict table (4.6.1), and "not sure" does not change it.
-- **Files tests:** tree and diff on a temp repo, path safety, stale tiny edit (409), marks cleared when a file changes.
-- **CI matrix:** unit, integration and API tests run on Ubuntu, macOS and Windows (GitHub Actions). PTY, paths and process-stop tests run on each OS.
-- **Gemini fixtures (M7):** recorded `gemini` streams in `tests/fixtures/agents/`, same as Claude and Codex.
-- **Smoke test with real agents:** a manual script `scripts/smoke_real_agents.sh` (not in CI) that runs a tiny task with real Claude and Codex.
-- **Jira tests (M10):** `JiraCloudProvider` with `httpx.MockTransport` + recorded JSON in `tests/fixtures/jira/` (search pages, issue, transitions, 401, 429). Never the real network. `FakeTicketProvider` for the rest.
-- **ADF golden tests:** each node type, and an unknown node is kept.
-- **Browser tests (M11):** a `FakeBrowser` (a fake Playwright MCP server that replays recorded JSON-RPC lines from `tests/fixtures/browser/`) and recorded agent streams of a Live test. Never a real browser in unit tests. Cover: browser finder order per OS (pure function over fake paths), host guard, step limit, typed text never saved, `storageState` file mode `600` and never in events, logs, the Context Pack or API responses, expiry -> Needs you, evidence cap, dev server ready / timeout with a tiny fake server.
-- **One optional integration test** starts a real headless Chromium in CI, behind the pytest marker `real_browser` (off by default).
-- **Live preview tests (M12):** screencast frame ack and fps cap with a fake CDP socket; a desktop test proves the preview window cannot call any Tauri command.
-- **Rule:** TDD for core logic - write the failing test first.
-
----
-
-## 14. Performance targets
-
-| What | Target |
-|---|---|
-| Event: agent stdout -> UI | < 300 ms |
-| Board load (200 tasks) | < 500 ms |
-| Daemon idle RAM | < 150 MB |
-| Window idle RAM | < 150 MB |
-| Installer size | < 40 MB per OS (the browser kit is downloaded on demand, not counted) |
-| Parallel runs | 4 default, tested with 8 |
-| App start (UI visible) | < 2 s |
+- **We never run the user's code** in the core. We parse with `ast`; we never import test
+  modules, never load `conftest.py`, never run pytest. The only exception is M3 mutation,
+  which runs the tests inside a temp worktree.
+- **We never write to the user's repo**: no edits, no commits, no `git push`, no branch
+  changes. `GIT_OPTIONAL_LOCKS=0` keeps even read calls from writing lock files. Mutation
+  writes only in its temp worktree and removes it.
+- **No shell.** Git runs with list args. Refs are resolved to SHAs with
+  `--end-of-options` first.
+- **YAML** is read with `yaml.safe_load` only. TOML with `tomllib`.
+- **Token only in the Action.** The core has no network code. `GITHUB_TOKEN` is passed to
+  `gh` through env, never printed, never written to the report. Workflow values reach
+  scripts through `env:`, not `${{ }}` inside `run:`.
+- **Untrusted text in reports.** File content in the PR comment is escaped (table cells,
+  code fences), and the hidden marker is stripped from snippets, so a PR cannot fake or
+  hijack the sticky comment.
+- **Fork PRs:** we document `pull_request`, not `pull_request_target`.
+- **Allow markers are visible on purpose.** An agent can add one, but it needs a reason,
+  and every allowed finding is listed in the report for a human to read.
+- **The gate cannot be switched off from inside the change.** Config comes from the base
+  ref, and any weakening of it is an HA007 finding.
 
 ---
 
-## 15. Security
+## 17. Later (not v1)
 
-- API only on `127.0.0.1`, token required, token file `chmod 600`.
-- Phone glance (later): separate read-mostly token, opt-in, LAN only.
-- Never push to the default branch (checked in Workspace Manager, not only in UI).
-- Secret masking before save and before send.
-- Agents run in the worktree folder. OS sandbox in M8: `bwrap` (Linux), `sandbox-exec` (macOS). Windows v1 has none, so `full` is refused there.
-- No telemetry.
-- Jira token file `chmod 600`, kept outside the repo. The token never shows in logs or events. Jira requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
-- Ticket text is untrusted. It is marked `<!-- from Jira, not trusted -->` in the Context Pack. The permission profile still applies.
-- Docs paths must stay inside the worktree or the data folder. Files paths must stay inside the worktree or the repo.
-- Browser testing (M11): saved logins are for **test accounts only**. The `storageState` file is mode `600` in the data folder. It is never logged, never in events, the Context Pack, the repo or agent text. The API never returns its path. Saarthi never stores a password.
-- The agent's browser opens only `base_url` and `allowed_hosts`. Screenshots of login pages are kept as evidence but never sent to the agent as text. Typed text is not saved in events.
-- The browser runs with the daemon, outside the agent's sandbox; each Live test uses a temp browser profile, deleted after the run. Chromium's own sandbox stays on (never `--no-sandbox`).
-- The MCP endpoint takes a per-run session id, not the API token, and works only while that Live test runs.
-- Live preview (M12): the preview window has no IPC and no capabilities. A driver (M12, spike-gated) may reach only the preview window, never the main window.
-
----
-
-## 16. Open technical questions (to answer in M0 spike)
-
-1. Exact event format of `claude -p --output-format stream-json` for questions and permission requests - how do we detect "needs input"?
-2. Can `codex exec` ask questions mid-run, or does it only finish? If it only finishes, "Needs You" for Codex = the run ends with a question -> we resume with the answer.
-3. Is `codex app-server` stable enough to use instead of `exec`?
-4. Do the system WebViews run xterm.js and CodeMirror smoothly on all three OSes (WebKitGTK on Ubuntu 24.04, WKWebView on macOS 14, WebView2 on Windows 11)? WebKitGTK is the most likely weak one. If one fails, plan B: open the UI in a normal browser at `http://127.0.0.1:7878`.
-5. Best way to keep agent processes alive when the daemon restarts, per OS (systemd `KillMode=process` on Linux, launchd on macOS, a Job Object setting on Windows) - or accept "interrupted + resume" everywhere.
-6. Gemini CLI (M7 spike): exact headless flags, how a question shows in the stream, and whether resume works.
-7. Notifications when no window is open on macOS and Windows: is the Tauri plugin enough, or does the app need to stay in the tray?
-8. Sidecar size: PyInstaller or Nuitka gives the smaller one-file binary per OS? Measured in M9 against the size budget.
-9. Browser kit packaging (M11 spike): how to ship Playwright MCP and Node when the user has no `node`; real sizes of the headless shell and the full Chromium per OS.
-10. Playwright MCP with each agent (M11 spike): exact flags for Claude, Codex and Gemini to use an HTTP MCP server, and to allow its tools in the `read_only` profile. If one agent only takes stdio servers, use the `saarthi mcp-bridge` fallback.
-11. Browser launch mode (M11 spike): Playwright MCP launches Chromium itself, or attaches to one the daemon starts (`--cdp-endpoint`)? M12's screencast needs a CDP handle, so attach is preferred if video and trace still work.
-12. Video size (M11 spike): size and length of `video.webm` per Live test against `EVIDENCE_MAX_MB`.
-13. Agent drives the preview window (M12 spike): go / no-go per OS. Linux WebKitWebDriver, Windows WebView2 CDP, macOS none.
+- JavaScript / TypeScript rules (Jest, Vitest).
+- Hosted GitHub App and paid team tier (org policy, history, private-repo app).
+- Trust score 0-100.
+- Optional LLM second opinion.
+- HTML proof report.
+- Codex and other agent hooks.
+- Web dashboard.
+- SARIF output for GitHub code scanning.
