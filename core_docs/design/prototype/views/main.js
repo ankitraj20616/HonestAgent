@@ -172,7 +172,7 @@ const BASE_FEED = () => [
   ['10:44', 'Changed <code>reset.py</code> <span class="green">+42</span>'],
   ['10:47', '<span class="green">✓</span> Ran the login tests · 4 passed'],
 ];
-const MORE_TABS = [['terminal', 'Terminal', `type to the agent directly`], ['docs', 'Docs', "the agent's plan, notes"], ['history', 'History', 'timeline, undo points'], ['details', 'Details', 'branch, cost, what it reads']];
+const MORE_TABS = [['terminal', 'Terminal', `type to the agent directly`], ['docs', 'Docs', "the agent's plan, notes"], ['history', 'History', 'timeline, undo points'], ['details', 'Details', 'branch, cost, what it reads'], ['livePreview', 'Live browser', 'watch the agent test it']];
 
 /* o: {status:[tone,label,{spin|dot}], statusText, top, tab, body, feed, baseFeed, right, input, title, backTo} */
 function taskPage(o = {}) {
@@ -363,6 +363,11 @@ view('check', {title: 'Check and ship: looks good', area: 'Check and ship', ms: 
   const codex = ui('codex', 'idle'), unsure = ui('unsure', 'open');
   const v = codex === 'done' ? verdict('look', 'Take a look', 'All 3 checks passed. Codex found 1 medium issue worth fixing first.', howDecided(71)) : verdict('good', 'Looks good', 'All 3 checks passed. 4 of 5 goals met, 1 needs a quick look.', howDecided(78));
   return checkPage({body: `${v}
+    <div class="card row wrap mt16" style="border-radius:20px">
+      <div class="row tight none">${['forgot', 'sent', 'dash'].map(p => `<div style="width:96px">${bwin('127.0.0.1:41012', BR_PAGES[p], {mini: true})}</div>`).join('')}</div>
+      <div class="grow" style="min-width:200px"><div class="b">Live test passed <span class="flag" style="background:var(--green-soft);color:var(--green)">6 of 6 steps</span></div><div class="muted small">Claude reset a password in Chrome, end to end, and tried the used link again. Screenshots, video and trace are kept.</div></div>
+      ${btn('See it work', {size: 'sm', go: 'evidence'})}
+    </div>
     <h2>What done looks like</h2>
     <div class="card flush">
       ${D.task.done.slice(0, 4).map(d => `<div class="row" style="padding:13px 18px;border-bottom:1px solid var(--border)"><span class="green">✓</span><span class="grow">${esc(d)}</span></div>`).join('')}

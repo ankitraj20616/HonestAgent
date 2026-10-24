@@ -1,7 +1,7 @@
 # FSD — M9: Polish + Package (v1.0)
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M9 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M9 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -310,7 +310,7 @@ From `../../MILESTONES.md`, made concrete:
 | More agents (F5.11): Aider, local models | Same adapter design (Gemini CLI is in M7) |
 | GitHub Issues and other ticket providers (F23.7) | Jira is M10 |
 | PR status on the task page (F11.4) | |
-| Evidence: screenshots, API recordings (F7.5) | |
+| API recordings (F7.8) | Screenshots, video and trace (F7.5) moved to M11 |
 | Smart memory by meaning (F12.2 later part), ADR suggestions (F12.4) | |
 | Team mode | |
 | Sub-tasks (F2.8), files/images in research (F4.5), replay (F14.4), sound (F19.2) | |

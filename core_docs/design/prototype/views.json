@@ -112,6 +112,48 @@
   "file": "main.js"
  },
  {
+  "id": "settingsBrowser",
+  "title": "Settings: Browser testing",
+  "area": "Browser testing",
+  "ms": "M11",
+  "file": "browser.js"
+ },
+ {
+  "id": "loginSave",
+  "title": "Browser testing: save a login",
+  "area": "Browser testing",
+  "ms": "M11",
+  "file": "browser.js"
+ },
+ {
+  "id": "liveTest",
+  "title": "Task: agent testing it live in the browser",
+  "area": "Browser testing",
+  "ms": "M11 M12",
+  "file": "browser.js"
+ },
+ {
+  "id": "evidence",
+  "title": "Check and ship: see it work (screenshots, video, trace)",
+  "area": "Browser testing",
+  "ms": "M11",
+  "file": "browser.js"
+ },
+ {
+  "id": "loginExpired",
+  "title": "Task: saved login expired",
+  "area": "Browser testing",
+  "ms": "M11",
+  "file": "browser.js"
+ },
+ {
+  "id": "livePreview",
+  "title": "Task \u2192 Live browser and preview window (M12)",
+  "area": "Browser testing",
+  "ms": "M12",
+  "file": "browser.js"
+ },
+ {
   "id": "cli",
   "title": "The saarthi CLI",
   "area": "CLI",

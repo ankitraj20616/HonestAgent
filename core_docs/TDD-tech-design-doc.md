@@ -3,7 +3,7 @@
 
 **Version:** 0.2 (draft)
 **Date:** 2026-10-23
-**Related:** `FUNCTIONAL_SPECIFICATIONS.md` (what), `TECH_STACK.md` (with what), `design/2026-10-23-simple-ui-design.md` (UI), `decisions/ADR-002-cross-platform-lightweight.md` (platforms)
+**Related:** `FUNCTIONAL_SPECIFICATIONS.md` (what), `TECH_STACK.md` (with what), `design/2026-10-23-simple-ui-design.md` (UI), `decisions/ADR-002-cross-platform-lightweight.md` (platforms), `decisions/ADR-003-browser-testing.md` (browser testing, live preview)
 
 > Simple English. This doc says **how** Saarthi is built.
 
@@ -61,6 +61,10 @@
 │  ┌──────────────┐ ┌───────────────────────┐ ┌──────────────┐     │
 │  │ Docs Finder  │ │ Ticket Provider (jira)│ │ Files        │     │
 │  └──────────────┘ └───────────────────────┘ └──────────────┘     │
+│  ┌──────────────────────────────────────────┐                    │
+│  │ Browser (M11): finder, kit, dev server,  │──► Chromium        │
+│  │ logins, evidence, MCP endpoint           │   (system or kit)  │
+│  └──────────────────────────────────────────┘                    │
 │                                                                  │
 │  Event Bus  ──►  Event Store (SQLite + JSONL per run)            │
 └──────────────────────────────────────────────────────────────────┘
@@ -85,9 +89,12 @@
 | Sandbox (M8) | `bwrap` | `sandbox-exec` profile | none in v1: "Full access" is not offered |
 | Notifications | Tauri plugin; `notify-send` fallback | Tauri plugin | Tauri plugin |
 | WebView | WebKitGTK | WKWebView | WebView2 |
+| Browser for Live tests (M11) | Chrome -> Edge -> Chromium on `PATH` / `/opt` -> browser kit | Chrome -> Edge -> Chromium in `/Applications` -> browser kit | Chrome -> Edge (built in, so usually no download) -> Chromium -> browser kit |
+| Live browser screencast (M12) | CDP `Page.startScreencast` | same | same |
+| Agent drives the preview window (M12, spike-gated) | WebKitWebDriver (if the spike passes) | not supported (no WKWebView driver) | WebView2 remote debugging, CDP (if the spike passes) |
 
 - Code never builds paths by hand from `~`. It asks `config.py`, which uses `platformdirs`.
-- Every OS-specific branch lives in one small module per topic (`core/paths.py`, `agents/pty_shell.py`, `safety/sandbox.py`, `core/notify.py`). Tests run on all three OSes in CI.
+- Every OS-specific branch lives in one small module per topic (`core/paths.py`, `agents/pty_shell.py`, `safety/sandbox.py`, `core/notify.py`, `browser/finder.py`). Tests run on all three OSes in CI.
 
 ---
 
@@ -109,7 +116,7 @@ Each component: **job**, **input**, **output**.
 - **Input:** User actions, run results, check results.
 - **Output:** Task updates + `task.*` events.
 - **Notes:** The stage machine is in one file with a clear table of allowed moves (see section 7).
-- **Status:** The engine also gives each task a simple UI status (`needs_you` / `working` / `todo` / `done`, FSD F2.9). It comes from the stage map `STAGE_STATUS` (next to `ALLOWED_MOVES`), plus one rule: a pending ticket action or a sync conflict makes the status `needs_you`. The status is returned with every task. It does not change any stage rule.
+- **Status:** The engine also gives each task a simple UI status (`needs_you` / `working` / `todo` / `done`, FSD F2.9). It comes from the stage map `STAGE_STATUS` (next to `ALLOWED_MOVES`), plus one rule: a pending ticket action, a sync conflict, an expired saved login or a blocked browser host (M11) makes the status `needs_you`. The status is returned with every task. It does not change any stage rule.
 
 ### 4.3 Run Manager (`core/runs.py`)
 - **Job:** Start, watch, stop, and resume agent runs.
@@ -140,6 +147,7 @@ class AgentAdapter(Protocol):
     async def resume(self, req: RunRequest, session_id: str) -> RunHandle: ...
 ```
 
+- **`RunRequest`** (in `agents/base.py`) carries everything an adapter needs, agent-neutral: `cwd`, `prompt`, `mode`, `env` (ports, M7), `output_schema` (M4), `extra_allowed_tools` (M2), and **`mcp_servers`** (M11): a list of `McpServerSpec {name, url}` (an HTTP MCP endpoint), or `{name, command, args}` for the stdio fallback. Each adapter turns it into its own flags in `mcp_args()` (for example Claude `--mcp-config`, Codex `-c mcp_servers.<name>...`, Gemini settings). The exact flags are checked in the M11 spike. Browser code never lives in `agents/`; adapters only pass the config through.
 - **ClaudeAdapter**
   - Command: `claude -p --output-format stream-json --input-format stream-json --verbose [--resume ID] [--permission-mode ...] [--allowedTools ...]`
   - Working dir = task worktree.
@@ -186,6 +194,13 @@ class AgentAdapter(Protocol):
   3. Ask the agent (cheap, read-only call) to fill "Brief coverage" (UI: "What done looks like"): each acceptance criterion -> met / not sure / not met. The user only answers "not sure" ones: "That's fine" sets it to met (`by_user = true`), "Ask Claude to add it" starts a `fix` run.
   4. Build the `ProofCard` and save it.
   5. Compute the trust score and the verdict (4.6.1).
+- **Check kinds (M11):** `cmd` (default), `e2e` (the project's own E2E command) and `live` (the Live test, made by Saarthi, never written in `[[checks]]`). With `[browser] enabled = true` the steps become:
+  1. Run the `cmd` checks.
+  2. If an `e2e` check exists, or the Live test will run: start the dev server on the task's port and wait until `base_url` answers (`DEV_SERVER_READY_TIMEOUT_S`). Events `devserver.started` / `devserver.failed`.
+  3. Run the `e2e` checks. Copy their artifacts (`artifacts` globs) into the evidence folder.
+  4. If every required check passed and `live_test = "auto"`: run the **Live test** as a `live_test` side run (4.15). Its result is one `check_results` row, kind `live`, name "Live test", `required = live_test_required`.
+  5. Stop the dev server. Then coverage (step 3 above, now with the Live test steps as extra input), the Proof Card and the verdict.
+- A failed optional Live test does not change the gate. A failed required one sends the task to `Failed`, like any required check.
 - **Output:** `check.*` events + a `ProofCard`.
 
 #### 4.6.1 Trust score and verdict (`checks/verdict.py`)
@@ -234,6 +249,7 @@ class AgentAdapter(Protocol):
 
 - **Secret masking:** Before an event is saved or sent, values from the project `.env` files and patterns (keys, tokens) are replaced with `****`.
 - **Sandbox (M8, `safety/sandbox.py`):** wrap the agent command so only the worktree is writable and secret folders are hidden. Linux: `bwrap`. macOS: a `sandbox-exec` profile. Windows v1: no wrapper.
+- **Live tests and the sandbox (M11):** the `live_test` side run is sandboxed like any run. It needs the network on (M8 already keeps it on) to reach the daemon's browser endpoint on `127.0.0.1`. The browser, the browser kit and the saved logins run with the daemon, **outside** the agent sandbox, so the sandbox never binds `browser-kit/` or `logins/`. If the spike forces the stdio fallback, only the small `saarthi mcp-bridge` runs inside the sandbox (read-only binary path + loopback network). Every Live test uses a fresh temp browser profile, deleted after the run.
 
 ### 4.10 Event Bus and Event Store (`core/events.py`)
 - **Job:** One place for all events.
@@ -319,6 +335,37 @@ class TicketProvider(Protocol):
   - Search uses `rg` with a list of args.
   - Same path rules as Docs: stay inside the worktree or the repo, refuse `..` and symlinks out. Limits `FILES_MAX_BYTES` and `FILES_MAX_TREE` in `config.py`.
 
+### 4.15 Browser (`browser/`, M11)
+- **Job:** Everything for browser testing (FSD F24, F7.5): find a browser, download the browser kit, start the dev server, run the browser for the Live test, save and load test logins, keep the evidence.
+- **Input:** `[browser]` from `project.toml`, a task (worktree + port), a saved login name.
+- **Output:** A browser session the agent can drive, `check_results` rows of kind `live`, evidence files, `browser.*` / `login.*` / `devserver.*` events.
+- **Files:**
+
+| File | What |
+|---|---|
+| `finder.py` | Find Chromium: system Chrome -> Edge -> Chromium -> kit (`BROWSER_SEARCH_ORDER`, known paths per OS in `BROWSER_PATHS_BY_OS`). Returns `{kind, path, version, headed_ok}`. |
+| `kit.py` | Download, check and remove the browser kit in `<data>/browser-kit/<BROWSER_KIT_VERSION>/`. Parts: the MCP server (pinned Playwright MCP, plus a Node runtime only if no usable `node` is found), the Chromium headless shell, and the full Chromium only when a window is needed and no system browser exists. Exact packaging from the M11 spike. |
+| `devserver.py` | Start `dev_server` in the worktree (list args, no shell, M4 rule), env `SAARTHI_PORT` / `PORT` (M7) + `SAARTHI_BASE_URL`; poll `base_url` until it answers or `DEV_SERVER_READY_TIMEOUT_S`; stop the process group. |
+| `host.py` | The **browser host**: starts Playwright MCP (stdio child of the daemon) with the found browser, a temp profile, `storageState` of the chosen login, video and trace on, allowed origins. One host per Live test. |
+| `mcp_endpoint.py` | The MCP endpoint the agent talks to (`/browser-mcp/{session}`, HTTP). It forwards each tool call to the host, refuses hosts not in `allowed_hosts` (`browser.host_blocked`), stops after `LIVE_TEST_MAX_STEPS`, takes a screenshot after each action, and writes `browser.step` / `browser.screenshot`. Typed text is never saved, only "Typed 12 characters into Email". |
+| `logins.py` | "Save a login": start a headed browser with a temp profile on `base_url`; when the user clicks "I'm logged in", read cookies and local storage over CDP and write a Playwright `storageState` JSON to `<data>/logins/<project_id>/<name>.json` (file `600`, folder `700`). Expiry check before a run (all session cookies of the host expired) and after it (the agent reports `blocked_by_login`). |
+| `evidence.py` | Folder `<data>/evidence/<task_id>/<proof_card_id>/`: screenshots, `video.webm`, `trace.zip`, e2e artifacts. Cap `EVIDENCE_MAX_MB` (drop the video first, then the oldest screenshots). Removed with the worktree (M5 cleanup). |
+| `cdp.py` | A small CDP client over WebSocket (used by `logins.py` and the M12 screencast). |
+| `live_test.py` | Builds the `live_test` side run: prompt (UI items of "What done looks like", base URL, "you are logged in as `test-admin`"), `RunRequest.mcp_servers`, `output_schema` = `live_test_result.schema.json`. Maps the result to a `check_results` row. |
+
+- **Why the browser runs with the daemon, not inside the agent:** the saved login must never be readable by the agent (B6). If the agent started Playwright MCP itself, the `storageState` path would sit in the agent's MCP config and the file would have to be visible inside its sandbox. With the daemon-side host, the agent only sees `http://127.0.0.1:7878/api/v1/browser-mcp/<session>`. It also gives one agent-neutral place for the host guard, the step limit, screenshots and events.
+- **Session token:** each Live test gets a random session id in the endpoint path. It works only while that run is active, and only for MCP calls.
+- **Live test result** (`live_test_result.schema.json`): `{steps: [{criterion, action, expect, result: pass|fail|skip, note}], status: pass|fail|skip, blocked_by_login: bool, summary}`. `skip` when the goal has no UI items. The result is a normal check result: status, seconds, `output_tail` = summary, `artifacts` = evidence paths.
+- **Agent:** the agent of the last build or fix run (same rule as coverage, M4). Profile `read_only` for files; the MCP tools are allowed (flags per adapter, M11 spike).
+- **Config (`config.py`):** `BROWSER_KIT_VERSION`, `BROWSER_KIT_DIR`, `BROWSER_SEARCH_ORDER`, `BROWSER_PATHS_BY_OS`, `PLAYWRIGHT_MCP_PACKAGE`, `DEV_SERVER_READY_TIMEOUT_S`, `LIVE_TEST_TIMEOUT_S`, `LIVE_TEST_MAX_STEPS`, `LIVE_TEST_VIDEO_SIZE`, `EVIDENCE_MAX_MB`, `LOGINS_DIR`, `BROWSER_DEFAULT_ALLOWED_HOSTS` (`["127.0.0.1", "localhost"]`), `E2E_DEFAULT_ARTIFACT_GLOBS`. Values in `milestones/M11_browser_testing/TDD_M11_browser_testing.md`.
+
+### 4.16 Live preview (`browser/screencast.py` + desktop, M12)
+- **Job:** Show the agent's browser live in the task page, open the task's app in a preview window, and (only where the spike passed) let the agent drive that window (FSD F25).
+- **Live browser (F25.1, all OS):** the daemon attaches to the browser host over CDP and calls `Page.startScreencast` (JPEG, `SCREENCAST_QUALITY`, `SCREENCAST_MAX_WIDTH`). Each `Page.screencastFrame` is acked (`Page.screencastFrameAck`) and sent to the UI on the WebSocket topic `screencast:<task_id>`, capped at `SCREENCAST_MAX_FPS`. Frames are not saved (like `terminal.output`). It runs only while a client is subscribed (NF5).
+- **Preview window (F25.2):** a separate Tauri `WebviewWindow` with label `preview-<task_id>`, loading the dev server URL from `GET /tasks/{id}/preview`. No capability file matches `preview-*`, no `remote.urls` IPC entry, no init scripts. So it has **no IPC** and cannot call any Saarthi command: it loads untrusted app code. An `on_navigation` guard allows only `base_url` and `allowed_hosts`; other links open in the system browser.
+- **Agent drives the preview window (F25.3, spike-gated):** Linux via WebKitWebDriver, Windows via WebView2 remote debugging (CDP, attached by Playwright MCP). macOS has no WKWebView driver, so it is never offered there. The driver must reach only the preview window, never the main window (Windows: a separate WebView2 environment and data folder for the preview). The per-OS result of the spike lives in `PREVIEW_DRIVE_BY_OS` in `config.py`; `GET /browser` returns what this machine supports. Where it is off, the agent uses its own Chromium (F25.1).
+- The preview window uses the system WebView, not Chromium. A Live test result always comes from Chromium.
+
 ---
 
 ## 5. Data model (SQLite)
@@ -350,6 +397,7 @@ class TicketProvider(Protocol):
 | branch | text | set when the worktree is made |
 | worktree_path | text | |
 | permission_profile | text | `read_only` / `safe_build` / `full` |
+| browser_hosts_ok | json | optional (M11). Extra hosts the user allowed for this task's Live test (F24.7) |
 | total_cost_usd | real | sum of runs |
 | total_seconds | int | sum of runs |
 | created_at, updated_at | datetime | |
@@ -407,7 +455,7 @@ class TicketProvider(Protocol):
 | created_at | datetime | |
 
 ### 5.7 `checks` and `proof_cards`
-- `check_results`: id, task_id, run_id, name, command, required, status (`pass`/`fail`/`skip`/`error`), exit_code, seconds, output_tail, output_path.
+- `check_results`: id, task_id, run_id, name, command, required, status (`pass`/`fail`/`skip`/`error`), exit_code, seconds, output_tail, output_path. M11 adds: kind (`cmd` / `e2e` / `live`, default `cmd`), artifacts (json: evidence paths relative to the evidence folder, `{session_id?, screenshots: [...], video?, trace?, files: [...]}`).
 - `proof_cards`: id, task_id, run_id, all_required_passed (bool), files_changed, lines_added, lines_removed, tests_added, coverage (json: list of {criterion, status, note, by_user}), trust_score (int), verdict (`looks_good` / `take_a_look` / `has_problems`), override_reason.
 
 ### 5.8 Review tables
@@ -465,6 +513,18 @@ class TicketProvider(Protocol):
 | created_at | datetime | |
 | decided_at | datetime | |
 
+### 5.13 `saved_logins` (M11)
+| Field | Type | Note |
+|---|---|---|
+| id | text | ULID |
+| project_id | text | FK. Unique with `name` |
+| name | text | `test-admin` |
+| host | text | the host it was saved on, e.g. `127.0.0.1` |
+| path | text | the `storageState` file in the data folder (mode `600`). Never returned by the API |
+| saved_at | datetime | |
+| last_ok_at | datetime | last Live test that worked with it |
+| expired_at | datetime | set when it stops working; cleared after "Log in again" |
+
 ---
 
 ## 6. Events
@@ -498,6 +558,10 @@ class TicketProvider(Protocol):
 | Ticket | `ticket.synced`, `ticket.imported`, `ticket.linked`, `ticket.action_proposed`, `ticket.action_sent`, `ticket.action_failed`, `ticket.action_skipped` |
 | Memory | `memory.update_proposed`, `memory.update_applied` |
 | Workspace | `workspace.created`, `workspace.checkpoint`, `workspace.rewound`, `workspace.removed` |
+| Browser (M11) | `browser.started`, `browser.step`, `browser.screenshot`, `browser.finished`, `browser.host_blocked`, `browser.host_allowed`, `browser.kit_installed`, `browser.kit_removed` |
+| Login (M11) | `login.saved`, `login.expired`, `login.removed` (name and host only, never the session) |
+| Dev server (M11) | `devserver.started`, `devserver.failed`, `devserver.stopped` |
+| Preview (M12) | `preview.opened`, `preview.closed`, `preview.agent_attached` (screencast frames are a stream, not events) |
 
 ### 6.3 Mapping rule
 - Each adapter maps its own raw lines to these types.
@@ -539,7 +603,7 @@ class TicketProvider(Protocol):
 
 | Status | Stages |
 |---|---|
-| `needs_you` | `Needs You`, `Failed`, `Review` (+ a pending ticket action or sync conflict on any stage) |
+| `needs_you` | `Needs You`, `Failed`, `Review` (+ a pending ticket action, sync conflict, expired saved login or blocked browser host on any stage) |
 | `working` | `Running`, `Verifying` |
 | `todo` | `Inbox`, `Research`, `Ready` |
 | `done` | `Shipped` |
@@ -688,11 +752,26 @@ class TicketProvider(Protocol):
 | POST | `/tasks/{id}/ticket` | `{key}` links an existing task, `{key: null}` unlinks it (M10) |
 | GET | `/tasks/{id}/ticket-actions` | List write-back actions (M10) |
 | POST | `/ticket-actions/{id}/send` or `/skip` | Decide (M10) |
+| GET | `/browser` | Browser found (kind, path, version), kit state, what this machine supports (M11; M12 adds `preview_drive`) |
+| POST / DELETE | `/browser/kit` | Download / remove the browser kit `{parts?}` (M11) |
+| GET | `/projects/{id}/browser` | `[browser]` settings from `project.toml` (read only), checks, the browser in use, saved logins (M11) |
+| GET / POST | `/projects/{id}/logins` | List saved logins (no paths) / start "Save a login" `{name}` -> headed browser opens, `{session_id}` (M11) |
+| POST | `/projects/{id}/logins/{name}/finish` | "I'm logged in": save the session (M11) |
+| DELETE | `/projects/{id}/logins/{name}` | Forget a saved login, delete its file (M11) |
+| GET / POST / DELETE | `/tasks/{id}/devserver` | Status / start / stop the task's dev server (M11) |
+| POST | `/tasks/{id}/browser/hosts` | `{host}` allow one more host for this task (Needs-you OK) (M11) |
+| GET | `/tasks/{id}/evidence` | See it work: per proof card, the steps (from `browser.step`), screenshot, video and trace paths (M11) |
+| GET | `/tasks/{id}/evidence/file?path=` | One evidence file (path must stay in the evidence folder) (M11) |
+| POST | `/tasks/{id}/evidence/trace` | `{proof_card_id}` open the trace in the local Playwright trace viewer (M11) |
+| POST | `/browser-mcp/{session_id}` | MCP endpoint for the agent during a Live test; session id only, not the API token (M11) |
+| GET / POST / DELETE | `/tasks/{id}/preview` | Preview URL / open (starts the dev server if needed) / close (M12) |
+| POST | `/tasks/{id}/preview/agent` | Let the agent use the preview window; 409 `preview_drive_unsupported` where the spike failed (M12) |
 
 ### 9.2 WebSocket
 - `ws://127.0.0.1:7878/api/v1/ws?token=...`
 - Client sends: `{"subscribe": ["board:<project_id>", "task:T-0042", "run:<run_id>"]}`. `board:*` subscribes to every project; the desktop app uses it for Home and the Needs-you count.
 - Server sends events in the shape from section 6.1.
+- M12: topic `screencast:<task_id>` sends live frames `{frame: <base64 jpeg>, ts}` of the agent's browser. Frames are not saved. The daemon streams only while someone is subscribed.
 - On reconnect, client sends `last_event_id`. Server sends missed events first.
 
 ---
@@ -714,6 +793,9 @@ Folders come from `platformdirs`. Below are the Linux paths. On macOS both folde
 │   └── runs/<run_id>.jsonl        # full raw + normalized events
 ├── checks/<task_id>/<check>.log   # full check output
 ├── tasks/<task_id>/docs/plan-<run_id>.md  # plan docs (not in the worktree)
+├── browser-kit/<version>/         # M11, downloaded on demand (never in the installer)
+├── logins/<project_id>/<name>.json  # M11 saved logins, storageState (folder 700, file 600)
+├── evidence/<task_id>/<proof_card_id>/  # M11 screenshots, video.webm, trace.zip, e2e artifacts
 └── worktrees/<project>/<task_id>/ # git worktrees
 
 <repo>/.saarthi/           # committed to the project repo
@@ -754,6 +836,23 @@ timeout_sec = 300
 [risk]
 auth_paths = ["**/auth/**", "**/security/**"]
 migration_paths = ["**/migrations/**", "**/alembic/**"]
+
+[browser]                         # M11, off by default
+enabled = false
+base_url = "http://127.0.0.1:{port}"      # {port} = the task's SAARTHI_PORT (M7)
+dev_server = "npm run dev -- --port {port}"
+allowed_hosts = ["127.0.0.1", "localhost"]
+live_test = "auto"                # "auto" | "off"
+live_test_required = false
+login = "test-admin"              # optional: the saved login the Live test uses
+
+[[checks]]                        # M11: the project's own E2E tests
+name = "e2e"
+cmd = "npx playwright test"
+kind = "e2e"                      # dev server first, artifacts collected
+required = false
+timeout_sec = 900
+artifacts = ["test-results/**", "playwright-report/**"]
 
 [docs]
 pinned = ["CLAUDE.md", "AGENTS.md", "core_docs/FUNCTIONAL_SPECIFICATIONS.md", "core_docs/TDD-tech-design-doc.md"]
@@ -850,6 +949,13 @@ The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, vie
 | Background service not running | The app tries to start the sidecar. If it fails, the "background service" error screen shows the fix. |
 | App and daemon versions differ | "Version mismatch" screen with the fix. |
 | `full` profile asked on Windows | 400 `sandbox_unavailable`. |
+| No browser found, kit not downloaded (M11) | Live test `skip` with "No browser. Download the browser kit in Settings -> Browser testing." If `live_test_required`, it is `error` with the same fix. |
+| Dev server not ready in time (M11) | `devserver.failed` with the last lines of output. Live test and `e2e` checks are `error`. |
+| Live test goes over `LIVE_TEST_TIMEOUT_S` or `LIVE_TEST_MAX_STEPS` (M11) | Stop the side run and the browser. Status `error`, note "timeout" or "too many steps". Evidence so far is kept. |
+| Page outside the allowed hosts (M11) | The call is refused, `browser.host_blocked`, a Needs-you card "Allow it for this task?". |
+| Saved login expired (M11) | `login.expired`, `saved_logins.expired_at` set, Needs-you card "Log in again". |
+| Evidence over `EVIDENCE_MAX_MB` (M11) | Drop the video first, then the oldest screenshots. Note on the check. |
+| Agent asks to drive the preview window on an OS where the spike failed (M12) | 409 `preview_drive_unsupported`. The agent keeps its own Chromium. |
 
 ---
 
@@ -867,6 +973,9 @@ The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, vie
 - **Smoke test with real agents:** a manual script `scripts/smoke_real_agents.sh` (not in CI) that runs a tiny task with real Claude and Codex.
 - **Jira tests (M10):** `JiraCloudProvider` with `httpx.MockTransport` + recorded JSON in `tests/fixtures/jira/` (search pages, issue, transitions, 401, 429). Never the real network. `FakeTicketProvider` for the rest.
 - **ADF golden tests:** each node type, and an unknown node is kept.
+- **Browser tests (M11):** a `FakeBrowser` (a fake Playwright MCP server that replays recorded JSON-RPC lines from `tests/fixtures/browser/`) and recorded agent streams of a Live test. Never a real browser in unit tests. Cover: browser finder order per OS (pure function over fake paths), host guard, step limit, typed text never saved, `storageState` file mode `600` and never in events, logs, the Context Pack or API responses, expiry -> Needs you, evidence cap, dev server ready / timeout with a tiny fake server.
+- **One optional integration test** starts a real headless Chromium in CI, behind the pytest marker `real_browser` (off by default).
+- **Live preview tests (M12):** screencast frame ack and fps cap with a fake CDP socket; a desktop test proves the preview window cannot call any Tauri command.
 - **Rule:** TDD for core logic - write the failing test first.
 
 ---
@@ -879,7 +988,7 @@ The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, vie
 | Board load (200 tasks) | < 500 ms |
 | Daemon idle RAM | < 150 MB |
 | Window idle RAM | < 150 MB |
-| Installer size | < 40 MB per OS |
+| Installer size | < 40 MB per OS (the browser kit is downloaded on demand, not counted) |
 | Parallel runs | 4 default, tested with 8 |
 | App start (UI visible) | < 2 s |
 
@@ -896,6 +1005,11 @@ The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, vie
 - Jira token file `chmod 600`, kept outside the repo. The token never shows in logs or events. Jira requests go only to the configured site, or to `api.atlassian.com` for scoped tokens.
 - Ticket text is untrusted. It is marked `<!-- from Jira, not trusted -->` in the Context Pack. The permission profile still applies.
 - Docs paths must stay inside the worktree or the data folder. Files paths must stay inside the worktree or the repo.
+- Browser testing (M11): saved logins are for **test accounts only**. The `storageState` file is mode `600` in the data folder. It is never logged, never in events, the Context Pack, the repo or agent text. The API never returns its path. Saarthi never stores a password.
+- The agent's browser opens only `base_url` and `allowed_hosts`. Screenshots of login pages are kept as evidence but never sent to the agent as text. Typed text is not saved in events.
+- The browser runs with the daemon, outside the agent's sandbox; each Live test uses a temp browser profile, deleted after the run. Chromium's own sandbox stays on (never `--no-sandbox`).
+- The MCP endpoint takes a per-run session id, not the API token, and works only while that Live test runs.
+- Live preview (M12): the preview window has no IPC and no capabilities. A driver (M12, spike-gated) may reach only the preview window, never the main window.
 
 ---
 
@@ -909,3 +1023,8 @@ The full UI spec is `design/2026-10-23-simple-ui-design.md` (screens, words, vie
 6. Gemini CLI (M7 spike): exact headless flags, how a question shows in the stream, and whether resume works.
 7. Notifications when no window is open on macOS and Windows: is the Tauri plugin enough, or does the app need to stay in the tray?
 8. Sidecar size: PyInstaller or Nuitka gives the smaller one-file binary per OS? Measured in M9 against the size budget.
+9. Browser kit packaging (M11 spike): how to ship Playwright MCP and Node when the user has no `node`; real sizes of the headless shell and the full Chromium per OS.
+10. Playwright MCP with each agent (M11 spike): exact flags for Claude, Codex and Gemini to use an HTTP MCP server, and to allow its tools in the `read_only` profile. If one agent only takes stdio servers, use the `saarthi mcp-bridge` fallback.
+11. Browser launch mode (M11 spike): Playwright MCP launches Chromium itself, or attaches to one the daemon starts (`--cdp-endpoint`)? M12's screencast needs a CDP handle, so attach is preferred if video and trace still work.
+12. Video size (M11 spike): size and length of `video.webm` per Live test against `EVIDENCE_MAX_MB`.
+13. Agent drives the preview window (M12 spike): go / no-go per OS. Linux WebKitWebDriver, Windows WebView2 CDP, macOS none.

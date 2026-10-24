@@ -35,10 +35,12 @@ const MOVED = [
   ['Jira tickets and write-back', 'Project menu → Jira tickets; write-back is a Needs-you row and a card on Done.', 'tickets'],
   ['Daemon status, versions', 'Settings → Health / About; full screen only when broken.', 'settingsHealth'],
   ['Several repos', 'All open in one window: project tabs and All projects on Home.', 'home'],
+  ['Evidence (was Later)', 'M11: Live test after each build, "See it work" on Check and ship.', 'evidence'],
+  ['Live preview (new)', 'M12: watch the agent\'s browser, open the app in a preview window.', 'livePreview'],
 ];
 
 view('designNotes', {title: 'Design notes: words, what moved, screens per milestone', area: 'Notes', ms: ''}, () => {
-  const ms = ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10'];
+  const ms = ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'];
   const byMs = ms.map(m => [m, ORDER.filter(id => (VIEWS[id].ms || '').split(' ').includes(m))]);
   return page(`${back('← Home')}
     <h1>Design notes</h1>

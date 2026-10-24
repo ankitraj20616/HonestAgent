@@ -104,7 +104,7 @@ def write_screen_table(views: list[dict]) -> None:
     """Fill the "Screens per milestone" table in ../README.md from the views."""
     readme = HERE.parent / "README.md"
     rows = ["| Milestone | Screens (open as `Saarthi Prototype.html#<id>`) |", "|---|---|"]
-    for m in [f"M{i}" for i in range(11)]:
+    for m in [f"M{i}" for i in range(13)]:
         ids = [f"`{v['id']}` {v['title']}" for v in views if m in v["ms"].split()]
         rows.append(f"| {m} | {' · '.join(ids) or '-'} |")
     text = readme.read_text()

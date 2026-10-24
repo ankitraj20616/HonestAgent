@@ -22,6 +22,7 @@ Also:
 - **Many git repos in one window.** Home has project tabs and **All projects**. No new window per repo.
 - One light app for **Linux, macOS and Windows** (no Electron).
 - Every task has a **Docs** view (plans, changed .md files, pinned project docs), and tasks can start from **Jira tickets** (M10).
+- Agents can **test the app live in a real browser** after each build and show proof, "See it work" (M11), and you can watch it live or open a preview window (M12). The browser is not in the installer.
 
 ---
 
@@ -55,8 +56,8 @@ On screen a task has only 4 statuses: **To do**, **Working**, **Needs you**, **D
 | `FUNCTIONAL_SPECIFICATIONS.md` | **FSD**. What the app does. Every feature, in points. | Before building any feature |
 | `TDD-tech-design-doc.md` | **TDD**. How the app is built. Parts, data, flows, APIs. | Before writing code |
 | `TECH_STACK.md` | Languages, libraries, tools. Python vs Go vs Rust decision. | Before setup or adding a library |
-| `MILESTONES.md` | Build plan. Milestones M0 to M10 with "done when" checks. | Planning the next session |
-| `design/2026-10-23-simple-ui-design.md` | **Simple UI spec**: product rules P1-P5, decisions D1-D8, statuses, UI words, screens. | Before any UI work |
+| `MILESTONES.md` | Build plan. Milestones M0 to M12 with "done when" checks. | Planning the next session |
+| `design/2026-10-23-simple-ui-design.md` | **Simple UI spec**: product rules P1-P7, decisions D1-D8, statuses, UI words, screens, browser testing (B1-B10). | Before any UI work |
 | `design/Saarthi Prototype.html` | Clickable prototype of the whole product (dummy data). Open a view with `#<id>`. | To see a screen |
 | `quick-prompts.md` | Ready prompts to give Claude / Codex while building Saarthi. | Every session |
 
@@ -64,7 +65,7 @@ On screen a task has only 4 statuses: **To do**, **Working**, **Needs you**, **D
 
 | Folder | What goes inside |
 |---|---|
-| `milestones/` | One sub-folder per milestone (M0-M10), each with its own FSD and TDD. Start at `milestones/README.md`. |
+| `milestones/` | One sub-folder per milestone (M0-M12), each with its own FSD and TDD. Start at `milestones/README.md`. |
 | `memory/` | `project_memory.md` - big wins, hard bugs (Problem -> Root cause -> Fix -> Result). One file per module later (`agent_runner_memory.md` etc.). |
 | `learnings/` | Patterns, mistakes, "do this, not that" rules. |
 | `design/` | UI spec and prototype. The old Wheel design is in `design/archive/wheel/` (history only). |
@@ -94,4 +95,5 @@ On screen a task has only 4 statuses: **To do**, **Working**, **Needs you**, **D
 |---|---|
 | `decisions/ADR-001-agent-integration.md` | Agent integration. Written after the M0 spikes. |
 | `decisions/ADR-002-cross-platform-lightweight.md` | One app for Linux, macOS and Windows: Tauri 2 + Python daemon as a sidecar, one CI matrix, a size budget. |
+| `decisions/ADR-003-browser-testing.md` | Browser testing (M11) and live preview (M12): Chromium only, system browser first, a browser kit on demand (never in the installer), saved test logins, the browser runs with the daemon. |
 | `design/2026-10-23-simple-ui-design.md` | Simple UI replaces the Wheel look: 4 statuses, plain words, Files (IDE view), Check and ship. |

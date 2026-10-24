@@ -1,7 +1,7 @@
 # TDD — M2: Agent Runs + Worktrees
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M2 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M2 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2

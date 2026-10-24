@@ -1,7 +1,7 @@
 # TDD — M5: Review + Ship
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M5 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M5 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -466,6 +466,7 @@ New fixtures (record once with real agents, commit): `claude_story_ok.jsonl`, `c
 - No looked-at marks or why notes in project files (`projectFiles`).
 - No PR status / CI (Later), no draft PRs, reviewers or labels.
 - No squash of agent commits; no editing in the diff view.
+- No See it work card (M11). Hook: M11 adds one line to the worktree cleanup to remove `<data>/evidence/<task_id>/`.
 
 ---
 

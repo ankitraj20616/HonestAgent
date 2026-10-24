@@ -2,7 +2,7 @@
    Settings save by themselves (they live in the background service, so the CLI sees the same values).
    Helpers here start with "st" so they never clash with other view files. */
 
-const ST_TABS = [['settings', 'General'], ['settingsAgents', 'Agents'], ['settingsProject', 'Project'], ['safety', 'Safety and cost'], ['settingsJira', 'Jira'], ['settingsHealth', 'Health'], ['settingsAbout', 'About']];
+const ST_TABS = [['settings', 'General'], ['settingsAgents', 'Agents'], ['settingsProject', 'Project'], ['settingsBrowser', 'Browser testing'], ['safety', 'Safety and cost'], ['settingsJira', 'Jira'], ['settingsHealth', 'Health'], ['settingsAbout', 'About']];
 
 function stFrame(cur, body, o = {}) {
   return page(`${back('← Home', 'home')}

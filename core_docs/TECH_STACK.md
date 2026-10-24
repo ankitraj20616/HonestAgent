@@ -34,6 +34,10 @@
 | GitHub | **`gh` CLI** | PRs, CI status. Already logged in. |
 | Jira (M10) | **`httpx`** (already a dependency) + own small ADF converter | Jira Cloud REST API v3. No new library. If the ADF code grows past ~300 lines, switch to `atlas-doc-parser`. |
 | Search | **ripgrep (`rg`)** | Fast code search. |
+| Browser for Live tests (M11) | **Chromium only**, lightest path first: system **Google Chrome** -> system **Microsoft Edge** -> system **Chromium** -> the **browser kit** (Playwright's **Chromium headless shell**, downloaded once into the data folder; the full Chromium only if a window is needed and no system browser exists) | One engine, same behaviour on all 3 OSes. CDP for the M12 screencast. Playwright MCP uses Chromium by default. Windows usually needs no download (Edge is built in). Never in the installer. Sizes measured in the M11 spike. |
+| Browser MCP server (M11) | **Playwright MCP** (`@playwright/mcp`, pinned in `PLAYWRIGHT_MCP_PACKAGE`), run by the daemon and reached by the agent through Saarthi's MCP endpoint | The agent drives the browser with tools it already knows. Saarthi stays in the middle for allowed hosts, step limits, screenshots and events. Flags checked in the M11 spike. Needs Node: the user's `node`, else a Node runtime in the kit. |
+| CDP client (M11, M12) | **own small client** over WebSocket (`websockets`, already pulled in by Uvicorn) | Save a login (cookies + local storage -> `storageState`) and the M12 screencast (`Page.startScreencast`). No Playwright Python package in the daemon. |
+| Live preview window (M12) | **Tauri `WebviewWindow`** with no capabilities (no IPC) | Shows the task's app inside Saarthi. Agent driving it is spike-gated: WebKitWebDriver (Linux), WebView2 CDP (Windows), none on macOS. |
 | Sandbox (M8) | Linux: **bubblewrap (`bwrap`)**. macOS: **`sandbox-exec` profile**. Windows v1: **none**, so "Full access" is not offered there. | Light OS tools, no containers. |
 | Notifications | **Tauri notification plugin** on every OS (fallback `notify-send` on Linux only) | Native desktop alerts. |
 | Tests (backend) | **pytest + pytest-asyncio** | Standard. |
@@ -109,6 +113,7 @@ From the Simple UI spec (P4). Checked per OS in M9.
 
 - Agent CLIs (`claude`, `codex`, `gemini`) are installed by the user and are not counted.
 - No Electron, no bundled browser, no VS Code.
+- The browser kit (M11) is optional and downloaded on demand into the data folder. It is not in the installer and not counted, so the budget does not change. A system Chrome, Edge or Chromium needs no download at all.
 - The biggest risk is the Python sidecar (see 2.3). M9 measures it and writes the numbers in `reports/`.
 
 ---
@@ -141,7 +146,13 @@ From the Simple UI spec (P4). Checked per OS in M9.
 - Approval and resume flags: to check in the M7 spike.
 - Unknown lines become raw events, like for the other agents.
 
-### 3.4 Rule
+### 3.4 Browser MCP server (M11)
+- Package: Playwright MCP (`@playwright/mcp`), one pinned version (`PLAYWRIGHT_MCP_PACKAGE`, part of `BROWSER_KIT_VERSION`).
+- The daemon starts it with the found browser (`--browser` / `--executable-path`), a temp profile, the saved login (`--storage-state`), video and trace on, and the allowed origins. The exact flag names come from the M11 spike.
+- The agent never starts it. The agent gets an HTTP MCP endpoint of the daemon through `RunRequest.mcp_servers` (TDD 4.4). Each adapter maps it to its own flags.
+- Tests use a `FakeBrowser` that replays recorded MCP JSON-RPC lines from `tests/fixtures/browser/`. Never a real browser in unit tests.
+
+### 3.5 Rule
 - **Spike first (M0, and M7 for Gemini).** The Claude and Codex flags above were checked with `--help` on 2026-10-11. The Gemini flags are not checked yet. CLI flags change often. M0 must record real sample event files for Claude and Codex in `tests/fixtures/agents/`; M7 does the same for Gemini.
 
 ---
@@ -165,6 +176,7 @@ saarthi/
 │   │   ├── files/             # Files API: tree, content, diff vs main, looked-at marks
 │   │   ├── memory/            # core_docs reader, context pack
 │   │   ├── safety/            # permission profiles, secret masking
+│   │   ├── browser/           # M11: browser finder, kit, dev server, logins, evidence, MCP endpoint; M12 screencast
 │   │   ├── db/                # SQLAlchemy models + Alembic
 │   │   ├── schemas/           # Pydantic models (single source of truth)
 │   │   ├── cli/               # Typer CLI (saarthi ...)
@@ -172,7 +184,8 @@ saarthi/
 │   └── tests/
 │       ├── unit/
 │       ├── integration/
-│       └── fixtures/agents/   # recorded claude / codex / gemini streams
+│       ├── fixtures/agents/   # recorded claude / codex / gemini streams
+│       └── fixtures/browser/  # recorded MCP / browser JSON-RPC lines (FakeBrowser)
 ├── desktop/                   # Tauri 2 + React app
 │   ├── src-tauri/             # thin Rust shell (starts the daemon sidecar)
 │   └── src/                   # React UI
@@ -214,3 +227,7 @@ cd desktop && npm test
 | PostgreSQL / Redis | Overkill for a local single-user app. SQLite is enough. |
 | GitPython | Plain `git` subprocess is simpler and supports everything (worktrees). |
 | Docker for sandbox | Too heavy for every run. `bwrap` (Linux) and `sandbox-exec` (macOS) are faster and built in. |
+| A bundled Chromium | 100-200 MB, breaks the 40 MB installer budget. The system browser or a one-time kit download is used instead (M11). |
+| Firefox or WebKit for Live tests | No CDP screencast for M12, and two more engines to test on three OSes. Chromium only. |
+| The Tauri WebView as the main test browser | No WebView driver on macOS, and it would run untrusted app code next to Saarthi. Kept only as the spike-gated M12 extra (agent drives the preview window). |
+| Playwright Python package in the daemon | It brings its own Node driver into the sidecar. A small CDP client does the login save and the screencast. |

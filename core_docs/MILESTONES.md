@@ -27,11 +27,14 @@
 | M8 | Safety + cost + undo | Sandbox per OS, what agents may do, Safety and cost, History -> Restore | 1.5 weeks |
 | M9 | Polish + package (v1.0) | Installers for Linux, macOS and Windows, daemon sidecar, background service per OS, docs | 2 weeks |
 | M10 | Jira tickets | Jira tickets screen, start task from ticket, write back | 2 weeks |
+| M11 | Browser testing | Live test in a real browser after the checks, saved logins of test accounts, See it work (screenshots, video, trace) | 2 weeks |
+| M12 | Live preview | Watch the agent's browser in the task page; a preview window for the task's app (agent drives it only where the spike passes) | 1.5 weeks |
 | Later | Phone glance, voice capture, more agents, team mode | - | - |
 
-Total for v1: about **20 weeks** of side-project time (plus buffer: plan for ~5 months).
+Total for v1: about **23.5 weeks** of side-project time (plus buffer: plan for ~6 months).
 
 > M10 needs M1-M6. Build it after M6 (it may come before M7).
+> M11 needs M4 and M5, and uses the per-workspace ports of M7. Build it after M7. M12 needs M11 and M3. M7-M10 keep their numbers.
 
 ---
 
@@ -314,6 +317,59 @@ Total for v1: about **20 weeks** of side-project time (plus buffer: plan for ~5 
 
 ---
 
+## M11 - Browser testing
+
+**Goal:** The agent proves UI work live in a real browser, once per build, and shows it.
+
+> Build order: M11 needs M4 (Check Runner) and M5 (Check and ship), and uses M7's per-workspace ports. Build it after M7. If M7 is not done, M11 builds the port part.
+
+**Build:**
+- [ ] Spike first (about 2.5 h): browser kit packaging (Playwright MCP, its Node runtime, Chromium headless shell), Playwright MCP flags with Claude / Codex / Gemini, `storageState` save and load, video size. Write the results into `decisions/ADR-003-browser-testing.md`.
+- [ ] Browser finder: Chrome -> Edge -> Chromium -> browser kit (F24.1). One engine: Chromium.
+- [ ] Browser kit download on demand into the data folder: headless shell first, full Chromium only when needed. `saarthi browser status`, `saarthi browser kit install`.
+- [ ] `[browser]` in `project.toml`, off by default (F24.2). Settings -> Browser testing.
+- [ ] Dev server per task on the task's port, ready check, timeout, stop at the end (F24.3). `saarthi devserver start|stop`.
+- [ ] Browser MCP endpoint in the daemon: proxies Playwright MCP, guards allowed hosts, counts steps, takes a screenshot per step, writes `browser.*` events (F24.7).
+- [ ] `RunRequest.mcp_servers`: each adapter turns it into its own flags. No browser code outside `browser/` and `agents/`.
+- [ ] Live test = a `live_test` side run + a check of kind `live` after the required checks pass. Optional by default, required with `live_test_required` (F24.4).
+- [ ] `e2e` check kind: dev server first, artifacts collected (F24.5).
+- [ ] Saved logins: headed browser, user logs in, `storageState` saved (owner-only file), expiry -> Needs-you "Log in again" (F24.6). `saarthi browser login save <name>`.
+- [ ] Evidence store + API; See it work card on Check and ship; cleaned up with the worktree (F7.5).
+- [ ] UI: `settingsBrowser`, `loginSave`, `liveTest`, `evidence`, `loginExpired`, the See it work card on `check`.
+- [ ] Events: `browser.*`, `login.*`, `devserver.*`.
+
+**Done when:**
+- A real UI task in a web project gets a Live test after green checks, and Check and ship shows See it work with steps, screenshots, a video and a trace.
+- A Live test with a saved test login works without the agent ever seeing the session or a password (test proves it).
+- A page outside `allowed_hosts` is blocked and shows a Needs-you card.
+- An expired login shows "Log in again".
+- The installer size does not change (the kit is downloaded, not bundled).
+- No unit test starts a real browser or a real agent.
+
+---
+
+## M12 - Live preview
+
+**Goal:** Watch the agent test the app, and click around in the task's running app, without leaving Saarthi.
+
+> Build order: M12 needs M11 (browser, dev server, Live test) and M3 (task page). It starts with a go/no-go spike per OS for "agent drives the preview window".
+
+**Build:**
+- [ ] Spike first (about 3 h): per OS, can the agent drive a Saarthi preview window? Linux: WebKitWebDriver. Windows: WebView2 remote debugging (CDP). macOS: no driver, so no-go. The main Saarthi window must never be reachable by the driver. Results go into ADR-003.
+- [ ] Live browser: a screencast of the agent's Chromium (CDP `Page.startScreencast`) in the task page, on every OS (F25.1). Streams only while someone watches.
+- [ ] Preview window: a separate Tauri WebView window on the task's dev server URL, with no IPC and no capabilities (F25.2). Only allowed hosts.
+- [ ] Agent drives the preview window, only on the OSes where the spike passed (F25.3). Else the agent keeps using its own Chromium.
+- [ ] UI: the live browser in `liveTest`, `livePreview` with "Let the agent use this window" only where supported.
+- [ ] CLI / API: `saarthi preview open|close <task>`.
+
+**Done when:**
+- I watch a Live test click through my app in the task page, on Linux, macOS and Windows.
+- I open the preview window for a task and use the app by hand.
+- A test proves the preview window cannot call any Saarthi command.
+- The go/no-go result per OS is written in ADR-003, and "Let the agent use this window" shows only on the OSes that passed.
+
+---
+
 ## Later (after v1)
 
 - **Phone glance:** read-only web page on the phone (LAN + token) to see status and answer "Needs you".
@@ -321,7 +377,8 @@ Total for v1: about **20 weeks** of side-project time (plus buffer: plan for ~5 
 - **More agents:** Aider, local models (Gemini CLI is M7).
 - **GitHub Issues** and other ticket providers (Jira is M10).
 - **PR status:** CI and review comments from GitHub on the task page.
-- **Evidence:** headless browser screenshots + API recordings on Check and ship.
+- **API recordings:** request + response as proof on Check and ship (F7.8). Screenshots, video and trace are M11.
+- **Agent drives the preview window on macOS** (no WKWebView driver today).
 - **Smart memory:** search memory by meaning (embeddings).
 - **Team mode:** share saved instructions and memory with 2-5 devs.
 - **Windows sandbox** (FSD Q4), so "Full access" can be offered on Windows.

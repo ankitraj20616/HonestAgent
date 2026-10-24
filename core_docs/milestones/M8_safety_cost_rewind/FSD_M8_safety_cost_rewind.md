@@ -1,7 +1,7 @@
 # FSD — M8: Safety + Cost + Rewind
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M8 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M8 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -380,6 +380,7 @@ From `../../MILESTONES.md`, made concrete:
 | Packaging bwrap AppArmor fix, first-run check of the sandbox | M9 |
 | An OS sandbox on Windows (so Full access works there) | Later |
 | Per-workspace ports | M7 |
+| Sandbox rules for the Live test (network on, browser outside the sandbox) | M11 (no M8 change needed; see M8 TDD Decision 5 note) |
 | Phone glance, team mode | Later |
 
 ---

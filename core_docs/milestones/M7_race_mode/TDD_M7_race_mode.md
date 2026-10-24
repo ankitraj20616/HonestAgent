@@ -1,7 +1,7 @@
 # TDD — M7: Side by side (Race Mode) + Gemini CLI + parallel polish
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M7 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M7 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -133,6 +133,8 @@ At the pick, for each losing lane: stop its run if active -> checkpoint its work
 - The Context Pack header gets one line: `Ports: 41010-41019. Start dev servers on $SAARTHI_PORT.`
 
 **Why:** a fixed number in the DB is simple and stable. The bind test only catches clashes with things outside Saarthi; between Saarthi workspaces the DB is the truth.
+
+**Used by M11:** the dev server per task (`browser/devserver.py`) reads `tasks.port` and the same env vars; M12 may use `SAARTHI_PORT + 9` for a preview debugging port. If M11 is built before this milestone, M11 builds this port part first.
 
 ### Decision 10 — A `race.*` event group (new)
 

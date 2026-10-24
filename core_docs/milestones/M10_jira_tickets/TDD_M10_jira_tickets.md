@@ -1,7 +1,7 @@
 # TDD — M10: Jira tickets
 
 **Document type:** Technical Design Document (TDD)
-**Milestone:** M10 of M0-M10 (built after M6; see `../../MILESTONES.md`)
+**Milestone:** M10 of M0-M12 (built after M6; see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2

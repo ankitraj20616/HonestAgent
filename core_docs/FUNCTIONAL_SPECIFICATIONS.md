@@ -117,6 +117,12 @@ Engine words stay in the code, API and CLI. The UI shows the label in the middle
 | - | Files | The IDE-style file view (F17). |
 | **Doc** | Doc | A markdown text about a task: a plan, a changed .md file, a pinned project doc, a research finding. |
 | **Ticket** | Jira ticket | A Jira issue linked to a task. |
+| **Live test** (check kind `live`) | Live test | One more check after the required checks pass: the agent opens the app in a real browser and walks the UI parts of "What done looks like" (F24.4, M11). |
+| **Evidence** | See it work | Screenshots, a short video and a trace from a Live test or an `e2e` check, shown on Check and ship (F7.5). |
+| **Saved login** (`storageState`) | Saved login | The browser session of a **test account**, saved once by hand and reused by Live tests. Never the password (F24.6). |
+| **Browser kit** | Browser kit | Playwright's Chromium, downloaded once into the Saarthi data folder when no system Chrome, Edge or Chromium is found. Never in the installer (F24.1). |
+| **Dev server** | (hidden) | The project's own "run the app" command, started by Saarthi on the task's own port (F24.3). |
+| **Live preview** | Live browser / Preview window | Watch the agent's browser inside the task page, or open the task's running app in a Saarthi window (F25, M12). |
 
 ---
 
@@ -129,15 +135,17 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
 3. **New task** - a drafted goal + More options (how to work, saved instructions, note, side by side, safety).
 4. **Task page** - goal card, Activity, answers to the agent. More: Terminal, Docs, History, Details, What Claude reads.
 5. **Files** - IDE-style file view, per task and per project (F17).
-6. **Check and ship** - verdict, tests and checks, what changed, Ask Codex to review, Approve and create pull request.
+6. **Check and ship** - verdict, tests and checks, what changed, Ask Codex to review, Approve and create pull request. With browser testing on (M11): the Live test and a **See it work** card.
 7. **Done** - PR link, lessons learned, Jira write-back.
 8. **Side by side** - two agents on one goal, compare and pick.
 9. **Lessons and notes** - project memory (project menu).
 10. **Saved instructions** - playbooks (project menu).
 11. **Jira tickets** - per project (project menu, M10).
 12. **Safety and cost** - what agents may do, sandbox, budget, cost.
-13. **Settings** - General, Agents, Project, Safety, Jira, Health, About.
+13. **Settings** - General, Agents, Project, Safety, Jira, Browser testing (M11), Health, About.
 14. **Command bar** (`Ctrl K`, every screen) + New task from any app (`Ctrl Alt N`) + shortcut list (`?`).
+15. **Browser testing** (M11) - Settings → Browser testing, Save a login, the task page while it live tests, See it work, the "Log in again" card.
+16. **Live preview** (M12) - the live browser in the task page, and a preview window for the task's running app.
 
 ---
 
@@ -208,7 +216,7 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
 
 | Status on screen | Engine stages | Row action |
 |---|---|---|
-| **Needs you** | `Needs You`, `Failed`, `Review`, and any Jira write-back or conflict waiting for the user | Answer / Fix / Review |
+| **Needs you** | `Needs You`, `Failed`, `Review`, and any Jira write-back, conflict, expired saved login or blocked host (M11) waiting for the user | Answer / Fix / Review |
 | **Working** | `Running`, `Verifying` | none (open the task) |
 | **To do** | `Inbox`, `Research`, `Ready` | Start (when a goal exists) |
 | **Done** | `Shipped` (+ pending lessons) | PR link |
@@ -329,8 +337,9 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
 - **F6.6 Cleanup** (Must)
   - When a task is shipped or archived, there is no prompt. The worktree is removed after 7 days (`WORKTREE_CLEANUP_DAYS` in `config.py`). The branch is kept.
   - Done shows a link to remove it now.
-- **F6.7 Ports** (Later)
+- **F6.7 Ports** (Later in this list; built in M7, see `milestones/README.md`)
   - Give each workspace its own port number, so two dev servers do not clash.
+  - M11 starts the dev server on this port (F24.3).
 
 ### F7. Checks and Proof
 
@@ -338,6 +347,7 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
   - Defined in `.saarthi/project.toml`.
   - Each check has: name, command, required yes/no, timeout.
   - Examples: `pytest`, `ruff check`, `mypy`, `npm run build`, `playwright test`.
+  - M11 adds a `kind`: `cmd` (default) or `e2e` (F24.5). The Live test is a check of kind `live`, made by Saarthi (F24.4).
 - **F7.2 Auto-run checks** (Must)
   - After every `Build` or `Fix` run ends, the app runs all checks in the task's workspace.
 - **F7.3 Proof Card** (Must)
@@ -350,9 +360,12 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
   - If checks fail, the user can click "Let Claude fix it".
   - The app sends the failing output to the agent.
   - Max auto-fix rounds: 3 (setting). Then it stops and asks the user.
-- **F7.5 Evidence** (Later)
-  - Screenshots of web pages (headless browser).
-  - API call recordings (request + response).
+- **F7.5 Evidence** (Must, M11)
+  - Screenshots, a short video and a Playwright trace, for the Live test (F24.4) and for `e2e` checks (F24.5).
+  - Shown on Check and ship as **See it work**: a step list with a screenshot per step, the video, and "Open trace".
+  - Kept with the task. Removed with the worktree (F6.6).
+  - Size is capped (`EVIDENCE_MAX_MB` in `config.py`). Over the cap, the video is dropped first, then old screenshots.
+  - API call recordings are not part of this (F7.8, Later).
 - **F7.6 Manual override** (Must)
   - "Review anyway": user can move a task to Review with failing checks, but must type a reason. The reason is saved.
 - **F7.7 Trust score** (Must, M4; second-opinion part in M5)
@@ -372,6 +385,8 @@ Details and view ids: UI spec, section 8. The top bar has: logo, project picker 
   - A "Not sure" goal does not change the verdict.
   - The UI shows the verdict on Check and ship. The number shows only under "How we decided".
   - It never blocks a move. The stage rules stay as in F2.5.
+- **F7.8 API recordings** (Later)
+  - Record API calls (request + response) as proof.
 
 ### F8. Second Opinion (Ask Codex to review)
 
@@ -572,6 +587,7 @@ Files works like an IDE file view, for exploring and reviewing. It is not a full
   - `saarthi review <task-id>` (prints what changed)
   - `saarthi ship <task-id>`
   - `saarthi daemon start|stop|status`
+  - M11: `saarthi browser status`, `saarthi browser kit install`, `saarthi browser login save <name>`, `saarthi devserver start <task-id>`, `saarthi evidence <task-id>`
 - **F20.2 JSON output** (Must)
   - `--json` flag for scripts.
 
@@ -637,6 +653,66 @@ Files works like an IDE file view, for exploring and reviewing. It is not a full
 - **F23.8 Create a Jira ticket from Saarthi; two-way comment sync** (Later)
 - **F23.9 Jira Data Center / Server** (Later)
 
+### F24. Browser testing (M11)
+
+Agents test the app live in a real browser, once per build, when the project turns it on. Details: UI spec section 11 (B1-B9), `milestones/M11_browser_testing/`, `decisions/ADR-003-browser-testing.md`.
+
+- **F24.1 Browser on demand** (Must, M11)
+  - One engine on every OS: **Chromium**. No Firefox, no WebKit. Same behaviour on Linux, macOS and Windows.
+  - Lightest path first, in this order:
+    1. system **Google Chrome**,
+    2. system **Microsoft Edge** (built into Windows 10/11, so Windows usually needs no download),
+    3. system **Chromium**,
+    4. else Settings → Browser testing offers a one-time download of the **browser kit** into the Saarthi data folder.
+  - The kit holds Playwright's **Chromium headless shell** for Live tests (the smallest build). The full Chromium is downloaded only when no system browser exists and the user wants to watch a test or save a login (both need a window).
+  - Never in the installer. The download starts only on a click (or `saarthi browser kit install`).
+  - Exact sizes and packaging are measured in the M11 spike.
+- **F24.2 Project browser settings** (Must, M11)
+  - `[browser]` in `.saarthi/project.toml`: `enabled`, `base_url`, `dev_server`, `allowed_hosts`, `live_test` (`"auto"` / `"off"`), `live_test_required`.
+  - Off by default. Backend-only projects keep it off.
+  - Settings → Browser testing shows: the browser found (or "Download browser kit"), base URL, dev server command and port, allowed hosts, Live test Auto / Off and Required, and the saved logins.
+- **F24.3 Dev server per task** (Must, M11)
+  - Saarthi starts `dev_server` in the task's own copy of the repo, on the task's own port (per-workspace ports, M7). If M7 is not built yet, M11 builds the port part.
+  - A ready check waits until `base_url` answers, with a timeout (`DEV_SERVER_READY_TIMEOUT_S`). On timeout, the Live test is an error with the last lines of the server output.
+  - It is stopped when the checks end.
+- **F24.4 Live test** (Must, M11)
+  - One more check, after the required checks pass. Shown as "Live test" in Tests and checks.
+  - The agent drives the browser through a browser MCP server (for example Playwright MCP; flags checked in the M11 spike). It walks the UI items of "What done looks like", step by step, and Saarthi saves a screenshot per step, a short video and a trace.
+  - Optional by default: a failed Live test feeds the verdict like any optional check. With `live_test_required = true` it is a required check.
+  - The task page shows the steps as they happen (`liveTest`).
+  - Max steps and time: `LIVE_TEST_MAX_STEPS`, `LIVE_TEST_TIMEOUT_S`.
+  - Example: goal "Add a password reset page". The Live test opens `/login`, clicks "Forgot password", types a test email, sees "Check your inbox". Check and ship shows "Live test · passed · 6 steps" and See it work.
+- **F24.5 `e2e` checks** (Must, M11)
+  - The project's own E2E command (`npx playwright test`, `pytest -m e2e`) is a check with `kind = "e2e"`.
+  - Saarthi starts the dev server first and collects the artifacts (screenshots, videos, traces) into See it work.
+- **F24.6 Saved logins** (Must, M11)
+  - **Test accounts only.** The Save a login dialog says so.
+  - "Save a login" opens a normal (headed) browser. The user logs in by hand. Saarthi saves the session (Playwright `storageState`) per project and name, in the data folder, in an owner-only file.
+  - It is never in the repo, in events, in the Context Pack, or in agent text. The agent only gets "you are logged in as `test-admin`".
+  - Saarthi never stores the password.
+  - When a saved login no longer works, the task shows a Needs-you card: "Your saved login test-admin expired. Log in again." One click opens the headed browser.
+- **F24.7 Allowed hosts** (Must, M11)
+  - The agent's browser opens only `base_url` and `allowed_hosts` (default `127.0.0.1`, `localhost`).
+  - Any other host is blocked, and a Needs-you card asks: "Claude wanted to open `accounts.example.com`. Allow it for this task?" After OK, the Live test can run again.
+  - Never use production accounts or production hosts.
+
+### F25. Live preview (M12, starts with a spike)
+
+Watch the agent's browser inside Saarthi, and open the task's running app in a Saarthi window. Details: UI spec section 11 (B10), `milestones/M12_live_preview/`.
+
+- **F25.1 Live browser** (Must, M12)
+  - A live picture (screencast) of the agent's Chromium inside the task page, while the Live test runs (`liveTest`).
+  - Works on every OS. It uses the same browser as M11.
+  - It only streams while someone watches.
+- **F25.2 Preview window** (Must, M12)
+  - "Open preview" opens a separate Saarthi window (Tauri WebView) on the task's dev server URL. The user clicks around by hand (`livePreview`).
+  - The window has **no IPC and no capabilities**: it cannot call any Saarthi command, because it loads untrusted app code.
+  - It only opens `base_url` and `allowed_hosts`. Other links open in the system browser.
+- **F25.3 Agent drives the preview window** (Spike-gated, M12)
+  - Linux: via WebKitWebDriver. Windows: via WebView2 remote debugging (CDP). macOS: not supported (no WKWebView driver), so it falls back to F25.1.
+  - Kept only on the OSes where the M12 spike passes. If the spike fails on an OS, F25.3 is off there and the agent uses its own Chromium (F25.1).
+  - "Let the agent use this window" shows only where it is supported.
+
 ---
 
 ## 6. Main user flows
@@ -695,6 +771,15 @@ Optional extras (never needed for the 5 steps):
 6. Go back to Check and ship and click "Approve and create pull request".
 - To explore code without a task: project menu -> Project files.
 
+### 6.7 Live test with a login (M11)
+1. In `acme-web`, set `[browser] enabled = true`, `base_url`, `dev_server` in `.saarthi/project.toml`.
+2. Settings -> Browser testing shows "Using Google Chrome". (No browser found? Click "Download browser kit" once.)
+3. Click "Save a login", name it `test-admin`. A browser opens. Log in with the **test** account by hand. Click "I'm logged in". Saarthi saves the session, not the password.
+4. Start a task: "Add a password reset page". Claude builds. The required checks pass.
+5. Saarthi starts the dev server on the task's port. The Live test starts. The task page shows each step with a thumbnail (in M12, also the live browser).
+6. Check and ship shows the verdict, "Live test · passed", and the See it work card. Open it: steps with screenshots, the video, "Open trace".
+7. Weeks later the session is old. The next Live test shows the Needs-you card "Your saved login test-admin expired. Log in again." Log in again, then "Run checks again".
+
 ---
 
 ## 7. Non-functional requirements
@@ -726,6 +811,7 @@ Optional extras (never needed for the 5 steps):
   - App open in under 2 s.
   - Idle RAM under 150 MB for the window plus under 150 MB for the daemon.
   - No Electron, no bundled browser, no VS Code.
+  - The browser kit (F24.1) is not in the installer. It is optional and downloaded on demand, so the installer budget does not change.
   - Checked on all three OSes before a release (M9).
 
 ---
@@ -737,6 +823,8 @@ Optional extras (never needed for the 5 steps):
 - Team / multi-user features.
 - Mobile app (only a read-only phone page, later).
 - Jira Data Center, creating Jira tickets (v1).
+- Live tests with production accounts or against production hosts. Saved logins are for test accounts only (F24.6).
+- A browser bundled in the installer (F24.1). Firefox and WebKit engines for Live tests.
 
 ---
 
@@ -746,3 +834,6 @@ Optional extras (never needed for the 5 steps):
 - Q2: Where to keep worktrees? Inside the Saarthi data folder (`worktrees/`) or next to the repo? (Default: first one.)
 - Q3: Should Race Mode count as one task or two? (Default: one task, two runs.)
 - Q4: How to sandbox agents on Windows after v1? (v1: no OS sandbox, so no "Full access" on Windows. Options to study: AppContainer, a restricted token + Job Object, or running the agent in WSL2.)
+- Q5: Browser kit packaging (M11 spike): how to ship Playwright MCP and its Node runtime when the user has no `node`, where to download the Chromium headless shell from, and how big each part really is on each OS.
+- Q6: Video size (M11 spike): which video size and length keep See it work useful but small? (Cap: `EVIDENCE_MAX_MB`; video is dropped first when over.)
+- Q7: Agent drives the preview window (M12 spike): does it pass on Linux (WebKitWebDriver) and Windows (WebView2 CDP) without opening the main Saarthi window to the driver? macOS has no driver.

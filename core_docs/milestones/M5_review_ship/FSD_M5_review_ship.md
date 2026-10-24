@@ -1,7 +1,7 @@
 # FSD — M5: Review + Ship
 
 **Document type:** Functional Specification Document (FSD)
-**Milestone:** M5 of M0-M9 (see `../../MILESTONES.md`)
+**Milestone:** M5 of M0-M12 (see `../../MILESTONES.md`)
 **Product:** Saarthi - Agentic Development Environment (Linux, macOS, Windows)
 **Status:** Draft — awaiting review
 **Version:** 0.2
@@ -440,6 +440,7 @@ g3  tests/test_reset.py
 | Editing code inside the diff view | Not planned (tiny edits in Files are M3) |
 | Draft PRs, reviewers, labels on the PR | Later |
 | Looked-at marks in project files (`projectFiles`) | Not planned |
+| See it work card on Check and ship (screenshots, video, trace) | M11 (its evidence folder is removed with the worktree cleanup of 5.10) |
 
 ---
 
