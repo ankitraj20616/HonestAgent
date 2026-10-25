@@ -50,6 +50,7 @@ If code and docs disagree, fix the doc in the same PR.
 
 | Folder | What goes inside |
 |---|---|
+| `milestones/` | One folder per milestone (M0-M5), each with its own `FSD.md`, `TDD.md` and `TASKS.md`. |
 | `decisions/` | One file per big decision (ADR). Starts with `ADR-001-build-fastauthz.md`. |
 | `plans/` | Implementation plans for bigger tasks. |
 | `reports/` | Spike results, test and benchmark reports. M0 writes `reports/M0_spikes.md`. |
