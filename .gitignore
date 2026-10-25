@@ -223,5 +223,5 @@ __marimo__/
 .superpowers/
 .claude/worktrees/
 
-# personal Hinglish guide, not for the repo
-SAMJHO_SAARTHI.md
+# personal Hinglish guides, not for the repo
+SAMJHO_*.md

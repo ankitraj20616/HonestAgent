@@ -1,839 +1,387 @@
 # Functional Specifications (FSD)
-## Saarthi - Agentic Development Environment
+## fastauthz v1.0 - who can do what, for FastAPI apps
 
-**Version:** 0.2 (draft)
-**Date:** 2026-10-23
-**Type:** Personal project
-**Platform:** Linux, macOS and Windows (one app, one codebase)
-**UI spec:** `design/2026-10-23-simple-ui-design.md` (screens, words, statuses). Prototype: `design/Saarthi Prototype.html`.
+**Version:** 1.0 (draft)
+**Date:** 2026-10-25
+**Scope:** v1.0 (tasks M0 to M5 in `TASKS.md`)
+**How it is built:** `TDD-tech-design-doc.md`. **With what:** `TECH_STACK.md`.
 
-> Simple English. Points and sub-points. "Must" = needed for v1. "Later" = after v1.
-
----
-
-## 1. Overview
-
-### 1.1 What is Saarthi
-- A light desktop app for Linux, macOS and Windows.
-- It helps a developer **direct AI coding agents** (Claude Code, Codex, Gemini CLI).
-- The main unit is a **Task**, not a file.
-- One window holds **many git repos** (projects).
-- The developer does: research, write intent, verify, approve.
-- The agents do: write code, run tests, explain changes.
-
-### 1.2 The problem
-- Today we use an IDE, a terminal, a browser, and many agent chats at once.
-- Each repo needs its own IDE window.
-- Context is spread everywhere:
-  - Research is in browser tabs.
-  - Task details are in the head or in a chat.
-  - Agent output is in a terminal that scrolls away.
-  - Test results are in another terminal.
-- Running 2-3 tasks at the same time is hard:
-  - Agents touch the same files.
-  - We forget which terminal is doing what.
-- Verifying is manual and easy to skip.
-- Learnings are lost after the session ends.
-
-### 1.3 The solution
-- One place per task, called the **Task page**. It has:
-  - the goal (what to build),
-  - the research,
-  - the live agent work (Activity),
-  - the checks and the review (**Check and ship**),
-  - the history (under More).
-- Each task gets its **own git worktree and branch** ("its own copy of the repo"). Tasks never clash.
-- On screen a task has one of **4 statuses**: To do, Working, Needs you, Done. Inside, the engine moves it stage by stage.
-- The app **runs checks by itself** and shows a simple **verdict**.
-- A **Files** screen shows the code like an IDE file view, for exploring and reviewing.
-- The app **remembers** the project (core_docs, learnings) and gives it to the agents.
-- All repos live in **one window**: project tabs and **All projects** on Home.
-
-### 1.4 What makes it different (ADE with a built-in IDE-style file view)
-- **Task-first, not file-first.** Home is a list of tasks across all projects, not a file tree.
-- **Many repos, one window.** No new window per repo.
-- **Proof gate.** A task cannot reach the `Review` stage without passing checks.
-- **What changed.** The diff is grouped by "why", with the agent's notes and risk tags.
-- **Ask Codex to review.** One agent builds, another agent reviews.
-- **Side by side.** The same goal goes to two agents in parallel. You pick the better result.
-- **Project Memory.** The app reads and updates `core_docs/` by itself.
-- **Files, IDE-style, for reading.** Tree, tabs, syntax colours, changes against `main`. Only tiny edits. For heavy editing, one click opens your own editor. Not built on VS Code.
-- **Light and cross-platform.** One small app for Linux, macOS and Windows. No Electron.
-
-### 1.5 Success criteria
-- I can do a full daily task (research -> PR) **without opening an IDE**.
-- I can run **3 tasks in parallel**, in **different repos**, from one window, without confusion.
-- Every finished task has **proof** (checks + verdict).
-- Starting a new task takes **under 30 seconds**.
-- A new user goes from opening the app to an open pull request, without help, in **under 5 minutes**.
-- After 1 month of use, `core_docs/memory` and `learnings` are **updated by the app**, not by hand.
+> This file says WHAT fastauthz does. It does not say how.
+> The English is kept very simple on purpose.
+> "Must" = needed for v1.0. "Should" = v1.0 if there is time. "Later" = not in v1.0.
+> Every point has an ID (like F6.2). Tests and PRs can point at it.
 
 ---
 
-## 2. Users
+## 1. The problem
 
-### 2.1 Primary user: Solo developer (me)
-- Python developer.
-- Uses Claude Code and Codex every day.
-- Works on 3-5 client projects at the same time.
-- Spends most time on research, reviewing, and verifying.
+### 1.1 What hurts today
+- Almost every app has users. Users may only do some things.
+  - Example: Alice can edit her own posts. She cannot edit Bob's posts.
+  - Example: a user in company A must never see data of company B.
+- In FastAPI, people write these checks by hand:
+  - `if user.role != "admin": raise 403` in many routes.
+  - `WHERE org_id = ...` added by hand to every list query.
+- If one route or one query forgets the check, private data leaks.
+- Django has ready tools for this. FastAPI does not have a good, maintained one:
+  - `oso` did this well. It is now archived and gets no fixes.
+  - `fastapi-permissions` has had no release since 2020.
+  - Other tools need a separate server, or cost money.
+- Proof and links: `decisions/ADR-001-build-fastauthz.md`.
 
-### 2.2 Later: small team
-- 2-5 developers share playbooks and memory.
-- Not in v1.
+### 1.2 What fastauthz is
+- A Python library. You install it with `pip install "fastauthz[standard]"`.
+- You write your permission rules **once**, in normal Python.
+- fastauthz uses the same rules in three places:
+  - **Check one thing:** "Can Alice edit post 7?" -> yes or no.
+  - **Filter a list:** "Show only the posts Alice may read." -> it adds the right `WHERE` to the SQL.
+  - **Guard a route:** a FastAPI dependency. It loads the object and checks it. If not allowed, it returns 404 or 403.
 
----
-
-## 3. Key words (glossary)
-
-Engine words stay in the code, API and CLI. The UI shows the label in the middle column (full list: UI spec, section 5).
-
-| Word (engine) | UI label | Meaning |
-|---|---|---|
-| **Project** | Project | A git repo added to Saarthi. One window holds many projects. |
-| **Task** | Task | One piece of work. Example: "Add password reset API". |
-| **Brief** | Goal | The written intent of a task: goal, acceptance criteria, notes. |
-| **Acceptance criteria** | What done looks like | The "done when" points of a brief. The agent pre-fills them. |
-| **Stage** | Status | The engine has 8 stages. The UI groups them into 4 statuses (F2.9). |
-| **Run** | Start (button) | One agent working on one task one time. A task can have many runs. |
-| **Agent** | its name ("Claude", "Codex", "Gemini") | An AI coding tool. v1: Claude Code, Codex, Gemini CLI. |
-| **Workspace** | "its own copy of the repo" | The git worktree + branch made for a task. Branch details under More -> Details. |
-| **Check** | Tests and checks | A command that verifies the work. Example: `pytest`, `ruff`, `npm run build`. |
-| **Proof Card** | Check and ship (checks part) | A summary of all check results + evidence for a task. |
-| **Trust score** | Verdict: Looks good / Take a look / Has problems | A 0-100 number made by the daemon. The UI shows a verdict (F7.7). |
-| **Change Story** | What changed | The review view: changes grouped by purpose, with explanations. |
-| **Second Opinion** | Ask Codex to review | A read-only review by a second agent. |
-| **Playbook** | Saved instructions | A saved, reusable prompt recipe. Example: "Fix bug with TDD". |
-| **Memory** | Lessons and notes | Project knowledge: core_docs, learnings, decisions. |
-| **Memory update** | Lessons learned | Drafted memory changes, shown as a card after shipping. |
-| **Context Pack** | What Claude reads | The file the agent reads before a run. |
-| **Checkpoint / Rewind** | Undo point / Restore | A hidden snapshot of the worktree, and going back to it. |
-| **Race Mode** | Side by side | One goal, two agents, pick the winner. |
-| **Needs You** | Needs you ("Claude has a question") | The agent is waiting for your answer or permission. |
-| **Permission profile** | What agents may do: Read only / Safe / Full access | How much an agent may do in its worktree. |
-| **Daemon** | Background service | `saarthid`. Shown only when broken. |
-| - | Home | The start screen: project tabs + All projects. |
-| - | All projects | One merged task list of every project. |
-| - | Files | The IDE-style file view (F17). |
-| **Doc** | Doc | A markdown text about a task: a plan, a changed .md file, a pinned project doc, a research finding. |
-| **Ticket** | Jira ticket | A Jira issue linked to a task. |
-| **Live test** (check kind `live`) | Live test | One more check after the required checks pass: the agent opens the app in a real browser and walks the UI parts of "What done looks like" (F24.4, M11). |
-| **Evidence** | See it work | Screenshots, a short video and a trace from a Live test or an `e2e` check, shown on Check and ship (F7.5). |
-| **Saved login** (`storageState`) | Saved login | The browser session of a **test account**, saved once by hand and reused by Live tests. Never the password (F24.6). |
-| **Browser kit** | Browser kit | Playwright's Chromium, downloaded once into the Saarthi data folder when no system Chrome, Edge or Chromium is found. Never in the installer (F24.1). |
-| **Dev server** | (hidden) | The project's own "run the app" command, started by Saarthi on the task's own port (F24.3). |
-| **Live preview** | Live browser / Preview window | Watch the agent's browser inside the task page, or open the task's running app in a Saarthi window (F25, M12). |
+### 1.3 Our promises
+- **Safe by default.** If no rule says "yes", the answer is "no".
+- **One rule, same answer.** The check in Python and the filter in SQL always agree. We test this.
+- **Mistakes show up early.** A typo in a rule stops the app at start, not later in production.
+- **No server, no subscription.** It runs inside your app. Free and open source (MIT).
+- **Plain Python.** No YAML files. No special policy language.
 
 ---
 
-## 4. Main screens (overview)
+## 2. Who uses it
 
-Details and view ids: UI spec, section 8. The top bar has: logo, project picker (with the project tools), search or jump (`Ctrl K`), the Needs-you pill, Settings. There is no sidebar and no dock.
-
-1. **Home** - project tabs + All projects. Groups: Needs you, Working, To do. Done this week.
-2. **Board view** - 4 columns (project menu). "Show detailed stages" shows the engine stage.
-3. **New task** - a drafted goal + More options (how to work, saved instructions, note, side by side, safety).
-4. **Task page** - goal card, Activity, answers to the agent. More: Terminal, Docs, History, Details, What Claude reads.
-5. **Files** - IDE-style file view, per task and per project (F17).
-6. **Check and ship** - verdict, tests and checks, what changed, Ask Codex to review, Approve and create pull request. With browser testing on (M11): the Live test and a **See it work** card.
-7. **Done** - PR link, lessons learned, Jira write-back.
-8. **Side by side** - two agents on one goal, compare and pick.
-9. **Lessons and notes** - project memory (project menu).
-10. **Saved instructions** - playbooks (project menu).
-11. **Jira tickets** - per project (project menu, M10).
-12. **Safety and cost** - what agents may do, sandbox, budget, cost.
-13. **Settings** - General, Agents, Project, Safety, Jira, Browser testing (M11), Health, About.
-14. **Command bar** (`Ctrl K`, every screen) + New task from any app (`Ctrl Alt N`) + shortcut list (`?`).
-15. **Browser testing** (M11) - Settings → Browser testing, Save a login, the task page while it live tests, See it work, the "Log in again" card.
-16. **Live preview** (M12) - the live browser in the task page, and a preview window for the task's running app.
-
----
-
-## 5. Functional requirements
-
-### F1. Projects
-
-- **F1.1 Add project** (Must)
-  - User picks a folder that is a git repo.
-  - App checks:
-    - It is a git repo.
-    - `git` and the agent CLIs (`claude`, `codex`, `gemini`) are installed (warn if missing, do not block).
-  - App creates a `.saarthi/` folder in the repo with `project.toml`.
-  - App finds `core_docs/` (or asks for the docs folder path).
-- **F1.2 Project settings** (Must)
-  - Default branch (main/master/develop).
-  - Default agent (Claude, Codex or Gemini). Claude is the default.
-  - Check commands (test, lint, type check, build).
-  - Memory folder path (default `core_docs/`).
-- **F1.3 Project list** (Must)
-  - Shows all projects with: name, open tasks count, running agents count.
-  - In the UI: the project picker menu and the project tabs on Home.
-- **F1.4 Remove project** (Must)
-  - Removes it from Saarthi only. Never deletes the repo.
-- **F1.5 Many projects in one window** (Must, M3)
-  - The user adds every repo once. No second window, no "open folder" per repo.
-  - Home has one tab per project plus **All projects**, which merges the tasks of every project. Each row shows its project.
-  - The top bar has a project picker. Its menu has the project tools (Board view, Lessons and notes, Saved instructions, Jira tickets, Safety and cost, Project files) and the list of all projects.
-  - The "Needs you" count and notifications cover every project.
-  - A new task picks its project (default: the open project tab).
-  - Each task still has its own branch and worktree in its own repo.
-  - CLI: `saarthi task list` without a project lists the tasks of all projects.
-
-### F2. Tasks and Board view
-
-- **F2.1 Create task** (Must)
-  - From Home (**New task**), the Command bar, or the CLI: `saarthi task new "title"`.
-  - Only the title (a one-line description) and the project are required. Everything else can come later.
-- **F2.2 Quick capture** (Must)
-  - `Ctrl Alt N` from any app opens a small New task box. Type one line. It goes to the To do list of the chosen project.
-- **F2.3 Task stages** (Must)
-  - `Inbox` -> `Research` -> `Ready` -> `Running` -> `Verifying` -> `Review` -> `Shipped`
-  - Side states:
-    - `Needs You` - agent is waiting for you.
-    - `Failed` - run or checks failed.
-    - `Parked` - paused by you.
-    - `Archived` - hidden, kept for history.
-  - These are engine stages. The UI shows them as 4 statuses (F2.9).
-- **F2.4 Board view** (Must)
-  - Project menu -> Board view. 4 columns, one per status (F2.9).
-  - "Show detailed stages" adds the engine stage name to each card.
-  - Drag and drop to move (only allowed moves, see F2.5).
-  - Each card shows: title, agent icon, time spent, cost, check status dot.
-  - Cards in Needs you glow and go to the top.
-- **F2.5 Stage rules** (Must)
-  - `Ready` needs a brief with at least a goal.
-  - `Review` needs a Proof Card with all required checks green (or a manual override with a reason).
-  - `Shipped` needs a commit (and a PR if the project uses PRs).
-- **F2.6 Task fields** (Must)
-  - Title, brief, stage, priority (P1/P2/P3), labels, linked ticket URL, created/updated dates.
-- **F2.7 Filters and search** (Must)
-  - By project, status, stage, label, agent, text.
-  - `Parked` and `Archived` tasks show only with a filter.
-- **F2.8 Sub-tasks** (Later)
-  - Split a big task into smaller tasks. Agent can suggest the split.
-- **F2.9 Simple statuses** (Must, M3)
-  - The UI shows 4 statuses. Each one groups engine stages:
-
-| Status on screen | Engine stages | Row action |
-|---|---|---|
-| **Needs you** | `Needs You`, `Failed`, `Review`, and any Jira write-back, conflict, expired saved login or blocked host (M11) waiting for the user | Answer / Fix / Review |
-| **Working** | `Running`, `Verifying` | none (open the task) |
-| **To do** | `Inbox`, `Research`, `Ready` | Start (when a goal exists) |
-| **Done** | `Shipped` (+ pending lessons) | PR link |
-
-  - `Parked` and `Archived` are hidden behind a filter.
-  - The engine stages and `ALLOWED_MOVES` do not change. Only the UI groups them.
-  - The daemon gives the status with each task, so the UI and the CLI show the same thing.
-
-### F3. Task Goal (brief)
-
-- **F3.1 Goal card** (Must)
-  - On the task page. "Edit" opens a markdown editor with fixed sections:
-    - Goal (what and why)
-    - What done looks like (acceptance criteria, a list of "done when" points)
-    - Notes / constraints
-    - Files or areas to focus (optional)
-- **F3.2 Goal from research** (Must)
-  - Button: "Make a goal from this" on the research view. The agent reads the research notes and writes a brief draft.
-  - New task shows a drafted goal from the one-line description, made the same way.
-  - User edits and starts.
-- **F3.3 Brief from ticket** (Must, M10)
-  - Start a task from a Jira ticket (Cloud). App pulls the text into the brief draft.
-  - See F23.3.
-  - GitHub issues stay Later (F23.7).
-- **F3.4 Brief versions** (Must)
-  - Every save keeps a version. User can see old versions (Goal card -> Edit -> History).
-
-### F4. Research
-
-- **F4.1 Notes** (Must)
-  - Free notes per task (markdown).
-- **F4.2 Links** (Must)
-  - Save URLs with a short note. App fetches the page title.
-- **F4.3 Snippets** (Must)
-  - Paste code, logs, error messages, API responses. Each snippet has a label.
-- **F4.4 Ask agent to research** (Must)
-  - New task -> More options -> "Just research", or "Research this" on a task. Agent explores the codebase in **read-only mode** and writes findings:
-    - Related files
-    - How the current code works
-    - Risks
-    - Suggested approach
-  - Findings are saved as a research note and shown on the task page research view.
-  - "Make a goal from this" turns them into a goal (F3.2).
-- **F4.5 Files and images** (Later)
-  - Attach screenshots, PDFs, designs.
-- **F4.6 Use in context** (Must)
-  - Each research item has a toggle: "send to agent" yes/no.
-
-### F5. Agents and Runs
-
-- **F5.1 Supported agents** (Must)
-  - Claude Code (CLI `claude`) - M2. The default.
-  - Codex (CLI `codex`) - M2.
-  - Gemini CLI (CLI `gemini`) - M7.
-  - All of them sit behind the `AgentAdapter` interface. Labels use the agent's name ("Claude has a question", "Let Codex fix it").
-  - The app uses the user's **existing logins** for these CLIs. It does not ask for API keys if the CLI is already logged in.
-- **F5.2 Start a run** (Must)
-  - **Start** uses the defaults: the project's default agent, `Build` mode. No choice is needed.
-  - New task -> agent picker + More options lets the user pick: agent, how to work (mode), saved instructions (optional), a note (optional).
-  - Modes:
-    - `Plan` - agent only writes a plan. No code changes.
-    - `Build` - agent writes code.
-    - `Fix` - agent fixes failing checks.
-    - `Research` - read-only exploration.
-- **F5.3 Context Pack** (Must)
-  - Before each run, the app builds a Context Pack (UI: "What Claude reads"):
-    - The brief
-    - Selected research items
-    - Relevant memory (core_docs, learnings)
-    - Playbook text (if picked)
-    - Project rules (CLAUDE.md / AGENTS.md)
-  - User can open it before or after starting: task page -> More -> What Claude reads.
-- **F5.4 Live activity** (Must)
-  - The **Activity** tab on the task page shows agent work as clean cards, not raw text:
-    - Thinking / message card
-    - Tool call card (read file, edit file, run command)
-    - Command output (collapsed by default)
-    - File changed card (with small diff)
-  - Auto-scroll with a "pause scroll" button.
-- **F5.5 Raw terminal** (Must)
-  - Task page -> More -> Terminal shows the raw terminal of the agent.
-  - User can type into it (interactive mode).
-- **F5.6 Needs You** (Must)
-  - When the agent asks a question or asks permission:
-    - Task moves to `Needs You` (status Needs you: "Claude has a question").
-    - Desktop notification is shown.
-    - User answers on the task page (or from the row on Home).
-- **F5.7 Send message during a run** (Must)
-  - User can send a follow-up message to the running agent.
-- **F5.8 Stop / Resume** (Must)
-  - Stop a run at any time.
-  - Resume the same agent session later (if the agent supports it).
-- **F5.9 Many runs per task** (Must)
-  - All runs are listed in the task (More -> Details) with: agent, mode, start time, duration, cost, result.
-- **F5.10 Parallel runs** (Must)
-  - Different tasks can run at the same time, in the same or in different projects.
-  - Default limit: 4 running agents across all projects. Can be changed in Settings.
-- **F5.11 More agents** (Later)
-  - Aider, local models, others, via the same adapter design.
-
-### F6. Workspace (isolation)
-
-- **F6.1 Auto workspace** (Must)
-  - When a task first runs, the app creates:
-    - A branch: `saarthi/<task-id>-<short-title>`
-    - A git worktree for that branch, outside the main repo folder.
-  - The UI calls it "its own copy of the repo".
-- **F6.2 Setup script** (Must)
-  - Optional per project. Runs once after the worktree is created.
-  - Example: copy `.env`, `uv sync`, `npm install`.
-- **F6.3 Workspace info** (Must)
-  - Task page -> More -> Details shows: branch name, path, "ahead/behind main" count ("Behind main"), changed files count.
-- **F6.4 Open in tools** (Must)
-  - Buttons: open folder, open terminal here, open in my editor (`$EDITOR`, Zed, Neovim, etc.).
-- **F6.5 Sync with main** (Must)
-  - Button: "Update from main" in Details (rebase or merge, user picks in settings).
-  - If there is a conflict, the task shows in Needs you with "Let Claude fix it", which starts a `Fix` run to solve it.
-- **F6.6 Cleanup** (Must)
-  - When a task is shipped or archived, there is no prompt. The worktree is removed after 7 days (`WORKTREE_CLEANUP_DAYS` in `config.py`). The branch is kept.
-  - Done shows a link to remove it now.
-- **F6.7 Ports** (Later in this list; built in M7, see `milestones/README.md`)
-  - Give each workspace its own port number, so two dev servers do not clash.
-  - M11 starts the dev server on this port (F24.3).
-
-### F7. Checks and Proof
-
-- **F7.1 Check list per project** (Must)
-  - Defined in `.saarthi/project.toml`.
-  - Each check has: name, command, required yes/no, timeout.
-  - Examples: `pytest`, `ruff check`, `mypy`, `npm run build`, `playwright test`.
-  - M11 adds a `kind`: `cmd` (default) or `e2e` (F24.5). The Live test is a check of kind `live`, made by Saarthi (F24.4).
-- **F7.2 Auto-run checks** (Must)
-  - After every `Build` or `Fix` run ends, the app runs all checks in the task's workspace.
-- **F7.3 Proof Card** (Must)
-  - Shown as the checks part of **Check and ship** ("Tests and checks").
-  - Shows for each check: pass / fail / skipped, time taken, short output ("Show output").
-  - Shows: files changed count, lines added/removed, tests added count.
-  - Shows a "What done looks like" list: each acceptance criterion with a status (met / not sure / not met). The agent fills this.
-  - The user answers only the "Not sure" ones: "That's fine" (counts as met) or "Ask Claude to add it" (starts a `Fix` run). There is no "Confirm all".
-- **F7.4 Auto-fix loop** (Must)
-  - If checks fail, the user can click "Let Claude fix it".
-  - The app sends the failing output to the agent.
-  - Max auto-fix rounds: 3 (setting). Then it stops and asks the user.
-- **F7.5 Evidence** (Must, M11)
-  - Screenshots, a short video and a Playwright trace, for the Live test (F24.4) and for `e2e` checks (F24.5).
-  - Shown on Check and ship as **See it work**: a step list with a screenshot per step, the video, and "Open trace".
-  - Kept with the task. Removed with the worktree (F6.6).
-  - Size is capped (`EVIDENCE_MAX_MB` in `config.py`). Over the cap, the video is dropped first, then old screenshots.
-  - API call recordings are not part of this (F7.8, Later).
-- **F7.6 Manual override** (Must)
-  - "Review anyway": user can move a task to Review with failing checks, but must type a reason. The reason is saved.
-- **F7.7 Trust score** (Must, M4; second-opinion part in M5)
-  - One number from 0 to 100 that sums up the proof of a task:
-    - Required checks: 50 points, by the share that pass.
-    - Brief criteria: 35 points, by the share marked Met ("Not sure" counts 0 until the user says "That's fine").
-    - Second opinion: 15 points if no high or medium finding is open, 8 if only medium findings are open, 0 if a high finding is open or no second opinion ran.
-  - The daemon computes it, and also a **verdict** from it:
-
-| Verdict | When |
+| User | What they need |
 |---|---|
-| **Has problems** | A required check failed, or a high finding is open. |
-| **Take a look** | Every required check passed, but a goal is "Not met", a medium finding is open, or the score is below `TRUST_GOOD_MIN`. |
-| **Looks good** | Every required check passed, no goal is "Not met", no medium or high finding is open, and the score is at least `TRUST_GOOD_MIN`. |
-
-  - `TRUST_GOOD_MIN = 70` lives in `config.py`.
-  - A "Not sure" goal does not change the verdict.
-  - The UI shows the verdict on Check and ship. The number shows only under "How we decided".
-  - It never blocks a move. The stage rules stay as in F2.5.
-- **F7.8 API recordings** (Later)
-  - Record API calls (request + response) as proof.
-
-### F8. Second Opinion (Ask Codex to review)
-
-- **F8.1 Cross review** (Must)
-  - An optional card on Check and ship: "Ask Codex to review".
-  - The reviewer is another agent than the builder. If Claude built it, Codex reviews it (and the other way round). The label uses the reviewer's name.
-  - The reviewer agent is **read-only**.
-- **F8.2 Review result** (Must)
-  - A list of findings, each with: file, line, severity (high / medium / low), short reason.
-  - Findings show inside What changed.
-- **F8.3 Send findings back** (Must)
-  - User ticks findings and clicks "Fix these". The builder agent gets them as a new run.
-
-### F9. Side by side (Race Mode)
-
-- **F9.1 Race** (Later, M7)
-  - New task -> More options -> Side by side.
-  - The same goal goes to two agents (for example Claude and Codex) at the same time.
-  - Each one works in its own worktree.
-- **F9.2 Compare** (Later, M7)
-  - Side by side: checks, verdict, diff size, cost, time.
-- **F9.3 Pick winner** (Later, M7)
-  - The winner branch stays. The loser worktree is deleted.
-
-### F10. What changed (Change Story)
-
-- **F10.1 Grouped changes** (Must)
-  - Part of Check and ship. Changes are grouped by purpose, not by file. Example groups:
-    - "New API endpoint"
-    - "Database change"
-    - "Tests"
-  - The agent writes a 1-2 line explanation for each group.
-- **F10.2 Risk flags** (Must)
-  - Auto flags, shown as a small tag on a group (for example "Login code", "Migration"), on:
-    - DB migrations
-    - Deleted files
-    - Changes to auth / security code
-    - New dependencies
-    - Changes to config / env / CI files
-    - Big files (more than 300 changed lines)
-- **F10.3 Diff view** (Must)
-  - Open a group to see the diff of its files. Side-by-side or unified.
-  - Read-only. The same diff also shows in Files (F17.5).
-- **F10.4 Comments** (Must)
-  - Open a group, comment on any line or on the group.
-  - "Send to Claude" starts a `Fix` run with all comments.
-- **F10.5 Approve / Reject** (Must)
-  - Approve the whole task ("Approve and create pull request", F11), or reject with a note.
-- **F10.6 Plain file view** (Must)
-  - A normal "files changed" list for users who want it: Files -> "Show changes" (F17.5).
-
-### F11. Ship
-
-- **F11.1 Commit** (Must)
-  - **Approve and create pull request** has no dialog. It uses a commit message and PR text drafted by the agent.
-  - "Edit pull request text" is optional. It lets the user change the text first.
-  - Commit style follows the project setting (for example Conventional Commits).
-- **F11.2 Push and PR** (Must)
-  - Push the branch.
-  - Create a PR with GitHub CLI (`gh`). The PR body uses the goal + what changed + the checks.
-- **F11.3 No direct push to main** (Must)
-  - The app never pushes to the default branch.
-- **F11.4 PR status** (Later)
-  - Show CI status and review comments from GitHub on the task page.
-
-### F12. Project Memory (Lessons and notes)
-
-- **F12.1 Memory viewer** (Must)
-  - **Lessons and notes** (project menu) shows the project's `core_docs/` as a tree with a markdown viewer and simple editor.
-- **F12.2 Smart context** (Must)
-  - For each run, the app picks the most relevant memory files and adds them to the Context Pack.
-  - v1: simple keyword match + always-include list (FSD, TDD, CLAUDE.md).
-  - Later: search by meaning (embeddings).
-- **F12.3 Auto memory update** (Must)
-  - When a task is shipped, the agent drafts updates for:
-    - `memory/project_memory.md` (what was done, hard bugs, solutions)
-    - `learnings/` (new rules or mistakes)
-    - `timeline/timeline.md` (date + task)
-  - They show as an optional **Lessons learned** card on Done. User approves each update before it is saved.
-- **F12.4 Decisions** (Later)
-  - When the brief or review has a big decision, the app suggests a new ADR file in `decisions/`.
-
-### F13. Playbooks (Saved instructions)
-
-- **F13.1 Playbook library** (Must)
-  - **Saved instructions** (project menu). Each has: name, description, prompt text, default agent, default mode.
-  - Picked in New task -> More options.
-- **F13.2 Built-in playbooks** (Must)
-  - "Plan first, then build"
-  - "Fix bug with TDD (failing test first)"
-  - "Refactor without behaviour change"
-  - "Write tests for this module"
-  - "Review for security"
-- **F13.3 Variables** (Must)
-  - Playbooks can use variables like `{{task.title}}`, `{{brief}}`, `{{failing_checks}}`.
-- **F13.4 Scope** (Must)
-  - Global playbooks (all projects) and project playbooks (in `.saarthi/playbooks/`).
-
-### F14. Timeline and Rewind (History and undo points)
-
-- **F14.1 Task timeline** (Must)
-  - Every event is saved: brief edits, runs, agent tool calls, checks, comments, stage moves.
-  - Shown as one vertical list: task page -> More -> History.
-- **F14.2 Checkpoints** (Must)
-  - The app makes a git checkpoint (a hidden commit, UI: "undo point") at the end of every run.
-- **F14.3 Rewind** (Must)
-  - User can restore the workspace to any checkpoint (History -> Restore, with a confirm).
-  - The current state is saved as a checkpoint first, so nothing is lost.
-- **F14.4 Replay** (Later)
-  - Play back a run step by step.
-
-### F15. Safety and Permissions
-
-- **F15.1 Permission profiles** (Must)
-  - UI: "What agents may do", in Settings -> Safety and cost, and per task in Details.
-  - `Read-only` ("Read only") - agent can read, not write or run commands.
-  - `Safe build` ("Safe", default) - agent can edit files in its worktree and run allowed commands.
-  - `Full` ("Full access") - agent can do anything inside the worktree. Must be turned on per task. Not offered on Windows in v1 (see F15.3).
-- **F15.2 Blocked actions** (Must)
-  - Always blocked or always asked:
-    - `git push` to the default branch
-    - `rm -rf` outside the worktree
-    - Reading `~/.ssh`, `~/.aws`, and other secret folders
-    - Production DB commands (patterns set by user)
-  - An "always ask" action shows as a Needs-you card on the task page.
-- **F15.3 Sandbox** (Later, M8)
-  - Run the agent inside an OS sandbox so it can only see its worktree:
-    - Linux: bubblewrap (`bwrap`).
-    - macOS: a `sandbox-exec` profile.
-    - Windows v1: no OS sandbox. So "Full access" is not offered on Windows. Read only and Safe still work.
-- **F15.4 Secret masking** (Must)
-  - Values from `.env` files and known key patterns are hidden in logs and in the UI.
-
-### F16. Cost and Time Meter
-
-- **F16.1 Per run** (Must)
-  - Tokens (if the agent reports them), cost (if reported), time.
-- **F16.2 Per task and per day** (Must)
-  - Totals per task (Board card, More -> Details) and per day (Safety and cost).
-- **F16.3 Budget alert** (Later)
-  - Warn when a task or day goes over a set amount.
-
-### F17. Files (IDE view)
-
-Files works like an IDE file view, for exploring and reviewing. It is not a full editor: no LSP, no debugger, no extensions.
-
-- **F17.1 Read-only code viewer** (Must)
-  - Folder tree of the task's worktree + file tabs + code view with syntax colours.
-- **F17.2 Quick search** (Must)
-  - Find a file by name, and search text (uses `ripgrep`).
-- **F17.3 Small edits** (Must)
-  - Allow tiny edits (a typo, a value). Not a full editor.
-- **F17.4 Open in editor** (Must)
-  - "Open in my editor": one click opens the file at the line in the user's editor.
-- **F17.5 Changes against main** (Must, M3)
-  - "Show changes / Full file": a filter for only the changed files, or the whole tree.
-  - Changed files are marked in the tree.
-  - The changes against the project's default branch (`main`) show inline in the code view.
-- **F17.6 Why it changed** (Must, M5)
-  - Each changed file shows a one-line reason from the agent: "Why Claude changed this".
-  - The reason comes from the What changed grouping (F10.1).
-- **F17.7 Mark as looked at + Next change** (Must, M5)
-  - "Mark as looked at" on a changed file. The marks are kept per task.
-  - "Next change" jumps to the next change in a file not yet looked at.
-- **F17.8 Project files** (Must, M3)
-  - Project menu -> Project files: browse the main repo of any project with the same view (tree, tabs, search, "Open in my editor").
-  - No task is needed.
-  - Read-only in v1. Tiny edits (F17.3) are only in a task's copy, so the main repo is never changed by Saarthi.
-
-### F18. Command Bar and Keyboard
-
-- **F18.1 Command Bar** (Must)
-  - `Ctrl+K` opens it on any screen.
-  - Search tasks (in all projects), projects, saved instructions, and actions ("run checks", "new task", "open in editor").
-- **F18.2 Keyboard first** (Must)
-  - Every main action has a shortcut. A `?` key shows the shortcut list.
-
-### F19. Notifications
-
-- **F19.1 Desktop notifications** (Must)
-  - Native on every OS (Tauri notification plugin). Cover every project.
-  - Agent needs you.
-  - Run finished.
-  - Checks failed / passed.
-- **F19.2 Sound** (Later)
-  - Optional sound for "Needs you".
-- **F19.3 Phone glance** (Later)
-  - Read-only web page on the phone (same Wi-Fi, with a token) to see task status and answer "Needs you" questions.
-
-### F20. CLI (`saarthi`)
-
-- **F20.1 Same power as the UI** (Must)
-  - `saarthi project add <path>`
-  - `saarthi task new "<title>"`
-  - `saarthi task list`
-  - `saarthi run <task-id> --agent claude|codex|gemini --mode build`
-  - `saarthi checks <task-id>`
-  - `saarthi review <task-id>` (prints what changed)
-  - `saarthi ship <task-id>`
-  - `saarthi daemon start|stop|status`
-  - M11: `saarthi browser status`, `saarthi browser kit install`, `saarthi browser login save <name>`, `saarthi devserver start <task-id>`, `saarthi evidence <task-id>`
-- **F20.2 JSON output** (Must)
-  - `--json` flag for scripts.
-
-### F21. Settings
-
-- **F21.1 Global** (Must)
-  - Theme: dark (default) or light (Settings -> General -> Theme).
-  - Default editor command.
-  - Max parallel runs.
-  - Max auto-fix rounds.
-  - Worktree root folder.
-  - Agent CLI paths (`claude`, `codex`, `gemini`).
-  - "Keep running in the background" (M9): the background service starts at login, the OS way (see TDD).
-- **F21.2 Health check** (Must)
-  - Settings -> Health shows: background service running, git version, agent CLIs found and logged in, `gh` logged in.
-  - A full screen shows only when something is broken.
-
-### F22. Task Docs
-
-- **F22.1 Docs view on the task page** (Must, M3)
-  - Task page -> More -> Docs. A list of docs, a markdown view, and an outline of headings.
-  - Docs are read-only in Saarthi. "Open in editor" is for changes.
-- **F22.2 Plan run saved as a doc** (Must, M2)
-  - When a `Plan` run ends well, its full final answer is saved as a markdown file.
-  - A failed or stopped plan run saves nothing.
-  - The file is kept outside the worktree, so a plan run never changes a worktree file.
-- **F22.3 Changed markdown files are listed** (Must, M2 CLI + API, M3 UI)
-  - Every `.md` file added or changed on the task branch is listed (committed or not).
-  - Each one has an "added" or "modified" badge.
-- **F22.4 Pinned project docs are listed** (Must, M2 CLI + API, M3 UI)
-  - Docs like FSD, TDD, CLAUDE.md are listed. They are read from the task worktree.
-  - The pinned list is set in `project.toml`. Missing files are skipped quietly.
-  - A file that is pinned and changed shows once, as changed.
-- **F22.5 Research findings and plan in context** (Must, M6)
-  - Research findings show in Docs.
-  - The latest plan goes into the Context Pack of the next `Build` or `Fix` run.
-- **F22.6 Edit docs in Saarthi, render Mermaid diagrams** (Later)
-
-### F23. Tickets (Jira)
-
-- **F23.1 Connect Jira Cloud** (Must, M10)
-  - Site, email, API token. A health check shows who I am.
-  - The token is kept outside the repo.
-- **F23.2 Tickets panel per project** (Must, M10)
-  - Project menu -> Jira tickets.
-  - Views: Mine, Sprint, and saved JQL views from `project.toml`.
-  - Search and refresh.
-- **F23.3 Start a task from a ticket** (Must, M10)
-  - One click makes a task with a brief draft from the ticket.
-  - A ticket already linked to a task opens that task.
-  - An existing task can be linked to a ticket.
-- **F23.4 Ticket chip** (Must, M10)
-  - Shown in the task page header and on Board cards.
-- **F23.5 Write back with confirm** (Must, M10)
-  - Move the ticket status, add a PR comment, add a link to the PR.
-  - Every write needs my OK by default. A project can turn on auto send.
-  - Status moves only go forward (Running < Review < Shipped). A fix run after Review does not move the ticket back to "In Progress".
-  - A write-back waiting for my OK is a Needs-you row (F2.9), and a card on Done.
-- **F23.6 Cache and offline view** (Must, M10)
-  - Tickets are cached. When Jira is not reachable, the cache shows with "last synced" time.
-  - No background polling. Refresh is by hand, or when the panel opens and the cache is old.
-- **F23.7 GitHub Issues and other providers** (Later)
-- **F23.8 Create a Jira ticket from Saarthi; two-way comment sync** (Later)
-- **F23.9 Jira Data Center / Server** (Later)
-
-### F24. Browser testing (M11)
-
-Agents test the app live in a real browser, once per build, when the project turns it on. Details: UI spec section 11 (B1-B9), `milestones/M11_browser_testing/`, `decisions/ADR-003-browser-testing.md`.
-
-- **F24.1 Browser on demand** (Must, M11)
-  - One engine on every OS: **Chromium**. No Firefox, no WebKit. Same behaviour on Linux, macOS and Windows.
-  - Lightest path first, in this order:
-    1. system **Google Chrome**,
-    2. system **Microsoft Edge** (built into Windows 10/11, so Windows usually needs no download),
-    3. system **Chromium**,
-    4. else Settings → Browser testing offers a one-time download of the **browser kit** into the Saarthi data folder.
-  - The kit holds Playwright's **Chromium headless shell** for Live tests (the smallest build). The full Chromium is downloaded only when no system browser exists and the user wants to watch a test or save a login (both need a window).
-  - Never in the installer. The download starts only on a click (or `saarthi browser kit install`).
-  - Exact sizes and packaging are measured in the M11 spike.
-- **F24.2 Project browser settings** (Must, M11)
-  - `[browser]` in `.saarthi/project.toml`: `enabled`, `base_url`, `dev_server`, `allowed_hosts`, `live_test` (`"auto"` / `"off"`), `live_test_required`.
-  - Off by default. Backend-only projects keep it off.
-  - Settings → Browser testing shows: the browser found (or "Download browser kit"), base URL, dev server command and port, allowed hosts, Live test Auto / Off and Required, and the saved logins.
-- **F24.3 Dev server per task** (Must, M11)
-  - Saarthi starts `dev_server` in the task's own copy of the repo, on the task's own port (per-workspace ports, M7). If M7 is not built yet, M11 builds the port part.
-  - A ready check waits until `base_url` answers, with a timeout (`DEV_SERVER_READY_TIMEOUT_S`). On timeout, the Live test is an error with the last lines of the server output.
-  - It is stopped when the checks end.
-- **F24.4 Live test** (Must, M11)
-  - One more check, after the required checks pass. Shown as "Live test" in Tests and checks.
-  - The agent drives the browser through a browser MCP server (for example Playwright MCP; flags checked in the M11 spike). It walks the UI items of "What done looks like", step by step, and Saarthi saves a screenshot per step, a short video and a trace.
-  - Optional by default: a failed Live test feeds the verdict like any optional check. With `live_test_required = true` it is a required check.
-  - The task page shows the steps as they happen (`liveTest`).
-  - Max steps and time: `LIVE_TEST_MAX_STEPS`, `LIVE_TEST_TIMEOUT_S`.
-  - Example: goal "Add a password reset page". The Live test opens `/login`, clicks "Forgot password", types a test email, sees "Check your inbox". Check and ship shows "Live test · passed · 6 steps" and See it work.
-- **F24.5 `e2e` checks** (Must, M11)
-  - The project's own E2E command (`npx playwright test`, `pytest -m e2e`) is a check with `kind = "e2e"`.
-  - Saarthi starts the dev server first and collects the artifacts (screenshots, videos, traces) into See it work.
-- **F24.6 Saved logins** (Must, M11)
-  - **Test accounts only.** The Save a login dialog says so.
-  - "Save a login" opens a normal (headed) browser. The user logs in by hand. Saarthi saves the session (Playwright `storageState`) per project and name, in the data folder, in an owner-only file.
-  - It is never in the repo, in events, in the Context Pack, or in agent text. The agent only gets "you are logged in as `test-admin`".
-  - Saarthi never stores the password.
-  - When a saved login no longer works, the task shows a Needs-you card: "Your saved login test-admin expired. Log in again." One click opens the headed browser.
-- **F24.7 Allowed hosts** (Must, M11)
-  - The agent's browser opens only `base_url` and `allowed_hosts` (default `127.0.0.1`, `localhost`).
-  - Any other host is blocked, and a Needs-you card asks: "Claude wanted to open `accounts.example.com`. Allow it for this task?" After OK, the Live test can run again.
-  - Never use production accounts or production hosts.
-
-### F25. Live preview (M12, starts with a spike)
-
-Watch the agent's browser inside Saarthi, and open the task's running app in a Saarthi window. Details: UI spec section 11 (B10), `milestones/M12_live_preview/`.
-
-- **F25.1 Live browser** (Must, M12)
-  - A live picture (screencast) of the agent's Chromium inside the task page, while the Live test runs (`liveTest`).
-  - Works on every OS. It uses the same browser as M11.
-  - It only streams while someone watches.
-- **F25.2 Preview window** (Must, M12)
-  - "Open preview" opens a separate Saarthi window (Tauri WebView) on the task's dev server URL. The user clicks around by hand (`livePreview`).
-  - The window has **no IPC and no capabilities**: it cannot call any Saarthi command, because it loads untrusted app code.
-  - It only opens `base_url` and `allowed_hosts`. Other links open in the system browser.
-- **F25.3 Agent drives the preview window** (Spike-gated, M12)
-  - Linux: via WebKitWebDriver. Windows: via WebView2 remote debugging (CDP). macOS: not supported (no WKWebView driver), so it falls back to F25.1.
-  - Kept only on the OSes where the M12 spike passes. If the spike fails on an OS, F25.3 is off there and the agent uses its own Chromium (F25.1).
-  - "Let the agent use this window" shows only where it is supported.
+| **FastAPI backend developer** (main user) | Stop writing permission checks by hand in every route. |
+| **SaaS team with many customers** | Make sure one customer never sees another customer's data. |
+| **Security reviewer / auditor** | See all rules in one table. Know who can do what. |
+| **Tech lead** | Be sure new routes cannot forget the check. |
 
 ---
 
-## 6. Main user flows
+## 3. Goals and non-goals
 
-### 6.1 Daily task flow (the main flow, 5 steps)
-1. **Describe.** Press New task (or `Ctrl Alt N` from any app). Pick the project. Type "Add password reset API". Claude drafts the goal and "What done looks like".
-2. **Edit the goal and Start.** Fix anything wrong. Click Start. The task is Working. Go do something else.
-3. **Answer Claude.** A notification: "Claude has a question - should I add a new table?". The task is in Needs you. Answer "yes".
-4. **Let Claude fix it.** The run ends. Checks run by themselves. If a check fails, the verdict is "Has problems". Click "Let Claude fix it". Checks pass.
-5. **Approve and create pull request.** Check and ship shows the verdict and what changed, grouped. Answer any "Not sure" goal. Click "Approve and create pull request". The PR opens. The task is Done.
+### 3.1 Goals (v1.0)
+- G1. Write permission rules in plain Python, in one place.
+- G2. Use the same rule to check one object and to filter a list in SQL.
+- G3. Plug into FastAPI with a few lines.
+- G4. Be safe by default: deny when unsure.
+- G5. Find rule mistakes when the app starts.
+- G6. Be easy to test and easy to debug.
+- G7. Be fast. Add almost no time to a request.
 
-Optional extras (never needed for the 5 steps):
-- **Research first:** New task -> More options -> Just research -> "Make a goal from this".
-- **Saved instructions:** New task -> More options, for example "Plan first, then build".
-- **Side by side:** New task -> More options -> Side by side (M7).
-- **Ask Codex to review:** a card on Check and ship. Tick findings, click "Fix these".
-- **Lessons learned:** a card on Done. Approve each memory update.
-
-### 6.2 Parallel flow
-1. Task A is running (Claude).
-2. Start Task B (Codex) in another worktree.
-3. Home shows both under Working, each with live status.
-4. Whichever needs you first moves to Needs you and glows.
-
-### 6.3 Bug fix flow
-1. Paste the error log into Research as a snippet (or as a note in New task -> More options).
-2. Pick saved instructions "Fix bug with TDD".
-3. Agent writes a failing test, then the fix.
-4. Check and ship shows the new test: failed before, passes after.
-
-### 6.4 Ticket flow
-1. Project menu -> Jira tickets for project `acme-billing`.
-2. Pick the view "Mine". Find ACME-151 "Export invoices as CSV".
-3. Click "Start as task". Task T-0033 is made.
-4. T-0033 has a drafted goal from the ticket: goal, what done looks like, notes. Edit it and click Start.
-5. Claude builds. Checks run by themselves.
-6. Task moves to the `Review` stage (status Needs you).
-7. A Needs-you card shows: "Move ACME-151 to In Review?" Click Send. Jira status changes.
-8. Click "Approve and create pull request". The PR is created.
-9. A card on Done offers a PR comment and a link on ACME-151. Click Send.
-10. The ticket now shows the PR link and comment.
-
-### 6.5 Many repos flow
-1. Add `acme-billing`, `acme-web` and `saarthi` once, from the project picker.
-2. Home -> All projects shows the tasks of all three. Each row shows its project.
-3. New task -> pick `acme-web` -> Start. Then a second task in `acme-billing` -> Start.
-4. The Needs-you pill counts both repos. Click it and answer each one.
-5. Click a project tab (or use the picker) to see one project only. No second window.
-
-### 6.6 Review in Files flow
-1. On Check and ship, open Files (or task page -> Files).
-2. "Show changes" shows only the changed files. The changes against `main` show inline.
-3. Each changed file shows "Why Claude changed this".
-4. Read a file, click "Mark as looked at", then "Next change".
-5. Fix a typo with a tiny edit, or click "Open in my editor" for more.
-6. Go back to Check and ship and click "Approve and create pull request".
-- To explore code without a task: project menu -> Project files.
-
-### 6.7 Live test with a login (M11)
-1. In `acme-web`, set `[browser] enabled = true`, `base_url`, `dev_server` in `.saarthi/project.toml`.
-2. Settings -> Browser testing shows "Using Google Chrome". (No browser found? Click "Download browser kit" once.)
-3. Click "Save a login", name it `test-admin`. A browser opens. Log in with the **test** account by hand. Click "I'm logged in". Saarthi saves the session, not the password.
-4. Start a task: "Add a password reset page". Claude builds. The required checks pass.
-5. Saarthi starts the dev server on the task's port. The Live test starts. The task page shows each step with a thumbnail (in M12, also the live browser).
-6. Check and ship shows the verdict, "Live test · passed", and the See it work card. Open it: steps with screenshots, the video, "Open trace".
-7. Weeks later the session is old. The next Live test shows the Needs-you card "Your saved login test-admin expired. Log in again." Log in again, then "Run checks again".
+### 3.2 Non-goals (v1.0)
+- Not login. fastauthz does not check passwords or tokens.
+  - You already have a "current user" dependency. fastauthz uses it.
+- Not a server. Not a database. Not a web UI.
+- No YAML or policy files.
+- No ORMs other than SQLAlchemy (and SQLModel, which is built on SQLAlchemy).
+- No unlimited-depth trees (like folders inside folders inside folders). That is Later.
 
 ---
 
-## 7. Non-functional requirements
+## 4. Words we use
 
-- **NF1 Speed**
-  - App opens in under 2 seconds.
-  - Agent events show in the UI in under 300 ms.
-- **NF2 Scale**
-  - 10 projects, 500 tasks, 4+ parallel runs without lag.
-- **NF3 Reliability**
-  - If the app UI closes, runs keep going (the daemon keeps them alive).
-  - If the daemon restarts, unfinished runs are marked `Interrupted` and can be resumed.
-  - No data loss: every event is saved to disk as it comes.
-- **NF4 Privacy**
-  - All data stays on the machine. No telemetry.
-  - Code only goes to the agent providers the user already uses.
-- **NF5 Resource use**
-  - When no run is active, the app and the daemon do almost no work: no polling (Jira refresh is by hand, F23.6).
-  - Agent CLI processes (`claude`, `codex`, `gemini`) and check commands are not counted in Saarthi's numbers.
-  - The size and RAM limits are in NF7.
-- **NF6 Platform**
-  - One app for Linux, macOS and Windows, from one codebase and one release pipeline.
-  - v1 test targets: Ubuntu 24.04+, macOS 14+, Windows 11.
-  - Native installers: `.AppImage` + `.deb` (Linux), `.dmg` (macOS), `.msi` (Windows).
-  - Nothing in the UI depends on the OS.
-  - One known gap: Windows v1 has no OS sandbox, so "Full access" is not offered there (F15.3).
-- **NF7 Lightweight**
-  - Installer under 40 MB.
-  - App open in under 2 s.
-  - Idle RAM under 150 MB for the window plus under 150 MB for the daemon.
-  - No Electron, no bundled browser, no VS Code.
-  - The browser kit (F24.1) is not in the installer. It is optional and downloaded on demand, so the installer budget does not change.
-  - Checked on all three OSes before a release (M9).
+| Word | Meaning |
+|---|---|
+| **Actor** | The person (or service) doing something. Usually your `User` object. Can be `None` if not logged in. |
+| **Resource** | The thing being used. Usually a SQLAlchemy model, like `Post`. |
+| **Action** | What the actor wants to do. A short word, like `"read"` or `"edit"`. |
+| **Rule** | One line that says "allow" or "deny" an action on a resource, maybe with a condition. |
+| **Condition** | The "when" part of a rule. Example: `R.author_id == A.id`. |
+| **`R`** | Means "the resource" inside a condition. `R.author_id` = the post's author id. |
+| **`A`** | Means "the actor" inside a condition. `A.id` = the user's id. |
+| **Role** | A name given to users, like `"admin"` or `"editor"`. |
+| **Scope** | A condition added to every rule of a resource. Used to keep each customer's data apart. |
+| **Policy** | All your rules together. One `Policy` object. |
+| **Decision** | The result of one check: allowed or not, plus who, what and when. |
+| **Filter** | A SQL condition made from the rules, to get only allowed rows. |
 
 ---
 
-## 8. Out of scope (v1)
+## 5. Features
 
-- Being a full code editor (no LSP, no debugger, no extensions). Files (F17) is for exploring and reviewing, with tiny edits only.
-- Our own AI model or our own cloud server.
-- Team / multi-user features.
-- Mobile app (only a read-only phone page, later).
-- Jira Data Center, creating Jira tickets (v1).
-- Live tests with production accounts or against production hosts. Saved logins are for test accounts only (F24.6).
-- A browser bundled in the installer (F24.1). Firefox and WebKit engines for Live tests.
+| ID | Feature | Priority | Milestone |
+|---|---|---|---|
+| F1 | Write rules in Python | Must | M1 |
+| F2 | Safe answers (deny when unsure) | Must | M1 |
+| F3 | Roles | Must | M1 |
+| F4 | Check one object | Must | M1 |
+| F5 | Startup checks | Must | M1 |
+| F6 | Explain a decision | Must | M1 |
+| F7 | Filter lists in SQL | Must | M2 |
+| F8 | Tenant scope (keep customers apart) | Must | M2 |
+| F9 | Rules that follow relationships | Must | M2 |
+| F10 | Custom checks (escape hatch) | Must | M2 |
+| F11 | FastAPI dependencies | Must | M3 |
+| F12 | Clear HTTP errors | Must | M3 |
+| F13 | Permissions shown in API docs | Must | M3 |
+| F14 | Decision log | Must | M3 |
+| F15 | Test helpers | Must | M4 |
+| F16 | Command line tool | Must | M4 |
+| F17 | Example apps and docs site | Must | M4 |
 
 ---
 
-## 9. Open questions
+### F1. Write rules in Python (Must, M1)
+- F1.1 The user makes one policy:
+  - `policy = Policy()`
+- F1.2 The user lists each resource and its actions:
+  - `policy.resource(Post, actions=["read", "create", "edit", "delete"])`
+- F1.3 The user adds "allow" rules:
+  - `policy.allow("read", Post, when=R.published.is_(True))`
+  - `policy.allow(["edit", "delete"], Post, when=R.author_id == A.id)`
+- F1.4 The user adds "deny" rules:
+  - `policy.deny("delete", Post, when=R.locked.is_(True))`
+- F1.5 The action can be one word, a list of words, or `"*"` (all actions).
+- F1.6 A condition can use:
+  - compare: `==`, `!=`, `<`, `<=`, `>`, `>=`
+  - lists: `.in_([...])`, `.not_in([...])`
+  - empty check: `.is_(None)`, `.is_not(None)`, `.is_(True)`, `.is_(False)`
+  - join conditions: `&` (and), `|` (or), `~` (not)
+- F1.7 If the user writes `and` / `or` / `not` instead of `&` / `|` / `~`:
+  - fastauthz stops with a clear error message.
+  - (Python `and` would silently drop part of the rule. That is dangerous.)
+- F1.8 Who a rule is for:
+  - By default, a rule is only for **logged-in** users.
+  - `who=ANYONE` makes it work for not-logged-in users too.
+- F1.9 Rules can have a name: `name="authors-edit-own-posts"`.
+  - Names show up in logs and in "explain".
 
-- Q1: Rebase or merge for "Update from main"? (Default: rebase, setting to change.)
-- Q2: Where to keep worktrees? Inside the Saarthi data folder (`worktrees/`) or next to the repo? (Default: first one.)
-- Q3: Should Race Mode count as one task or two? (Default: one task, two runs.)
-- Q4: How to sandbox agents on Windows after v1? (v1: no OS sandbox, so no "Full access" on Windows. Options to study: AppContainer, a restricted token + Job Object, or running the agent in WSL2.)
-- Q5: Browser kit packaging (M11 spike): how to ship Playwright MCP and its Node runtime when the user has no `node`, where to download the Chromium headless shell from, and how big each part really is on each OS.
-- Q6: Video size (M11 spike): which video size and length keep See it work useful but small? (Cap: `EVIDENCE_MAX_MB`; video is dropped first when over.)
-- Q7: Agent drives the preview window (M12 spike): does it pass on Linux (WebKitWebDriver) and Windows (WebView2 CDP) without opening the main Saarthi window to the driver? macOS has no driver.
+### F2. Safe answers (Must, M1)
+- F2.1 **Default deny.** No allow rule matches -> "no".
+- F2.2 **Deny wins.** Any deny rule matches -> "no", even if allow rules match.
+- F2.3 **Unsure means no.** The answer is "no" when:
+  - the actor is `None` and the rule needs the actor;
+  - the actor has no such field;
+  - the database value is empty (`NULL`);
+  - a custom check crashes.
+- F2.4 Python checks and SQL filters follow the same rules.
+  - So they always give the same answer for the same data.
+
+### F3. Roles (Must, M1)
+- F3.1 A rule can need a role:
+  - `policy.allow("delete", Post, roles=["admin"])`
+- F3.2 Roles can include other roles:
+  - `policy.roles({"admin": ["editor"], "editor": ["viewer"]})`
+  - Here an admin can do everything an editor and a viewer can.
+- F3.3 By default, fastauthz reads roles from `user.roles`.
+  - The user can change this: `Policy(actor_roles=lambda user: user.role_names)`.
+- F3.4 A loop in roles (admin -> editor -> admin) is an error at start.
+- F3.5 A rule that uses an unknown role (typo like `"admn"`) is an error at start.
+
+### F4. Check one object (Must, M1)
+- F4.1 `policy.can(user, "edit", post)` returns `True` or `False`.
+- F4.2 `policy.check(user, "edit", post)` does nothing if allowed. If not allowed, it raises `Denied`.
+- F4.3 It works with any Python object, not only database models.
+- F4.4 It never loads data from the database by itself.
+  - If needed data is not loaded, the answer is "no" and a warning is logged.
+
+### F5. Startup checks (Must, M1)
+- F5.1 When the app starts, fastauthz checks all rules. It finds:
+  - actions that were never declared (typo like `"eidt"`);
+  - resources that were never declared;
+  - columns that do not exist on the model;
+  - unknown roles and role loops;
+  - scope columns missing on a resource.
+- F5.2 It shows **all** problems at once, each with the file and line of the rule.
+- F5.3 Any error stops the app from starting.
+- F5.4 Warnings do not stop the app. Examples:
+  - "Anyone, even not logged in, can do this."
+  - "Nobody can ever do this action."
+  - "You wrote `== None`. Did you mean `.is_(None)`?"
+- F5.5 After the check, the policy is locked. No one can change it while the app runs.
+
+### F6. Explain a decision (Must, M1)
+- F6.1 `policy.explain(user, "edit", post)` shows every rule and its result.
+  - Example line: `Post.edit#1  allow  FALSE  R.author_id (7) == A.id (3)`
+- F6.2 It shows the file and line of each rule.
+- F6.3 It is for developers (debugging and tests). It is not shown to end users.
+
+### F7. Filter lists in SQL (Must, M2)
+- F7.1 `policy.filter(user, "read", Post)` returns a SQLAlchemy condition.
+  - Use it like: `select(Post).where(policy.filter(user, "read", Post))`.
+- F7.2 The database returns only the rows the user may see.
+- F7.3 Values are always sent as safe SQL parameters. Never as raw text.
+- F7.4 Parts that depend only on the user are worked out before the query.
+  - Example: for an admin, the filter often becomes simply "true".
+- F7.5 It works with normal and async SQLAlchemy sessions.
+- F7.6 It works on SQLite and PostgreSQL.
+
+### F8. Tenant scope (Must, M2)
+- F8.1 The user can set one scope for the whole policy:
+  - `Policy(scope=R.org_id == A.org_id)`
+  - Now every allow rule also needs "same organisation".
+- F8.2 A resource can have its own scope, or no scope:
+  - `policy.resource(Org, actions=[...], scope=R.id == A.org_id)`
+  - `policy.resource(Country, actions=["read"], scope=None)`
+- F8.3 If a resource does not have the scope column, the app does not start.
+  - The user must set `scope=None` or a different scope for it. This must be a clear choice.
+- F8.4 An allow rule can skip the scope only with `bypass_scope=True`.
+  - Example: platform staff who support all customers.
+  - The command line tool lists every rule that does this.
+- F8.5 Deny rules apply in every scope.
+- F8.6 A not-logged-in user has no organisation. So they never pass a scope like `R.org_id == A.org_id`.
+  - For public things (like published posts), add `bypass_scope=True` to that rule.
+  - fastauthz warns at start if a `who=ANYONE` rule would never work because of the scope.
+
+### F9. Rules that follow relationships (Must, M2)
+- F9.1 Follow a "belongs to" link with a dot:
+  - `R.project.org_id == A.org_id` -> "the post's project is in my organisation".
+- F9.2 Check a "has many" link with `.any()`:
+  - `R.members.any(user_id=A.id)` -> "I am one of the members".
+  - `R.members.any(user_id=A.id, role="editor")` -> "I am an editor member".
+- F9.3 Check a "belongs to" link with a condition using `.has()`:
+  - `R.owner.has(R.is_active.is_(True))`
+- F9.4 Max depth is 3 links. This keeps queries fast.
+- F9.5 These work in both Python checks and SQL filters, with the same answers.
+
+### F10. Custom checks (Must, M2)
+- F10.1 For rules that cannot be written with `R` and `A`:
+  - `policy.allow("publish", Post, check=my_function)`
+- F10.2 Such a rule works for one-object checks only.
+- F10.3 If the user also gives `sql=...`, it can be used in filters too.
+- F10.4 If a route tries to filter with a rule that has no SQL form:
+  - the app stops at start with a clear error.
+- F10.5 If the custom function crashes, the answer is "no" and the error is logged.
+
+### F11. FastAPI dependencies (Must, M3)
+- F11.1 Setup in 2 lines:
+  - `authz = FastAuthz(policy, actor=get_current_user, session=get_session)`
+  - `authz.install(app)`
+- F11.2 **List route:** `Depends(authz.query(Post, "read"))`
+  - Gives the route a `select(Post)` that is already filtered.
+  - The route can still add `limit`, `order_by`, pagination.
+- F11.3 **One-object route:** `Depends(authz.load(Post, "edit"))`
+  - Reads the id from the URL (like `/posts/{post_id}`).
+  - Loads the post and checks permission in **one** query.
+  - Not found or not allowed -> 404 (by default).
+- F11.4 **Create route:** `Depends(authz.require("create", Post))`
+  - Checks rules that need only the user (like roles).
+  - The scope is not used here, because the new object does not exist yet.
+  - To check the new object itself (like its organisation), build it and use `guard.check("create", new_post)`.
+- F11.5 **Many checks in one route:** `Depends(authz.guard)`
+  - Gives a helper with `.can()`, `.check()` and `.filter()` for the current user.
+- F11.6 Works with `async def` and normal `def` routes.
+- F11.7 Works with async and normal SQLAlchemy sessions.
+- F11.8 Wrong action names or resources in a route stop the app at start.
+
+### F12. Clear HTTP errors (Must, M3)
+- F12.1 Not allowed -> HTTP 403. For `load()`, 404 by default.
+  - 404 hides whether the object exists. This is safer.
+  - The app can choose 403 instead: `FastAuthz(..., deny_status=403)`.
+- F12.2 The error body uses the standard "problem details" format (RFC 9457):
+  - `{"type": "about:blank", "title": "Forbidden", "status": 403, "detail": "You do not have permission to edit this Post."}`
+- F12.3 The error never shows rule names or data values.
+
+### F13. Permissions shown in API docs (Must, M3)
+- F13.1 After `authz.install(app)`, Swagger UI shows for each guarded route:
+  - which permission it needs (like "`edit` on `Post`");
+  - the 403 / 404 responses.
+- F13.2 The OpenAPI file gets an extra field `x-fastauthz` with the resource and action.
+- F13.3 It must keep working on new FastAPI versions. CI tests this.
+
+### F14. Decision log (Must, M3)
+- F14.1 Every check makes a decision record: allowed or not, action, resource type, ids, time taken.
+- F14.2 The app can get each record: `FastAuthz(..., on_decision=my_function)`.
+- F14.3 Records hold ids only. Never full user objects or private data.
+- F14.4 Records also go to the Python logger `fastauthz.decisions`.
+- F14.5 If `my_function` crashes, the decision does not change. The error is logged.
+
+### F15. Test helpers (Must, M4)
+- F15.1 `assert_allowed(policy, user, "edit", post)` and `assert_denied(...)`.
+  - On failure they print the full explanation.
+- F15.2 `check_cases(policy, [...])` tests a table of cases and reports all failures at once.
+- F15.3 `assert_filter_consistent(...)` proves the Python check and the SQL filter agree on the user's own test data.
+- F15.4 `override_actor(app, authz, user)` lets a test act as any user.
+
+### F16. Command line tool (Must, M4)
+- F16.1 `fastauthz check app.authz:policy`
+  - Checks all rules. Prints problems with file and line.
+  - Exit code 0 = fine, 1 = errors, 2 = could not run.
+  - `--strict` also fails on warnings. Good for CI.
+- F16.2 `fastauthz matrix app.authz:policy --format markdown`
+  - Prints a table: resource, action, and who can do it, in plain words.
+  - Good for security reviews and audits.
+- F16.3 `fastauthz explain app.authz:policy --resource Post --action edit`
+  - Prints every rule for that action.
+- F16.4 `fastauthz version`
+
+### F17. Example apps and docs site (Must, M4)
+- F17.1 Three example apps, all tested in CI:
+  - **blog** - authors edit their own posts.
+  - **saas_multitenant** - many companies, roles per company.
+  - **hospital** - doctors see only patients in their ward; deny rules.
+- F17.2 A docs website with:
+  - a 5-minute start guide;
+  - concepts, every operator, roles, relationships, FastAPI guide, testing, CLI;
+  - the security model in simple words;
+  - recipes and FAQ;
+  - a fair comparison with other tools.
+- F17.3 Every code example in the docs is run in CI.
+
+---
+
+## 6. Quality needs (non-functional)
+
+### 6.1 Safety
+- N1. No known way for a mistake in data (empty values, missing fields) to give access.
+- N2. Values never go into SQL as text.
+- N3. Security issues can be reported privately (see `SECURITY.md`).
+
+### 6.2 Speed
+- N4. Checking one object takes less than 20 microseconds (normal laptop).
+- N5. Building a filter takes less than 100 microseconds.
+- N6. `load()` uses one query. `query()` adds no extra queries.
+
+### 6.3 Works with
+- N7. Python 3.11 to 3.15.
+- N8. FastAPI 0.115 and newer. SQLAlchemy 2.0 and newer.
+- N9. SQLite and PostgreSQL.
+- N10. The core part needs no other packages at all.
+
+### 6.4 Trust
+- N11. Test coverage: 100% for the core, at least 95% overall.
+- N12. Special random tests prove Python checks and SQL filters agree.
+- N13. Releases come only from CI, with signed proof of where they were built.
+- N14. Version numbers follow SemVer. After 1.0, nothing breaks without a major version.
+  - Old features warn for at least two releases before removal.
+
+---
+
+## 7. User stories (end to end)
+
+### 7.1 A blog: authors edit only their own posts
+1. Dev writes: `policy.allow(["edit", "delete"], Post, when=R.author_id == A.id)`.
+2. Dev adds `Depends(authz.load(Post, "edit"))` to `PATCH /posts/{post_id}`.
+3. Alice edits her post -> 200.
+4. Alice tries Bob's post -> 404. She cannot even tell it exists.
+
+### 7.2 A SaaS app: companies never see each other
+1. Dev writes: `Policy(scope=R.org_id == A.org_id)`.
+2. `GET /invoices` uses `Depends(authz.query(Invoice, "read"))`.
+3. A user of company A gets only company A's invoices. The SQL has `WHERE org_id = ...` added for them.
+4. Later, a new dev adds a `Report` model without `org_id`.
+   - The app does not start. The error says: "Report has no org_id. Set scope=None or a custom scope."
+   - The leak is stopped before it ships.
+
+### 7.3 A hospital: doctors see patients in their ward
+1. Rule: `policy.allow("read", Patient, when=R.ward.doctors.any(id=A.id))`.
+2. A doctor opens the patient list. They see only patients in their wards.
+3. Rule: `policy.deny("read", Patient, when=R.is_vip.is_(True) & ~A.is_senior.is_(True))`.
+4. A junior doctor does not see VIP patients, even in their ward.
+
+### 7.4 A security review
+1. The reviewer runs `fastauthz matrix app.authz:policy --format markdown`.
+2. They get one table with every resource, action and rule in plain words.
+3. They see one rule with `bypass_scope=True` and ask why. Good review, in minutes.
+
+---
+
+## 8. Later (not v1.0)
+- Hide single fields (like `salary`) from some users.
+- Trees of unlimited depth (folders inside folders).
+- "Who can access this object?" reverse search.
+- Rules stored in the database or changed while the app runs.
+- Other ORMs: Tortoise, Beanie (MongoDB), Piccolo.
+- MySQL / MariaDB in CI.
+- Adapters for Litestar and Django Ninja.
+- A web UI to edit rules.
