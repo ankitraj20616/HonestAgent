@@ -1,26 +1,29 @@
-# Quick Prompts - HonestAgent
+# Quick Prompts - fastauthz
 
-Prompts to give Claude / Codex while building HonestAgent.
+Prompts to give Claude / Codex while building fastauthz.
 
 ---
 
 ## Start of a session
-Read `CLAUDE.md`, `core_docs/README.md`, `core_docs/MILESTONES.md`, and the latest lines of `core_docs/timeline/timeline.md`. Tell me which milestone we are on, what is done, and what the next 3 small steps are. Do not write code yet.
+Read `CLAUDE.md`, `core_docs/README.md`, `core_docs/TASKS.md`, and the latest lines of `core_docs/timeline/timeline.md`. Tell me which milestone we are on, what is done, and the next 3 small tasks. Do not write code yet.
 
-## Plan a milestone item
-Read `core_docs/FUNCTIONAL_SPECIFICATIONS.md` (the related F-number), `core_docs/TDD-tech-design-doc.md` (the related section), and `core_docs/TECH_STACK.md`. Then read all the related code files fully, not just a few lines. Make a plan in `core_docs/plans/<milestone>_<feature>.md`: files to add or change, fixtures and tests to write first, risks. Keep constants in `config.py`. Reuse code. Do not over-engineer and do not build "Later" items.
+## Plan a task
+Read the FSD feature (F-number) and the TDD section named in the task in `core_docs/TASKS.md`, and `core_docs/TECH_STACK.md`. Then read all related code files fully. Write a plan in `core_docs/plans/<milestone>_<task>.md`: files to add or change, tests to write first, risks, and which truth rules (TDD 6) are touched. Constants go in `config.py`. Do not build "Later" items.
 
 ## Build with tests first
-Follow the plan in `core_docs/plans/<file>.md`. First add or pick the recorded PR fixtures in `tests/fixtures/prs/<case>/` (`before/`, `after/`, `expected.json`). Write the failing tests, run them and show they fail, then write the code, then run `uv run pytest`, `uv run ruff check .` and `uv run pyright`. Show me the real output. Do not say "done" without it. Never call real GitHub, real agents or the network in tests.
+Follow the plan in `core_docs/plans/<file>.md`. Write the failing tests first, run them and show they fail. Then write the code. Then run `uv run pytest`, `uv run ruff check .` and `uv run pyright`, and show me the real output. Do not say "done" without it.
 
-## Add a new rule
-Rule IDs and names come from `core_docs/FUNCTIONAL_SPECIFICATIONS.md`; do not make up a new ID. Steps: 1) add fixtures first: at least one case where the rule must fire and one clean case where it must not; 2) write the rule as a pure function `(ChangeSet, Config) -> list[Finding]`, using the stdlib `ast` module for Python files; 3) add it to the `RULES` registry in `rules/__init__.py`; 4) put its default severity in `config.py`; 5) update the docs: the FSD rule table, the rule table in `README.md`, and the `honestagent explain <ID>` text (what it catches, one example, how to allow it). Run all checks and show the output.
+## Change the evaluator or the SQL compiler
+Any change to `truth.py`, `evaluate.py` or `sql.py` must keep both engines equal. Steps: 1) add a unit test for the new case in both engines; 2) make sure the Hypothesis strategy in `tests/property/` can produce the case; 3) run the property tests on SQLite, and on PostgreSQL with `uv run pytest -m postgres`; 4) if Hypothesis found a bug, add it as a fixed `@example`. Show the output.
 
-## Bug fix (false positive or false negative)
-Read the full files involved, not snippets. First add a fixture in `tests/fixtures/prs/<case>/` that shows the bug: a clean change that gets flagged (false positive) or a tampered change that is missed (false negative). Run it and show it fails. Explain the root cause in 3 lines. Then fix the rule and run all checks. Add problem -> root cause -> fix -> result to `core_docs/memory/project_memory.md`.
+## Add a startup problem code
+Codes come from TDD 8.5. Do not invent a new code without adding it to TDD 8.5, FSD F5 and `QUICK_REFERENCE.md` in the same change. Write one test that triggers it and one that does not. The message must say what is wrong, where (file:line of the rule), and how to fix it.
+
+## Bug fix
+Read the full files involved. First write a test that shows the bug. Run it and show it fails. Explain the root cause in 3 lines. Fix it and run all checks. If the bug could give access when it should not, mark it as security: add a row to TDD 17.1 if a new risk was found, and add Problem -> Root cause -> Fix -> Result to `core_docs/memory/project_memory.md`.
 
 ## Review before commit
-Review the current diff against the TDD and FSD. Check: core is deterministic (no LLM, no network); read-only on the user's repo; git args passed as a list, never a shell string; mutation runs only in a temp worktree that is removed; all rules in the `RULES` registry and each one pure; constants only in `config.py`; every rule has fixture tests; integrations only call the CLI; no "Later" features; docs and `honestagent explain` text match the code. List issues by severity. Do not fix yet.
+Review the diff against the TDD and FSD. Check: default deny and fail-closed kept; both engines agree; values only as bound parameters; core imports nothing outside stdlib; FastAPI/SQLAlchemy internals only in `_compat.py`; constants only in `config.py`; public API fully typed; every new behavior has tests; error messages leak no rule details or values; docs match the code; no "Later" features. List issues by severity. Do not fix yet.
 
 ## End of a session
-Update `core_docs/MILESTONES.md` checkboxes, add a line to `core_docs/timeline/timeline.md` with today's date, and add any new lesson to `core_docs/learnings/`. Keep it short.
+Tick boxes in `core_docs/TASKS.md`, add a line to `core_docs/timeline/timeline.md` with today's date, and add any new lesson to `core_docs/learnings/`. Keep it short.

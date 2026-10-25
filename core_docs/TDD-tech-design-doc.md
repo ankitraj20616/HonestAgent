@@ -1,1122 +1,1005 @@
 # Technical Design Document (TDD)
-## HonestAgent - test-integrity gate for agent pull requests
+## fastauthz - authorization for FastAPI and SQLAlchemy
 
-**Version:** 1.0 (draft, v1 only)
-**Date:** 2026-10-24
-**Related:** `FUNCTIONAL_SPECIFICATIONS.md` (what, F1-F12), `MILESTONES.md` (when, M0-M4), `TECH_STACK.md` (with what), `decisions/ADR-001-pivot-to-test-integrity-gate.md` (why)
+**Version:** 1.0 (draft)
+**Date:** 2026-10-25
+**Scope:** v1.0 (milestones M0-M5 in `TASKS.md`)
+**What it does:** `FUNCTIONAL_SPECIFICATIONS.md` (FSD). **With what:** `TECH_STACK.md`.
 
-> Simple English. This doc says **how** HonestAgent v1 is built. No code exists yet.
-> Anything past v1 is in section 17, one line each.
+> This file says HOW fastauthz is built. It is detailed on purpose. Code must match it.
+> If the code needs to change the design, change this file in the same PR.
+> Section numbers are stable. Tests and PRs can point at them ("TDD 6.3").
 
 ---
 
 ## 1. Overview
 
-HonestAgent is one Python package with one CLI command that matters: `honestagent check`.
-It reads two versions of a repo from git, compares the test files, test config and CI
-files, and prints a report with a **verdict**. It answers one question: "Are the tests
-real, or did the agent cheat to make them pass?"
+### 1.1 The problem in one paragraph
+Every FastAPI app answers the question "can this user do this action on this thing?".
+Today people answer it by hand: `if user.role != "admin": raise HTTPException(403)` in every
+route, and `WHERE org_id = :org` added by hand to every list query. When one route or one query
+forgets the check, data leaks. Django has `django-rules`, `django-guardian` and DRF permissions.
+FastAPI has nothing in-process and maintained:
+- `oso` (the open-source library that did exactly this, including SQLAlchemy filtering) is
+  archived. Its README says "no longer maintained... there won't be new releases or bug fixes".
+- `fastapi-permissions` (652 stars) has had no release since 2020-10-05.
+- `casbin` uses string policy files and does not filter SQLAlchemy queries.
+- Cerbos, OpenFGA and Permify need a separate server. Permit.io and Oso Cloud are paid.
 
-It is stateless. No server, no database, no UI. Every run starts from git and ends with
-a report and an exit code.
+Full evidence: `decisions/ADR-001-build-fastauthz.md`.
 
+### 1.2 What fastauthz is
+A Python library. You write your permission rules once, in plain Python, next to your models.
+fastauthz then uses the same rules in three places:
+
+1. **Check one object** - "can Alice edit post 7?" (in Python, in memory).
+2. **Filter a list** - "give me only the posts Alice can read" (as a SQL `WHERE` clause).
+3. **Guard a route** - a FastAPI dependency that loads the object and checks it in one query,
+   or returns 404.
+
+### 1.3 The central idea: one rule, two engines
+A rule is not a Python function (a function cannot be turned into SQL). A rule is a small
+**expression tree** built from `R` (the resource) and `A` (the actor):
+
+```python
+policy.allow(["edit", "delete"], Post, when=R.author_id == A.id)
 ```
-  pre-commit (F9)   GitHub Action (F10)   Claude Code hook (F11)   you, in a terminal
-        |                   |                      |                       |
-        +-------------------+----------+-----------+-----------------------+
-                                       |
-                                       v
-                          honestagent check  (cli.py, F8)
-                                       |
-                    config.py  <-------+  load + validate config from the base ref (F7)
-                                       |
-                                       v
-                 git.py  -- subprocess, list args, read-only (F1)
-                                       |
-                                       v
-                 changes.py  -> ChangeSet: ChangedFile[] with before/after text (F1, F2)
-                                       |
-                                       v
-                 rules/  RULES registry: HA001 ... HA007  -> Finding[] (F3)
-                 (HA000 notes come from changes.py, the engine and allow.py)
-                 mutation.py (only with --mutation)        -> HA100 Finding[] (F12)
-                                       |
-                                       v
-                 allow.py   mark findings allowed (marker or config) (F4)
-                                       |
-                                       v
-                 verdict.py pure function -> Verdict (F5)
-                                       |
-                                       v
-                 report/text.py | report/markdown.py | report/json.py (F6)
-                                       |
-                                       v
-                       stdout or --output FILE, then exit code 0 / 1 / 2
-```
+
+`R.author_id == A.id` builds a tree: `Compare(op="eq", ResourceAttr("author_id"), ActorAttr("id"))`.
+Two engines read the same tree:
+
+| Engine | Input | Output | Used for |
+|---|---|---|---|
+| Python evaluator (`evaluate.py`) | actor + one object | `TRUE` / `FALSE` / `UNKNOWN` | `can()`, `check()`, objects not in a DB |
+| SQL compiler (`sql.py`) | actor + model class | SQLAlchemy `ColumnElement[bool]` | `filter()`, `query()`, `load()` |
+
+Both engines follow the **same truth rules** (SQL three-valued logic, section 6). A property-based
+test (section 14.3) proves they agree on random rules and random rows. This agreement is the
+main promise of the library.
+
+### 1.4 What fastauthz is not (v1)
+- Not authentication. It does not log users in or check passwords or tokens. You give it the
+  current user (any Python object) through a FastAPI dependency you already have.
+- Not a server, not a database, not a UI. A library imported by your app.
+- Not a graph engine (Google Zanzibar style). Relationships are supported up to a fixed depth
+  (section 5.6). Unlimited-depth trees are Later.
 
 ---
 
 ## 2. Design principles
 
-1. **One package, no services.** `honestagent` in a `src/` layout. A stateless CLI that reads
-   git and prints a report.
-2. **CLI first.** The pre-commit hook, the GitHub Action and the Claude Code hook only call
-   `honestagent check`. They hold no logic of their own except "post the comment" and
-   "map the exit code".
-3. **Deterministic.** Same input, same output, byte for byte. No LLM. No network in the core.
-   No clock or random values in the report. Findings are always sorted.
-4. **Read-only.** We never edit, commit or push the user's code. The only exception is the
-   mutation check (M3), which writes only inside a temp `git worktree` that we remove.
-5. **Git through `subprocess` with a list of args.** Never a shell string.
-6. **One rule registry.** `RULES` in `rules/__init__.py`. Each rule is a pure function
-   `(ChangeSet, Config) -> list[Finding]`.
-7. **Constants live in `config.py`.** Defaults, limits, globs, file names. No magic values
-   in other modules.
-8. **Tests first.** Every rule gets recorded PR fixtures before it gets code.
-9. **Show, do not hide.** Allowed findings still appear in every report. Skipped files are
-   listed with the reason.
+1. **Default deny.** No matching allow rule means "no". A missing value means "no".
+2. **Deny wins.** If any deny rule matches, the answer is "no", whatever the allow rules say.
+3. **Fail closed.** Every unclear case ends in "no": missing actor attribute, `NULL` column,
+   unknown truth value, error inside a custom check.
+4. **Fail early.** Mistakes are found when the app starts, not when a user hits a route:
+   unknown action names, unknown columns, cycles in roles, rules that cannot become SQL.
+5. **One rule, two engines, same answer.** Python and SQL evaluation must agree. Tested.
+6. **Plain Python.** No YAML, no DSL in strings, no policy files. Rules are Python objects, so
+   editors autocomplete them and pyright checks them.
+7. **Small core, optional extras.** The core (`policy`, `expr`, `evaluate`) has zero runtime
+   dependencies. SQLAlchemy and FastAPI support are extras.
+8. **No surprises with upgrades.** FastAPI and SQLAlchemy internals are touched only in
+   `_compat.py`, and CI tests a version matrix (section 15). In June 2026 FastAPI 0.137 changed
+   `router.routes` into a tree and silently broke slowapi, fastapi-utils and others. That must
+   not happen to us.
+9. **Immutable after start.** A policy is frozen when validated. A frozen policy is safe to share
+   across threads, async tasks and free-threaded Python.
+10. **Fast enough to forget about.** Rules are compiled once. Per request we only bind actor
+    values. Targets are in section 16.
 
 ---
 
 ## 3. Package layout
 
 ```
-HonestAgent/
-  pyproject.toml                  # package, deps, [project.scripts] honestagent = "honestagent.cli:app"
-  action.yml                      # F10 composite GitHub Action
-  .pre-commit-hooks.yaml          # F9 pre-commit hook definition
-  hooks/claude-code/              # F11 sample settings.json snippet + README
-  src/honestagent/
-    __init__.py                   # __version__ only
-    cli.py                        # Typer app: check, rules, explain, version; exit codes (F8)
-    config.py                     # all defaults and limits; load + validate config (F7)
-    git.py                        # every git call; returns plain Python values or raises GitError
-    changes.py                    # build the ChangeSet: file list, before/after text, changed lines, is_test (F1, F2)
-    models.py                     # Pydantic models: ChangedFile, ChangeSet, Finding, Severity, Verdict, Report
-    rules/
-      __init__.py                 # Rule dataclass + RULES registry + run_rules()
-      _pyast.py                   # shared AST helpers: parse, collect tests, resolve import aliases
-      test_deleted.py             # HA001
-      skip_added.py               # HA002
-      assertion_weakened.py       # HA003
-      coverage_lowered.py         # HA004
-      ci_lint_weakened.py         # HA005
-      snapshot_rewritten.py       # HA006
-      gate_config_weakened.py     # HA007
-    allow.py                      # parse allow markers + config allow list; mark findings; HA000 for markers with no reason (F4)
-    verdict.py                    # pure verdict function (F5)
-    report/
-      text.py                     # Rich terminal output (F6)
-      markdown.py                 # PR comment and proof report (F6)
-      json.py                     # JSON report, schema_version 1 (F6)
-    mutation.py                   # mutmut on changed lines in a temp worktree; HA100 (F12, M3)
-  tests/
-    fixtures/prs/<case>/          # before/, after/, expected.json
-    golden/                       # expected markdown and json output
-    test_rules_*.py  test_verdict.py  test_cli.py  test_git.py  test_allow.py ...
+src/fastauthz/
+  __init__.py        # public API re-exports: Policy, R, A, ANYONE, AUTHENTICATED, errors
+  _version.py        # __version__
+  py.typed           # PEP 561 marker
+  config.py          # all constants and defaults (no magic numbers elsewhere)
+  errors.py          # exception classes (section 11)
+  expr.py            # expression tree: R, A, nodes, operators (section 5)
+  truth.py           # Truth enum and Kleene logic (section 6)
+  evaluate.py        # Python evaluator (section 7)
+  roles.py           # role hierarchy (section 8.3)
+  policy.py          # Policy, Resource, Rule, validate(), freeze() (section 8)
+  decision.py        # Decision, Explanation, explain() (section 10)
+  sql.py             # SQLAlchemy compiler and partial evaluation (section 9)   [extra: sqlalchemy]
+  fastapi.py         # FastAuthz, dependencies, error handlers (section 12)   [extra: fastapi]
+  openapi.py         # adds permissions to the OpenAPI schema (section 12.6)   [extra: fastapi]
+  _compat.py         # the only place that touches FastAPI / SQLAlchemy internals
+  testing.py         # test helpers for users (section 13)
+  cli.py             # `fastauthz` command: check, matrix, explain, version (section 13.4)
+  __main__.py        # `python -m fastauthz` -> cli.main()
+
+tests/
+  unit/              # one file per module
+  property/          # Hypothesis differential tests (section 14.3)
+  integration/       # FastAPI apps with SQLite and PostgreSQL
+  compat/            # version-matrix contract tests for _compat.py
+  typing/            # pyright `assert_type` checks for the public API
+  examples/          # runs every example app in examples/
+examples/
+  blog/              # owner-based rules (author can edit own posts)
+  saas_multitenant/  # tenant scope + roles per organisation
+  hospital/          # relationships (doctor -> ward -> patient), deny rules
+docs/                # user docs site (MkDocs)
+benchmarks/          # pytest-benchmark suites (section 16)
 ```
 
-`_pyast.py` is a private helper, not a rule. It keeps the "find the test functions" code
-in one place, so HA001, HA002 and HA003 agree on what a test is.
+**Import rule:** `expr`, `truth`, `evaluate`, `roles`, `policy`, `decision`, `errors`,
+`config` must never import `sqlalchemy` or `fastapi`. A test (`tests/unit/test_imports.py`)
+imports the core in a subprocess with both packages blocked and checks it works.
 
 ---
 
-## 4. Data models (`models.py`)
-
-All models are Pydantic v2, `frozen=True`. Paths are POSIX strings relative to the repo
-root (git always gives `/`, also on Windows).
+## 4. Public API at a glance
 
 ```python
-class FileStatus(StrEnum):
-    added = "added"; modified = "modified"; deleted = "deleted"; renamed = "renamed"
+from fastauthz import Policy, R, A, ANYONE
+from fastauthz.fastapi import FastAuthz
 
-class ChangedFile(BaseModel):
-    path: str                     # path on the after side (for deleted: the old path)
-    status: FileStatus
-    old_path: str | None = None   # only for renamed
-    before_text: str | None       # None when added, binary or skipped
-    after_text: str | None        # None when deleted, binary or skipped
-    is_test: bool                 # matches test_paths (F2), checked on path (and old_path)
-    changed_lines: frozenset[int] # after-side line numbers added or changed (empty for deleted)
-    skipped_reason: str | None = None   # "binary", "too large", "not utf-8"
+policy = Policy(scope=R.org_id == A.org_id)          # tenant isolation for every resource
 
-class ChangeSet(BaseModel):
-    mode: Literal["refs", "staged", "working"]
-    base: str                     # full SHA
-    head: str                     # full SHA, or "index" / "working-tree"
-    repo_root: str
-    files: tuple[ChangedFile, ...]   # sorted by path
+policy.roles({"admin": ["editor"], "editor": ["viewer"]})
 
-    def tests(self) -> Iterator[ChangedFile]: ...     # is_test and .py
-    def sources(self) -> Iterator[ChangedFile]: ...   # .py, not test, not snapshot
-    def by_path(self, path: str) -> ChangedFile | None: ...
+policy.resource(Post, actions=["read", "create", "edit", "delete", "publish"])
+policy.resource(Org, actions=["read", "manage"], scope=R.id == A.org_id)
 
-class Severity(StrEnum):
-    high = "high"; medium = "medium"; low = "low"
+policy.allow("read", Post, who=ANYONE, when=R.published.is_(True), bypass_scope=True)   # public posts
+policy.allow("read", Post, roles=["viewer"])
+policy.allow(["edit", "delete"], Post, when=R.author_id == A.id)
+policy.allow("*", Post, roles=["admin"])
+policy.deny("delete", Post, when=R.locked.is_(True))
 
-class Verdict(StrEnum):
-    has_problems = "has_problems"; take_a_look = "take_a_look"; looks_good = "looks_good"
+authz = FastAuthz(policy, actor=get_current_user, session=get_session)
+authz.install(app)                                    # error handlers + OpenAPI docs
 
-class Finding(BaseModel):
-    rule_id: str                  # "HA000" ... "HA007", "HA100"
-    name: str                     # "test-deleted"
-    severity: Severity
-    file: str
-    line: int | None              # None = whole file (deleted file, config-level change)
-    message: str                  # one plain sentence
-    before: str | None = None     # short snippet, see SNIPPET_MAX_LINES
-    after: str | None = None
-    allowed: bool = False
-    allow_reason: str | None = None
 
-class Report(BaseModel):
-    schema_version: Literal[1] = 1
-    honestagent_version: str
-    verdict: Verdict
-    mode: Literal["refs", "staged", "working"]
-    base: str
-    head: str
-    counts: Counts                # high, medium, low, allowed, total
-    findings: tuple[Finding, ...] # sorted
-    skipped: tuple[SkippedFile, ...]   # path + reason
+@app.get("/posts")
+async def list_posts(stmt: Annotated[Select[tuple[Post]], Depends(authz.query(Post, "read"))],
+                     session: SessionDep):
+    return (await session.scalars(stmt.limit(50))).all()
 
-class Counts(BaseModel):
-    high: int; medium: int; low: int     # not-allowed findings only
-    allowed: int; total: int
 
-class SkippedFile(BaseModel):
-    path: str
-    reason: str                   # "binary", "too large", "syntax error on line 12", ...
+@app.patch("/posts/{post_id}")
+async def edit_post(post: Annotated[Post, Depends(authz.load(Post, "edit"))], body: PostUpdate):
+    ...
+
+
+@app.post("/posts")
+async def create_post(_: Annotated[None, Depends(authz.require("create", Post))], body: PostCreate):
+    ...
 ```
 
-Sort order for findings everywhere: `(file, line or 0, rule_id, message)`.
-
----
-
-## 5. Git layer (`git.py`, `changes.py`)
-
-### 5.1 Rules for every git call
-
-- `subprocess.run(["git", "-C", repo_root, ...], capture_output=True, check=False)`.
-  Never `shell=True`.
-- Env: `LC_ALL=C`, `GIT_TERMINAL_PROMPT=0`, `GIT_OPTIONAL_LOCKS=0` (no lock files, so we
-  stay read-only even for `git status`-style calls).
-- Every user ref is resolved once to a full SHA with
-  `git rev-parse --verify --end-of-options <ref>^{commit}`. After that only SHAs go to git.
-  This stops a ref like `--output=x` from being read as an option.
-- File lists use `-z` (NUL separated), so paths with spaces or new lines are safe.
-- A non-zero git exit raises `GitError(message, hint)`. The CLI turns it into exit code `2`.
-
-### 5.2 Exact commands per mode (F1)
-
-| Step | `--base/--head` (mode `refs`) | `--staged` | `--working` |
-|---|---|---|---|
-| Repo root | `git rev-parse --show-toplevel` | same | same |
-| Base SHA | `--base`, or default (5.3) | `HEAD` | `HEAD` |
-| Head | `--head` (default `HEAD`) | the index | the working tree |
-| Changed files | `git diff --name-status -z -M --no-ext-diff <base>...<head>` | `git diff --cached --name-status -z -M --no-ext-diff <base>` | `git diff --name-status -z -M --no-ext-diff <base>` + untracked: `git ls-files --others --exclude-standard -z` (status added) |
-| Changed lines | `git diff -U0 --no-color --no-ext-diff -M <base>...<head> -- <path>` | `git diff --cached -U0 ... <base> -- <path>` | `git diff -U0 ... <base> -- <path>` (untracked: all lines) |
-| Binary check | `git diff --numstat -z -M ...` (same range); `-\t-` means binary | same | same + NUL byte check for untracked |
-| Before text | `git cat-file --batch` with `<base>:<old_path or path>` | same | same |
-| After text | `git cat-file --batch` with `<head>:<path>` | `git cat-file --batch` with `:<path>` (index) | read from disk: `repo_root / path` |
-
-Notes:
-- **Three dots** (`<base>...<head>`) means "diff from the merge-base of base and head".
-  So a PR base SHA that moved ahead still gives only the PR's own changes.
-- **Rename detection** is `-M` (git's default 50% similarity). A rename gives status `R`,
-  so the file is `renamed` with `old_path`. Copies (`C`) are treated as `added`.
-- **Empty repo** (no `HEAD` yet, `--staged` on the first commit): base is the empty tree,
-  from `git hash-object -t tree --stdin` with empty input. All files are `added`.
-- `git cat-file --batch` reads all blobs in one process. This is the main speed trick
-  (section 15). Before reading, `git cat-file --batch-check` gives the size; files over
-  `MAX_FILE_BYTES` are not read.
-- Changed lines come from the `@@ -a,b +c,d @@` hunk headers: lines `c .. c+d-1` on the
-  after side. A hunk with `d = 0` (pure delete) adds line `c` (the line after the cut), so a
-  rule can still point near the removed code.
-
-### 5.3 Default base
-
-When `--base` is not given in `refs` mode:
-1. Default branch = `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`
-   (for example `origin/main`).
-2. If that fails, the first of `DEFAULT_BRANCH_CANDIDATES = ("main", "master")` that exists
-   (`git rev-parse --verify --quiet refs/heads/<name>`).
-3. Base = `git merge-base <default branch> <head>`.
-4. If nothing is found: exit `2` with "Could not find the default branch. Pass --base."
-
-If the head is on the default branch itself, the merge-base equals the head, the change set
-is empty, and the verdict is "Looks good" with the note "No changes to check."
-
-### 5.4 Reading text
-
-- Decode as UTF-8 (`utf-8-sig`, so a BOM is dropped). If decoding fails, the side is
-  `None` and `skipped_reason = "not utf-8"`.
-- Normalize line endings to `\n` on both sides before any rule sees the text. CRLF changes
-  alone are never findings.
-- Binary files and files over `MAX_FILE_BYTES` are kept in the ChangeSet (so HA001 still
-  sees a deleted test file and HA006 still sees a changed snapshot) but with no text. They
-  are listed in `Report.skipped`, and `changes.py` emits one HA000 note (low) per skipped
-  file: "File skipped: binary." / "File skipped: too large."
-- More than `MAX_CHANGED_FILES` changed files: we keep the first ones in path order, list
-  the rest as skipped ("too many changed files"), and say so in the report.
-
-### 5.5 `is_test` (F2)
-
-- `test_paths` globs (default from F2: `tests/**/*.py`, `**/test_*.py`, `**/*_test.py`,
-  `**/conftest.py`) are matched with our own small glob function in `changes.py`, because
-  `fnmatch` lets `*` cross `/` and `**/` cannot match zero folders.
-- Glob meaning: `*` = any chars except `/`; `**/` = zero or more folders; a pattern with
-  no `/` matches the file name in any folder (`setup.cfg` matches `a/b/setup.cfg`).
-- A renamed file is a test if the new path **or** the old path matches. HA001 uses the
-  difference (test before, not a test after) to catch "renamed out of collection".
-
----
-
-## 6. Rule engine (`rules/`)
-
-### 6.1 Registry
+Plain Python use (no FastAPI):
 
 ```python
-RuleFn = Callable[[ChangeSet, Config], list[Finding]]
-
-@dataclass(frozen=True)
-class Rule:
-    id: str                    # "HA001"
-    name: str                  # "test-deleted"
-    default_severity: Severity
-    summary: str               # one line for `honestagent rules`
-    explain: str               # text for `honestagent explain` (what, example, how to allow)
-    check: RuleFn | None       # None for HA000 (notes from changes.py, the engine, allow.py)
-                               # and HA100 (findings from mutation.py)
-
-RULES: dict[str, Rule] = {r.id: r for r in
-                          (HA000, HA001, HA002, HA003, HA004, HA005, HA006, HA007, HA100)}
+policy.freeze()
+policy.can(alice, "edit", post)              # -> bool
+policy.check(alice, "edit", post)            # -> None, or raises Denied
+policy.filter(alice, "read", Post)           # -> ColumnElement[bool]   (needs [sqlalchemy])
+policy.explain(alice, "edit", post)          # -> Explanation (why yes / why no)
 ```
-
-`run_rules(changes, config)`:
-1. For each rule in `RULES` order, skip it if its ID is in `config.disable` or `check` is
-   `None`. HA000 and HA100 are registered with `check=None` only so that `rules` and
-   `explain` list them.
-2. Call `check(changes, config)`. A rule that raises is a bug: we let it crash (exit `2`)
-   in tests, and in the CLI we print "Internal error in HA00x" and exit `2`. We never return
-   a half verdict.
-3. Add the HA000 notes collected while building the ChangeSet and parsing (skipped files,
-   syntax errors), unless HA000 is in `config.disable`.
-4. If `config.severity` has the rule ID, every finding of that rule gets that severity.
-5. Return all findings, sorted.
-
-Rules never read files or call git. They only read the ChangeSet. That makes them pure and
-easy to test.
-
-### 6.2 How AST comparison works (`_pyast.py`)
-
-1. `parse(text)` = `ast.parse(text)`, cached by text hash. A `SyntaxError` means "this side
-   cannot be compared": the file goes to `Report.skipped` with "syntax error on line N", the
-   AST rules skip it, and the engine adds one HA000 note (low) for the file. (pytest would
-   fail to collect it anyway, so CI will show it.)
-2. `aliases(tree)` maps local names to full names from the imports:
-   `import pytest as pt` -> `pt` = `pytest`; `from pytest import mark` -> `mark` =
-   `pytest.mark`; `from unittest import skip` -> `skip` = `unittest.skip`.
-   `dotted(node, aliases)` turns `pt.mark.skip` or `mark.skip(...)` into `pytest.mark.skip`.
-3. `collect_tests(tree)` returns `{qualname: TestItem}` using pytest's default collection
-   rules:
-   - module-level `def test*` / `async def test*` -> `test_login`
-   - methods `test*` in classes named `Test*` that have no `__init__` ->
-     `TestApi::test_login`
-   - methods `test*` in classes that inherit from `unittest.TestCase` (by alias) ->
-     `ApiTests::test_login`
-   - nested classes are walked the same way (`TestA::TestB::test_x`).
-   Each `TestItem` keeps: the node, the start line, the decorator full names, a
-   `body_key` (`ast.dump` of the body without line numbers), and the class decorators.
-4. Tests are matched between before and after **by qualname**. Then each rule compares the
-   two `TestItem`s. A test whose `body_key` and decorators are the same is "unchanged" and
-   most rules skip it.
-
-### 6.3 HA001 test-deleted (high)
-
-Algorithm:
-1. Deleted file whose path is a test file and whose before side had at least one test ->
-   one finding for the file (`line = None`), message "Test file deleted with N tests."
-2. Renamed file that was a test file before and is not a test file after (does not match
-   `test_paths`) -> one finding: "Test file renamed to a path pytest does not collect."
-3. For each test file present on both sides: every qualname in before but not in after is a
-   candidate.
-4. Drop candidates that are really moves or renames:
-   - a test with the same `body_key` appears as a **new** qualname in the same file
-     (`test_foo` -> `test_foo_handles_empty`, body unchanged), or
-   - a test with the same qualname and the same `body_key` appears in another test file of
-     the ChangeSet (moved file to file).
-   A rename to a non-test name (`test_x` -> `_test_x`, `helper_x`) is **not** dropped,
-   because the new name is not a test.
-5. One finding per remaining candidate. `line` is the nearest after-side changed line
-   (from 5.2), `before` is the first lines of the removed test.
-
-Known false positives: a test removed on purpose with its feature (allow it in config with
-a reason); a test whose body changed **and** got renamed in one change.
-Known false negatives: fewer `@pytest.mark.parametrize` cases; custom `python_functions` /
-`python_classes` settings in pytest config (v1 uses pytest defaults).
-
-### 6.4 HA002 skip-added (high)
-
-Python test files, per test present in after:
-1. Count "skip marks" on before and after: decorators (on the function or its class)
-   whose full name is in `SKIP_DECORATORS = {"pytest.mark.skip", "pytest.mark.skipif",
-   "pytest.mark.xfail", "unittest.skip", "unittest.skipIf", "unittest.skipUnless",
-   "unittest.expectedFailure"}`,
-   with or without a call.
-2. Count skip calls in the body: `pytest.skip(...)`, `pytest.xfail(...)`.
-3. Module level: a `pytestmark = ...` assignment that contains a skip mark.
-4. After count > before count (a new test counts as before = 0) -> finding at the new
-   mark's line. A new test that is skipped from day one is also flagged: it adds nothing.
-
-Config and collection files, line level:
-5. `--ignore=` / `--ignore ` / `--deselect` in `addopts` of `pyproject.toml`
-   (`[tool.pytest.ini_options]`), `pytest.ini`, `tox.ini`, `setup.cfg`
-   (`[pytest]` / `[tool:pytest]`), and in `run:` lines of CI workflow files: a path that is
-   in after and not in before -> finding.
-6. `conftest.py`: `collect_ignore` / `collect_ignore_glob` list literals (assign or
-   `+=` / `.append` / `.extend`) that gain an entry -> finding.
-
-Known false negatives: `self.skipTest()`, `pytest.importorskip()`, skips through a custom
-marker or a `pytest_collection_modifyitems` hook, `-k "not x"` filters.
-
-### 6.5 HA003 assertion-weakened (high; expected-value rewrite: medium)
-
-Only for tests present on both sides with a changed `body_key`. Five checks:
-
-1. **Fewer asserts.** `assert_count` = `ast.Assert` nodes + calls to `self.assert*` +
-   `with pytest.raises(...)` / `pytest.warns(...)` blocks. After < before -> finding.
-2. **Trivial replacement.** Split asserts into "strong" (a `Compare` with `==`, `!=`, `<`,
-   `>`, `in`, ..., or `self.assertEqual`-style calls with two args) and "trivial":
-   `assert True`, `assert <truthy constant>`, `assert x` (a bare name or attribute),
-   `assert x is not None`. Strong count goes down **and** trivial count goes up ->
-   finding at the first new trivial assert.
-3. **Wider raises.** `pytest.raises(X)` where before had a specific class and after has
-   `Exception` or `BaseException` (by alias) in the same test -> finding.
-4. **Looser approx.** `pytest.approx(..., rel=a, abs=b)`: matched by position in the test.
-   A literal `rel` or `abs` that grew, or appeared where there was none (pytest default is
-   `rel=1e-6`) -> finding. Non-literal tolerances are skipped.
-5. **Expected value rewritten (medium).** Only when the ChangeSet also changes a source
-   file that this test file imports (`from pkg.mod import f` -> `pkg/mod.py` or
-   `src/pkg/mod.py`). Asserts are paired by the `ast.dump` of their non-constant side
-   (for example the call `total(cart)`). If the pair's constant side changed
-   (`== 120` -> `== 125`) -> medium finding: "Expected value changed in the same change as
-   the code it tests."
-
-Known false positives: real refactors that merge asserts into a helper
-(`assert_valid(resp)`); a fixed wrong expected value (check 5 is medium for this reason).
-Known false negatives: asserts moved into helpers or fixtures; weaker `match=` patterns.
-
-### 6.6 HA004 coverage-lowered (high)
-
-Line-level and config-level, not AST.
-
-| File | Where we look |
-|---|---|
-| `pyproject.toml` | `[tool.coverage.report] fail_under`; `--cov-fail-under` in `[tool.pytest.ini_options] addopts` |
-| `setup.cfg` | `[coverage:report] fail_under`; `--cov-fail-under` in `[tool:pytest] addopts` |
-| `.coveragerc` | `[report] fail_under` |
-| `tox.ini` | `[coverage:report] fail_under`; `--cov-fail-under` anywhere |
-| `pytest.ini` | `--cov-fail-under` in `[pytest] addopts` |
-| CI files (`CI_FILE_GLOBS`) | regex `--cov-fail-under[= ](\d+(\.\d+)?)` and `fail_under` in any line |
-
-Algorithm per file: collect all threshold values on each side (TOML with `tomllib`, INI
-with `configparser`, regex as fallback if parsing fails). Finding when the lowest after
-value is below the lowest before value, or before had a value and after has none (also
-when the file was deleted). Message: "Coverage threshold lowered from 90 to 80."
-
-Known false negatives: thresholds set through env vars or a Makefile.
-
-### 6.7 HA005 ci-or-lint-weakened (medium)
-
-1. **Workflow files** (`.github/workflows/*.yml|*.yaml`): parse both sides with
-   `yaml.safe_load`. For each job, a step is a "check step" when its `run` text contains
-   a word from `CHECK_COMMANDS` (`pytest`, `tox`, `nox`, `ruff`, `flake8`, `mypy`,
-   `pyright`, `pylint`, `coverage`, `pre-commit`) or its `uses` starts with an entry of
-   `CHECK_ACTIONS` (`pre-commit/action`). Steps are matched by `name`, else by `run`
-   text, else by `uses`. Findings:
-   - a check step or a job with check steps removed;
-   - `continue-on-error: true` added on a job or step that runs checks;
-   - `|| true` or `|| exit 0` added in a `run` line of a check step.
-   If YAML does not parse, fall back to the line checks only.
-2. **`tox.ini`, `noxfile.py`**: removed lines that contain a `CHECK_COMMANDS` word and are
-   not added back elsewhere in the file; added `|| true` / `ignore_outcome = true`.
-3. **`.pre-commit-config.yaml`**: a hook `id` present before and missing after.
-4. **Lint config ignore lists**: codes added to `LINT_IGNORE_KEYS` - ruff `ignore`,
-   `extend-ignore`, `per-file-ignores` (in `pyproject.toml`, `ruff.toml`, `.ruff.toml`);
-   flake8 `ignore`, `extend-ignore`, `per-file-ignores` (in `setup.cfg`, `tox.ini`,
-   `.flake8`); mypy `disable_error_code`; pyright rules switched to `"none"` / `false`.
-   We compare sets of codes, so reordering is not a finding.
-5. **Inline suppressions** in any changed `.py` file: an added line (from `changed_lines`)
-   with `# noqa`, `# type: ignore` or `# pragma: no cover`, unless the same marker text was
-   already on a removed line of the same hunk (a moved line is not new).
-
-Known false positives: a CI job removed because it moved to another workflow file (we do
-match steps across workflow files in the same ChangeSet to reduce this).
-Known false negatives: `if: false` on a step, a check moved into a script we do not read.
-
-### 6.8 HA006 snapshot-rewritten (medium)
-
-1. Snapshot file = path matches `SNAPSHOT_GLOBS = ("**/__snapshots__/**", "**/*.ambr",
-   "**/snapshots/**")`.
-2. If the ChangeSet has at least one changed source file (`ChangeSet.sources()`), then
-   every snapshot file that is `modified`, `deleted` or `renamed` gets one finding
-   (`line = None`): "Snapshot changed in the same change as source code."
-3. New snapshot files (`added`) are not flagged; new tests need new snapshots.
-
-Known false positives: a real UI or output change (allow in config with a reason).
-
-### 6.9 HA007 gate-config-weakened (medium, `rules/gate_config_weakened.py`)
-
-Why: the config is read from the base ref (10.1), so an agent cannot switch the gate off in
-the same change. This rule makes the attempt visible.
-
-1. Gate config files = `pyproject.toml` (only the `[tool.honestagent]` table) and
-   `.honestagent.toml` at the repo root (`GATE_CONFIG_FILES` in `config.py`). Only these
-   paths in the ChangeSet are read.
-2. Parse both sides with `tomllib` into a plain dict (missing file or table = `{}`). A side
-   that does not parse is compared as `{}` (the CLI already fails with exit `2` if the base
-   config is bad). If both files exist on one side, `.honestagent.toml` is the one used,
-   same as 10.1.
-3. Fill missing keys with the defaults from `config.py`, so a removed key means "back to the
-   default".
-4. Compare before -> after. One finding per weakening:
-   - a rule ID in after `disable` that is not in before `disable`;
-   - a rule whose effective severity went down (`high` > `medium` > `low`);
-   - an `allow` entry in after that is not in before (compared as `(rule, path)`);
-   - `fail_on` got looser (order `take_a_look` < `has_problems` < `never`).
-5. `line` = the after-side line of the key when it can be found by a text search, else
-   `None`. Message, for example: "Gate config changed: HA002 added to disable."
-
-Not findings: stricter changes, `test_paths` and `mutation.*` changes, new inline allow
-markers (those are handled by `allow.py` and always listed under "Allowed", 7.3).
 
 ---
 
-## 7. Allow markers and the config allow list (`allow.py`, F4)
+## 5. Expression tree (`expr.py`)
 
-### 7.1 Inline marker
+### 5.1 Node types
+All nodes are frozen `@dataclass(frozen=True, slots=True)` classes. They are hashable, so the
+compiler can cache by node.
 
-```
-# honestagent: allow HA002 -- flaky on CI, see issue #12
-```
-
-Regex (in `config.py` as `ALLOW_MARKER_RE`):
-
-```
-#\s*honestagent:\s*allow\s+(HA\d{3})\s*(?:--\s*(?P<reason>\S.*?))?\s*$
-```
-
-- Searched only in the **after** text, on the finding's line or the line above.
-- Works in any file with `#` comments: Python, YAML, TOML, INI.
-- The rule ID must match the finding's rule.
-- One rule ID per marker in v1 (the regex takes one ID).
-- A marker with no reason (nothing after `--`) is ignored and produces an HA000 note (low)
-  at the marker's line: "Allow marker has no reason, so it was ignored." Low findings never
-  change the verdict.
-- A marker that matches no finding is not reported (it may guard a line for later).
-
-### 7.2 Config allow list
-
-```toml
-allow = [{ rule = "HA005", path = "tox.ini", reason = "py3.9 env dropped on purpose" }]
-```
-
-- `path` is matched with the same glob function as `test_paths`, so an exact path works.
-- `reason` must be non-empty; an empty reason is a config error (exit `2`).
-- Findings with `line = None` (a deleted file, a whole-file finding) cannot carry an
-  inline marker. They are allowed only through this list.
-- Findings on removed code (a removed test, a removed CI step) point to the after-side
-  line where the code used to be (5.2), so a marker on that line or the line above works.
-
-### 7.3 Effect
-
-`apply_allows(findings, changes, config) -> list[Finding]` returns copies with
-`allowed = True` and `allow_reason` set, plus the HA000 notes for markers with no reason.
-Allowed findings stay in every report (their own section). The verdict ignores them.
-Markers added in the change itself still count, so a human always sees every marker the
-agent added in the "Allowed" section. The config `allow` list comes from the base ref, so
-an `allow` entry added in the change has no effect and is an HA007 finding.
-
----
-
-## 8. Verdict (`verdict.py`, F5)
-
-| Verdict | JSON value | When |
+| Node | Fields | Built by |
 |---|---|---|
-| Has problems | `has_problems` | At least one not-allowed **high** finding |
-| Take a look | `take_a_look` | No high, but at least one not-allowed **medium** finding |
-| Looks good | `looks_good` | No not-allowed high or medium findings |
+| `ResourceAttr` | `path: tuple[str, ...]` | `R.author_id`, `R.project.org_id` |
+| `ActorAttr` | `path: tuple[str, ...]` | `A.id`, `A.org.id` |
+| `Literal` | `value: LiteralValue` | any plain value on the other side of an operator |
+| `Compare` | `op: CompareOp, left: Operand, right: Operand` | `==`, `!=`, `<`, `<=`, `>`, `>=` |
+| `In` | `item: Operand, options: Operand, negate: bool` | `.in_(x)`, `.not_in(x)` |
+| `Is` | `item: Operand, value: None \| bool, negate: bool` | `.is_(None)`, `.is_not(True)` |
+| `And` | `items: tuple[Expr, ...]` | `a & b` |
+| `Or` | `items: tuple[Expr, ...]` | `a \| b` |
+| `Not` | `item: Expr` | `~a` |
+| `Related` | `path: tuple[str, ...], kind: "any" \| "has", where: Expr` | `R.members.any(...)`, `R.project.has(...)` |
+| `Const` | `value: Truth` | `TRUE_`, `FALSE_` (and results of folding) |
+
+`Operand = ResourceAttr | ActorAttr | Literal`. `Expr = Compare | In | Is | And | Or | Not | Related | Const`.
+
+`CompareOp` is a `StrEnum`: `eq, ne, lt, le, gt, ge`.
+
+`LiteralValue` is one of: `None, bool, int, float, str, bytes, Decimal, UUID, date, datetime,
+time, Enum`, or a `tuple` / `frozenset` of these (only inside `In`). Lists passed by users are
+turned into tuples. Any other type raises `ExpressionError` at build time.
+
+### 5.2 The `R` and `A` builders
+`R` and `A` are singletons of a small `_Ref` class:
+
+- `__getattr__(name)` returns a new ref with `path + (name,)`. Names starting with `_` raise
+  `ExpressionError` (protects dunder lookups and private columns from typos).
+- Operators (`__eq__`, `__ne__`, `__lt__`, ...) return `Compare` nodes.
+- `.in_()`, `.not_in()`, `.is_()`, `.is_not()` return `In` / `Is` nodes.
+- `.any(where=None, **eq)` and `.has(where=None, **eq)` return `Related`.
+  - `R.members.any(user_id=A.id, role="editor")` is short for
+    `R.members.any((R.user_id == A.id) & (R.role == "editor"))`.
+  - Inside `.any()` / `.has()`, `R` means **the related row**, not the outer resource.
+- `__bool__` raises `ExpressionError("use & | ~ instead of and/or/not")`. This catches
+  `when=R.a == 1 and R.b == 2`, which would silently drop the first part.
+- `__hash__` is defined (needed because `__eq__` is overloaded).
+
+### 5.3 Combining
+- `a & b` -> `And((a, b))`, flattened: `And((a, And((b, c))))` becomes `And((a, b, c))`.
+- `a | b` -> `Or(...)`, flattened the same way.
+- `~a` -> `Not(a)`; `~~a` simplifies to `a`.
+- Python operator precedence: `&` binds tighter than `==`. So users must write
+  `(R.a == 1) & (R.b == 2)`. Docs say this loudly. `__bool__` raising catches most mistakes.
+  `fastauthz check` also warns about `Compare` nodes whose operand is an `And`/`Or` node.
+
+### 5.4 Allowed shapes
+- Each `Compare` / `In` / `Is` must have **at least one** `ResourceAttr` or `ActorAttr`.
+  `Literal == Literal` raises at build time (it is always constant and is probably a mistake).
+- `ActorAttr op ActorAttr` is allowed (e.g. `A.is_staff.is_(True)`). It is folded before SQL.
+- `In.options` must be a `Literal` tuple or an `ActorAttr` (an actor list such as
+  `R.org_id.in_(A.org_ids)`). `ResourceAttr` in `options` raises (`ExpressionError`) - it has no
+  clean SQL form in v1.
+
+### 5.5 Paths
+- `ResourceAttr.path` of length 1 is a column on the resource model.
+- Length 2+ walks **many-to-one** relationships: `R.project.org_id` means
+  "the `org_id` of this post's project". SQL uses `has()` (section 9.4).
+- One-to-many and many-to-many relationships cannot be walked with dots. They need
+  `.any()` (there can be many rows). `validate()` checks this (section 8.5).
+- `ActorAttr.path` is read with `getattr` step by step, or `dict[key]` if the value is a
+  `Mapping`. Any missing step gives `MISSING` (section 6.2).
+
+### 5.6 Depth limit
+- The number of relationship hops in one path, plus the nesting of `Related` nodes, must be
+  `<= config.MAX_RELATION_DEPTH` (default `3`).
+- Reason: each hop is one SQL `EXISTS` subquery. Deep chains get slow. A limit keeps queries
+  predictable.
+
+### 5.7 Escape hatch: custom checks
+Some rules cannot be expressed as a tree (for example "the post's text passes a spam check").
 
 ```python
-def verdict(findings: Iterable[Finding]) -> Verdict:
-    active = [f for f in findings if not f.allowed]
-    if any(f.severity is Severity.high for f in active):
-        return Verdict.has_problems
-    if any(f.severity is Severity.medium for f in active):
-        return Verdict.take_a_look
-    return Verdict.looks_good
+policy.allow("publish", Post, check=lambda actor, post: spam_score(post.body) < 0.5)
+policy.allow("read", Doc, check=is_shared_with, sql=shared_with_sql)
 ```
 
-Gate: order is `looks_good < take_a_look < has_problems`. With `--fail-on X`, the gate
-fails when the verdict is at or worse than `X`. `never` never fails. Both are pure
-functions with a test for every row.
+- `check: Callable[[Actor, Resource], bool]` runs in Python only.
+- `sql: Callable[[Actor, type[Resource]], ColumnElement[bool]]` is an optional SQL twin.
+- A rule with `check` and no `sql` is **not filterable**. Using `filter()`, `query()` or
+  `load()` on an action that has a non-filterable rule raises `NotFilterableError` **when the
+  dependency is created** (app start), not per request.
+- If `check` raises any exception, the result is `UNKNOWN` (fail closed) and the exception is
+  logged at WARNING with the rule name. It is never swallowed silently.
+- If both `check` and `sql` are given, users should prove they agree with
+  `fastauthz.testing.assert_filter_consistent` (section 13.2).
 
 ---
 
-## 9. Reports (`report/`, F6)
+## 6. Truth values and logic (`truth.py`)
 
-All three formats take the same `Report`. None of them adds a time stamp, so output is
-stable for golden tests.
-
-### 9.1 Text (`report/text.py`)
-
-Rich `Console`. Colour only when stdout is a terminal (Rich's own detection, and
-`NO_COLOR` is honoured). With `--output`, no colour.
-
-```
-Has problems  - 3 findings: 1 high, 2 medium. 1 allowed.
-
-tests/test_cart.py
-  42  high    HA002 skip-added           New @pytest.mark.skip on test_total_with_discount.
-  57  medium  HA003 assertion-weakened   Expected value changed in the same change as the code it tests.
-tox.ini
-  12  medium  HA005 ci-or-lint-weakened  Test command removed from [testenv].
-
-Allowed (1)
-setup.cfg
-   8  high    HA004 coverage-lowered     Coverage threshold lowered from 90 to 85. Reason: legacy module removed.
-
-Allow a finding: add "# honestagent: allow HA002 -- <reason>" on the line or the line above.
-```
-
-### 9.2 Markdown (`report/markdown.py`)
-
-Used for the PR comment and as the **proof report** file. Layout:
-
-1. `<!-- honestagent -->` (first line, always; the Action finds the comment by it).
-2. Verdict line with an emoji: `## 🔴 HonestAgent: Has problems`,
-   `## 🟡 HonestAgent: Take a look`, `## 🟢 HonestAgent: Looks good`.
-3. Summary: "3 findings: 1 high, 2 medium" (not-allowed findings only), plus the base and
-   head short SHAs.
-4. Table: `| Rule | Where | What |` with `HA002 skip-added (high)`,
-   `` `tests/test_cart.py:42` ``, message.
-5. `<details><summary>Before / after</summary>` with one fenced block pair per finding.
-6. "Allowed findings" small table with the reason.
-7. Skipped files, if any, in one line each.
-8. Footer: "HonestAgent 0.1.0 - deterministic, no LLM. To allow a finding: ..."
-
-Safety and size:
-- Table cells escape `|` and new lines. Snippets use a code fence longer than the longest
-  backtick run inside them. The text `<!-- honestagent -->` is removed from snippets.
-- Limit: `MARKDOWN_MAX_CHARS = 65_536` (GitHub's comment limit). We build the full text;
-  if it is too long we drop, in order: the `<details>` snippets, then table rows from the
-  end. Then we add "N more findings not shown. Run `honestagent check` locally or use
-  `--format json` for all of them." The final text is always under the limit
-  (we aim for `MARKDOWN_TARGET_CHARS = 60_000` to leave room for the note).
-
-### 9.3 JSON (`report/json.py`)
-
-`Report.model_dump_json(indent=2)` with sorted findings. Schema version 1:
-
-```json
-{
-  "schema_version": 1,
-  "honestagent_version": "0.1.0",
-  "verdict": "has_problems",
-  "mode": "refs",
-  "base": "3f2a...full sha",
-  "head": "9c1d...full sha",
-  "counts": { "high": 1, "medium": 2, "low": 0, "allowed": 1, "total": 4 },
-  "findings": [
-    {
-      "rule_id": "HA002",
-      "name": "skip-added",
-      "severity": "high",
-      "file": "tests/test_cart.py",
-      "line": 42,
-      "message": "New @pytest.mark.skip on test_total_with_discount.",
-      "before": null,
-      "after": "@pytest.mark.skip(reason=\"later\")\ndef test_total_with_discount():",
-      "allowed": false,
-      "allow_reason": null
-    }
-  ],
-  "skipped": [ { "path": "assets/logo.png", "reason": "binary" } ]
-}
-```
-
-Rules for the schema:
-- `counts.high/medium/low` count not-allowed findings; `allowed` counts allowed ones;
-  `total` counts all.
-- `head` is a SHA in `refs` mode, `"index"` in `staged` mode, `"working-tree"` in `working`
-  mode.
-- Adding a field is allowed in schema 1. Renaming or removing one needs
-  `schema_version: 2`.
-- A JSON Schema file is generated from the Pydantic model in tests and compared to a golden
-  copy, so a schema change is always a visible diff.
-
----
-
-## 10. Config (`config.py`, F7)
-
-### 10.1 Where it comes from
-
-1. Find the repo root (`git rev-parse --show-toplevel`).
-2. Pick the **base** ref: the base SHA in `refs` mode; `HEAD` in `staged` and `working`
-   mode. Read the files from it with `git show <base>:<file>`, never from the working tree
-   or the head. So an agent cannot switch the gate off in the same change (HA007, 6.9).
-3. If `.honestagent.toml` exists at the root on that ref, use it. Its keys sit at the top
-   level (no `[tool.honestagent]` header); mutation settings go under `[mutation]`.
-4. Else, if `pyproject.toml` on that ref has `[tool.honestagent]`, use that table.
-5. Else (or if there is no base commit yet, as in an empty repo) use the defaults.
-6. If both files have config, `.honestagent.toml` wins and we print a one-line warning to
-   stderr. We never merge the two.
-7. CLI flags win over both files: `--fail-on` over `fail_on`, `--mutation` over
-   `mutation.enabled`.
-
-### 10.2 Model and validation
+### 6.1 Why three values
+SQL uses three-valued logic: a comparison with `NULL` is `NULL` ("unknown"), not `FALSE`.
+`WHERE` keeps a row only if the condition is `TRUE`. If the Python engine used two values, the
+engines would disagree on `NULL` columns and on negation. Worse, `~(R.owner_id == A.id)` with a
+missing `A.id` would become `TRUE` in Python and open access. So the Python engine uses the
+same three values as SQL.
 
 ```python
-class MutationConfig(BaseModel, extra="forbid"):
-    enabled: bool = False
-    max_mutants: int = Field(DEFAULT_MAX_MUTANTS, ge=1)      # 50
-    timeout_sec: int = Field(DEFAULT_MUTATION_TIMEOUT, ge=1) # 300
-
-class AllowEntry(BaseModel, extra="forbid"):
-    rule: RuleId
-    path: str
-    reason: str = Field(min_length=1)
-
-class Config(BaseModel, extra="forbid"):
-    test_paths: list[str] = list(DEFAULT_TEST_PATHS)
-    fail_on: Literal["has_problems", "take_a_look", "never"] = "has_problems"
-    disable: list[RuleId] = []
-    severity: dict[RuleId, Severity] = {}
-    allow: list[AllowEntry] = []
-    mutation: MutationConfig = MutationConfig()
+class Truth(Enum):
+    TRUE = 1
+    FALSE = 0
+    UNKNOWN = -1
 ```
 
-- `RuleId` is validated against `RULES`. A typo like `HA0O5` is an error.
-- `extra="forbid"`: an unknown key is an error, not a silent no-op.
-- TOML syntax errors and validation errors exit `2` with the file name and the key path,
-  for example `pyproject.toml: tool.honestagent.severity.HA005: must be high, medium or low`.
+### 6.2 MISSING
+`MISSING` is a sentinel for "this value does not exist". It is produced when:
+- the actor is `None` (anonymous user) and the rule reads `A.<anything>`;
+- an actor attribute does not exist (`getattr` raises `AttributeError`, or the key is not in a dict);
+- a resource relationship is not loaded (lazy-load guard, section 7).
 
-### 10.3 Constants in `config.py`
+A Python `None` value (attribute exists, value is `None`) is treated like SQL `NULL`. For
+comparisons, `MISSING` and `None` behave the same: they give `UNKNOWN`. The difference matters
+only for `Is` (6.3).
 
-All of these live only in `config.py`: `DEFAULT_TEST_PATHS`, `SNAPSHOT_GLOBS`,
-`CI_FILE_GLOBS`, `CHECK_COMMANDS`, `CHECK_ACTIONS`, `LINT_IGNORE_KEYS`, `SKIP_DECORATORS`,
-`ALLOW_MARKER_RE`, `DEFAULT_BRANCH_CANDIDATES`, `GATE_CONFIG_FILES`, `MAX_FILE_BYTES`, `MAX_CHANGED_FILES`,
-`SNIPPET_MAX_LINES`, `SNIPPET_MAX_CHARS`, `MARKDOWN_MAX_CHARS`, `MARKDOWN_TARGET_CHARS`,
-`DEFAULT_MAX_MUTANTS`, `DEFAULT_MUTATION_TIMEOUT`, `CONFIG_FILE_NAME`.
+**NO_ROW.** When a dotted resource path goes through a many-to-one relationship that is `None`
+(`post.project is None` while reading `R.project.org_id`), the value is `NO_ROW`. SQL turns this
+path into `Post.project.has(...)`, and `has()` is `FALSE` when there is no related row. So any
+`Compare` / `In` / `Is` that reads a `NO_ROW` path is `FALSE` (not `UNKNOWN`). This keeps the
+two engines equal, also under `NOT`.
 
----
+**Order of checks** for one `Compare` / `In` / `Is` (Python engine; `fold` gives the same result):
+1. A non-resource operand (actor value or literal) is `None` or `MISSING` -> `UNKNOWN`
+   (for `Is` on an actor value, use the `Is` table).
+2. The resource path is `NO_ROW` -> `FALSE`.
+3. The resource value is `MISSING` -> `UNKNOWN`.
+4. The resource value is `None` -> `UNKNOWN` (for `Is`, use the `Is` table).
+5. Otherwise compare the values.
 
-## 11. CLI (`cli.py`, F8)
+### 6.3 Truth tables
+Comparisons (`Compare`, `In`):
 
-```
-honestagent check [--base REF] [--head REF] [--staged | --working]
-                  [--format text|markdown|json] [--output FILE]
-                  [--fail-on has_problems|take_a_look|never] [--mutation]
-honestagent rules                 # list all rules, their severity and on/off state
-honestagent explain HA003         # what the rule catches, an example, how to allow it
-honestagent version
-```
-
-`check` flow: parse flags -> load config -> build ChangeSet -> `run_rules` -> (mutation) ->
-`apply_allows` -> `verdict` -> render -> write -> exit.
-
-| Exit | Meaning |
+| Case | Result |
 |---|---|
-| `0` | Gate passed (verdict better than `--fail-on`, or `--fail-on never`) |
-| `1` | Gate failed (verdict at or worse than `--fail-on`; default `has_problems`) |
-| `2` | Tool error. Nothing was judged. |
+| `In` with **empty** options | `FALSE` (`not_in`: `TRUE`), whatever the item is. Same as SQLAlchemy's empty-IN rendering. Checked before the rows below. |
+| either side is `None` or `MISSING` | `UNKNOWN` (see the order of checks in 6.2) |
+| `In` with options containing `None`, item not found among the non-`None` options | `UNKNOWN` (SQL behavior) |
+| `not_in` | `NOT` of `in_` with the same options (Kleene), except the empty case above |
+| values of types that cannot be compared (`TypeError`) | `UNKNOWN`, logged at DEBUG |
+| otherwise | `TRUE` or `FALSE` |
 
-Tool errors (all exit `2`, message on stderr, report not written):
+`Is`:
 
-| Case | Message |
+| Expression | Value is `None` | Value is `MISSING` | Value is `True` | Value is `False` | Other |
+|---|---|---|---|---|---|
+| `x.is_(None)` | `TRUE` | `UNKNOWN` | `FALSE` | `FALSE` | `FALSE` |
+| `x.is_(True)` | `FALSE` | `UNKNOWN` | `TRUE` | `FALSE` | `FALSE` |
+| `x.is_(False)` | `FALSE` | `UNKNOWN` | `FALSE` | `TRUE` | `FALSE` |
+
+`is_not` is `Not(is_(...))` with the same table. `MISSING` gives `UNKNOWN`, never `TRUE`. So a
+rule like `A.banned_at.is_(None)` does not let in an anonymous user.
+
+`And`, `Or`, `Not` use Kleene logic (same as SQL):
+
+| a | b | a AND b | a OR b | NOT a |
+|---|---|---|---|---|
+| T | T | T | T | F |
+| T | F | F | T | F |
+| T | U | U | T | F |
+| F | F | F | F | T |
+| F | U | F | U | T |
+| U | U | U | U | U |
+
+### 6.4 Final decision
+`final = allow_expr AND NOT deny_expr`. Access is granted **only if `final` is `TRUE`**.
+`FALSE` and `UNKNOWN` both mean "no".
+
+Check of the fail-closed cases:
+- Allow rule `UNKNOWN` -> `final` is `UNKNOWN` or `FALSE` -> no.
+- Deny rule `UNKNOWN` -> `NOT UNKNOWN = UNKNOWN` -> `final` is not `TRUE` -> no.
+  (An unclear deny blocks access. This is on purpose.)
+- SQL behaves the same: `WHERE allow AND NOT deny` drops rows where the result is `NULL`.
+
+---
+
+## 7. Python evaluator (`evaluate.py`)
+
+```python
+def evaluate(expr: Expr, actor: object | None, resource: object | None) -> Truth: ...
+```
+
+- A plain recursive function with one `match` statement over node types. No classes with
+  `evaluate()` methods: the logic stays in one place and is easy to compare with `sql.py`.
+- `ResourceAttr` reads `resource` with the same `getattr`/`Mapping` walk as actors (5.5).
+- `Related(kind="any")`: reads the collection (`post.members`). For each item, evaluates
+  `where` with the item as the resource. Result: `TRUE` if any item gives `TRUE`; else
+  `UNKNOWN` if any gives `UNKNOWN`; else `FALSE`. An empty collection gives `FALSE`. A
+  `MISSING` collection gives `UNKNOWN`.
+- `Related(kind="has")`: reads the single related object and evaluates `where` on it. A `None`
+  object gives `FALSE` (SQL `has()` on a `NULL` foreign key matches no row). `MISSING` gives
+  `UNKNOWN`.
+- `And` / `Or` short-circuit: `And` stops at the first `FALSE`, `Or` at the first `TRUE`.
+  The result is the same as the full Kleene table, only faster.
+- **Lazy loading guard:** on an SQLAlchemy object, reading an unloaded relationship can start
+  a lazy load (and in async code it raises `MissingGreenlet`). `evaluate()` does not load
+  anything. Before reading a relationship attribute it calls `_compat.is_loaded(obj, name)`.
+  If the relationship is not loaded, the value is `MISSING` (-> `UNKNOWN` -> deny), and a
+  WARNING suggests using `load()` / `filter()` (SQL) or eager loading.
+  This is why the FastAPI `load()` dependency always uses SQL, never Python, for DB objects.
+
+---
+
+## 8. Policy (`policy.py`)
+
+### 8.1 Objects
+
+```python
+@dataclass(frozen=True, slots=True)
+class Rule:
+    name: str                         # e.g. "Post.edit#2" or the user's name=...
+    effect: Literal["allow", "deny"]
+    actions: frozenset[str]           # {"edit", "delete"} or {"*"}
+    resource: type
+    who: Who                          # AUTHENTICATED (default) or ANYONE
+    roles: frozenset[str] | None      # None = any role
+    when: Expr | None                 # None = always TRUE
+    check: Callable | None
+    sql: Callable | None
+    bypass_scope: bool                # allow rules only
+    source: str                       # "file.py:42" where the rule was defined (for errors and explain)
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceSpec:
+    model: type
+    actions: frozenset[str]
+    scope: Expr | None                # None = no scope for this resource (explicit)
+    id_column: str                    # default "id"
+```
+
+`Policy` holds `resources: dict[type, ResourceSpec]`, `rules: list[Rule]`, a `RoleGraph`, the
+default scope, and config hooks:
+
+```python
+Policy(
+    scope: Expr | None = None,                       # default scope for every resource
+    actor_roles: Callable[[Actor], Iterable[str]] = default_actor_roles,   # getattr(actor, "roles", ())
+    actor_id: Callable[[Actor], object] = default_actor_id,                # getattr(actor, "id", None)
+)
+```
+
+### 8.2 Methods (all return `self` where it makes sense, so calls can chain)
+- `resource(model, *, actions, scope=INHERIT, id_column="id")`
+  - `scope=INHERIT` (default) uses the policy's default scope.
+  - `scope=None` means "no scope". Allowed, but `fastauthz check` lists it as a notice so a
+    reviewer sees which resources are not tenant-scoped.
+- `allow(actions, resource, *, who=AUTHENTICATED, roles=None, when=None, check=None, sql=None, bypass_scope=False, name=None)`
+- `deny(actions, resource, *, who=ANYONE, roles=None, when=None, check=None, sql=None, name=None)`
+  - Deny defaults to `who=ANYONE` so a deny also covers anonymous users.
+  - Deny rules have no `bypass_scope` and are **not** combined with the scope (a deny applies
+    everywhere).
+- `roles(mapping)`: role -> list of roles it includes (8.3).
+- `validate() -> list[PolicyProblem]`: finds all problems, does not raise.
+- `freeze()`: runs `validate()`, raises `PolicyError` listing **every** error if any, then makes
+  the policy read-only. Further `allow()` calls raise `PolicyFrozenError`. Calling `freeze()`
+  twice is fine (no-op).
+- `can / check / filter / explain`: need a frozen policy. If not frozen they call `freeze()`
+  first (first-use freeze), so small scripts just work.
+
+### 8.3 Roles (`roles.py`)
+- `policy.roles({"admin": ["editor"], "editor": ["viewer"]})` means admin includes editor,
+  editor includes viewer.
+- `RoleGraph.expand(roles) -> frozenset[str]` returns the roles plus everything they include
+  (transitive). Computed once per role set and cached (`functools.lru_cache` on a frozenset key;
+  `maxsize=config.ROLE_CACHE_SIZE`).
+- Cycles (`a -> b -> a`) are an error in `validate()`.
+- A role used in a rule but not defined anywhere is an error (catches typos like `"admn"`).
+  Roles that appear only on actors are not checked (we cannot know them at start time).
+- A rule with `roles=["viewer"]` matches if `expand(actor_roles(actor))` contains `"viewer"`.
+- Roles are global in v1 (one set per actor). Per-organisation roles are written with
+  relationships: `R.org.members.any(user_id=A.id, role="editor")` (example in `examples/saas_multitenant`).
+
+### 8.4 Building the condition for (action, resource)
+For a resource type and an action, `policy._condition(action, model)` returns one tree:
+
+```
+allow_part = OR over allow rules matching (action or "*") on model:
+                 who_part AND roles_part AND when AND (scope unless bypass_scope)
+deny_part  = OR over deny rules matching (action or "*") on model:
+                 who_part AND roles_part AND when
+condition  = allow_part AND NOT deny_part
+```
+
+- `who_part`: `AUTHENTICATED` -> `ActorPresent()` (a tiny internal node: `TRUE` if actor is not
+  `None`, else `FALSE`). `ANYONE` -> `TRUE_`.
+- `roles_part`: `RolesMatch(frozenset)`, an internal actor-only node.
+- No allow rules -> `allow_part = FALSE_`. No deny rules -> `deny_part = FALSE_`.
+- Custom `check` rules become an internal `CustomCheck(rule)` node (Python only).
+- The result is cached per `(model, action)` after `freeze()`. The tree does not depend on the
+  actor, so one tree serves every request.
+- **Scope and anonymous users.** A scope that reads the actor (`R.org_id == A.org_id`) is
+  `UNKNOWN` for an anonymous actor, so it blocks every scoped allow rule for them. This is
+  correct for tenant data. A truly public rule (`who=ANYONE`) on a scoped resource therefore
+  needs `bypass_scope=True`. `validate()` warns about this case (FA016).
+- `require()` (12.4) builds the same tree **without** the scope, because there is no row yet.
+  Tenant checks for a new object are done on the built object (`guard.check`).
+
+### 8.5 `validate()` checks
+Each problem has a code, a message, and the rule's `source` location.
+
+| Code | Level | Problem |
+|---|---|---|
+| FA001 | error | Rule uses an action not declared on the resource. |
+| FA002 | error | Rule targets a resource not declared with `resource()`. |
+| FA003 | error | `R.<path>` does not exist on the model (column or relationship). (Needs SQLAlchemy; skipped for plain classes.) |
+| FA004 | error | A dotted path walks a one-to-many / many-to-many relationship (use `.any()`). |
+| FA005 | error | Relationship depth over `MAX_RELATION_DEPTH`. |
+| FA006 | error | Role cycle. |
+| FA007 | error | Rule uses an undefined role. |
+| FA008 | error | Scope references a column that the resource does not have. Fix: set `scope=None` or a custom scope on that resource. |
+| FA009 | warning | Allow rule with `who=ANYONE` and no `when` (everyone, even anonymous, can do this). |
+| FA010 | warning | Action declared but no allow rule (nobody can ever do it). |
+| FA011 | warning | Rule can never match (for example `when` folds to `FALSE`). |
+| FA012 | notice | Resource has `scope=None`. |
+| FA013 | notice | Action has a non-filterable rule (`check` without `sql`). |
+| FA014 | warning | `Compare` with an `And`/`Or` operand (probably missing parentheses, 5.3). |
+| FA015 | warning | `== None` or `!= None` (always `UNKNOWN`, so never matches). Use `.is_(None)` / `.is_not(None)`. |
+| FA016 | warning | Allow rule with `who=ANYONE` on a resource whose scope reads `A`, without `bypass_scope=True`. Anonymous users can never match it (8.4). |
+
+Warnings and notices never stop `freeze()`. `fastauthz check --strict` turns warnings into errors.
+
+---
+
+## 9. SQL compiler (`sql.py`)
+
+### 9.1 Entry point
+```python
+def compile_filter(policy: Policy, actor: object | None, action: str, model: type) -> ColumnElement[bool]:
+    tree = policy._condition(action, model)            # cached, actor-free
+    folded = fold(tree, actor)                         # 9.2: bind actor values, simplify
+    return to_sql(folded, model)                       # 9.3
+```
+
+### 9.2 Partial evaluation (`fold`)
+Everything that depends only on the actor is evaluated **in Python, before SQL**:
+- `ActorAttr` -> `Literal(value)` (or `Literal(MISSING)`).
+- `ActorPresent`, `RolesMatch` -> `Const(TRUE / FALSE)`.
+- `Compare` / `In` / `Is` with no `ResourceAttr` left -> evaluated to `Const` with the rules of
+  section 6.
+- `Compare` with a `MISSING` or `None` literal on one side -> `Const(UNKNOWN)` (same as SQL,
+  but without sending `= NULL` to the database).
+- `And` / `Or` / `Not` simplified with Kleene rules: `TRUE AND x -> x`, `FALSE AND x -> FALSE`,
+  `FALSE OR x -> x`, `TRUE OR x -> TRUE`, `UNKNOWN AND FALSE -> FALSE`, `NOT TRUE -> FALSE`, and
+  so on. Duplicates inside one `And`/`Or` are removed (nodes are hashable).
+
+Result: an admin's filter is often just `TRUE`, and an anonymous user's is often `FALSE`, so
+the database does no extra work. This is the same idea oso called "partial evaluation".
+
+`CustomCheck` nodes: if the rule has `sql=`, it is replaced by `SqlFragment(rule.sql(actor, model))`.
+Without `sql=`, `fold` raises `NotFilterableError` (but this is normally caught earlier, when the
+dependency is created, 5.7).
+
+### 9.3 Turning nodes into SQLAlchemy
+| Node | SQLAlchemy |
 |---|---|
-| Not inside a git repo / `git` not on PATH | "Not a git repo" / "git not found" |
-| Bad `--base` / `--head` | "Unknown ref: X" |
-| No default branch (no `origin/HEAD`, `main` or `master`) | "Could not find the default branch. Pass --base." |
-| No merge-base (shallow clone) | "No common history between base and head. In GitHub Actions use `fetch-depth: 0`." |
-| `--staged` with `--working`, or either with `--base/--head` | "Use only one of: --base/--head, --staged, --working" |
-| Bad config: unknown key, unknown rule ID, bad value, `allow` entry without a reason | file + key path + what is wrong |
-| `explain` with an unknown rule ID | "Unknown rule: X" |
-| `--mutation` without mutmut | install hint (section 13) |
-| `--mutation` with `--staged` or `--working` | "--mutation needs --base/--head (real refs)." |
-| `--output` cannot be written | "Cannot write FILE" |
-| Unexpected exception | "Internal error. Please open an issue with this output." + traceback with `-v` |
+| `Const(TRUE)` | `sa.true()` |
+| `Const(FALSE)` | `sa.false()` |
+| `Const(UNKNOWN)` | `sa.null()` cast to Boolean: `sa.cast(sa.null(), sa.Boolean)` |
+| `ResourceAttr((col,))` | `getattr(model, col)` (an `InstrumentedAttribute`) |
+| `Literal(v)` | `sa.bindparam(None, v, unique=True)` (always a bound parameter, never inlined text) |
+| `Compare(eq, a, b)` | `a == b` (and `!=`, `<`, ... the same way) |
+| `In(item, options)` | `item.in_(options)` / `item.not_in(options)`; empty options -> `sa.false()` / `sa.true()` |
+| `Is(item, None)` | `item.is_(None)`; `Is(item, True)` -> `item.is_(sa.true())` |
+| `And(items)` | `sa.and_(*items)` |
+| `Or(items)` | `sa.or_(*items)` |
+| `Not(item)` | `sa.not_(item)` |
+| `SqlFragment(el)` | `el` as given |
 
-- The report goes to stdout (or `--output`). Errors and warnings go to stderr. So
-  `honestagent check --format json > r.json` is always clean JSON.
-- `rules` prints a Rich table: ID, name, severity (after config), on/off.
-- `explain HAxxx` prints `Rule.explain`. Unknown ID exits `2`.
-- `version` prints `honestagent 0.1.0`.
+`Literal(v)` values are always bound parameters. User or actor data never becomes SQL text,
+so SQL injection through policy values is impossible by construction.
 
----
+### 9.4 Relationships
+- `ResourceAttr(("project", "org_id"))` on `Post` ->
+  `Post.project.has(Project.org_id == <rhs>)`. The comparison is pushed inside `has()`.
+  For longer paths, `has()` calls are nested.
+- `Related(("members",), "any", where)` -> `Post.members.any(to_sql(where, Member))`, where
+  `Member` is the relationship's target class (`_compat.relationship_target(Post, "members")`).
+- `Related(..., "has", where)` -> `Post.owner.has(to_sql(where, User))`.
+- No related row means `has()` is `FALSE`. The Python engine matches this with `NO_ROW` (6.2).
+- SQLAlchemy turns `has()` / `any()` into correlated `EXISTS` subqueries. They do not add
+  rows to the outer query, so `LIMIT` / pagination stay correct (no duplicate rows, unlike
+  joins).
 
-## 12. Integrations (F9-F11)
+### 9.5 Sync and async
+The compiler only builds expressions. It does not run queries, so it is the same for `Session`
+and `AsyncSession`. Running queries happens in `fastapi.py` (12.3).
 
-All three call the CLI. None of them has rule logic.
-
-### 12.1 pre-commit (F9, `.pre-commit-hooks.yaml`)
-
-```yaml
-- id: honestagent
-  name: honestagent (test-integrity gate)
-  description: Flags deleted, skipped or weakened tests in staged changes.
-  entry: honestagent check --staged --format text
-  language: python
-  pass_filenames: false
-  always_run: true
-  require_serial: true
-```
-
-- `pass_filenames: false`: the CLI reads the index itself; it needs the whole change set
-  (HA003 and HA006 look across files).
-- pre-commit stashes unstaged changes before running, so the index is what gets committed.
-  We read the index through `git cat-file` (`:path`), not the disk, so it is right either way.
-- User side, in `.pre-commit-config.yaml`:
-  `- repo: https://github.com/ankitraj20616/HonestAgent`, `rev: v0.1.0`, `hooks: [{id: honestagent}]`.
-
-### 12.2 GitHub Action (F10, `action.yml`)
-
-Composite action. Inputs: `fail-on` (default `has_problems`), `mutation` (default
-`false`), `comment` (default `true`), `python-version` (default `3.12`).
-
-```yaml
-runs:
-  using: composite
-  steps:
-    - uses: actions/setup-python@v5
-      with: { python-version: "${{ inputs.python-version }}" }
-
-    - name: Install HonestAgent
-      shell: bash
-      env: { MUTATION: "${{ inputs.mutation }}", ACTION_PATH: "${{ github.action_path }}" }
-      run: |
-        if [ "$MUTATION" = "true" ]; then pip install "$ACTION_PATH[mutation]"
-        else pip install "$ACTION_PATH"; fi
-
-    - name: Check
-      id: check
-      shell: bash
-      env:
-        BASE: ${{ github.event.pull_request.base.sha }}
-        HEAD: ${{ github.event.pull_request.head.sha }}
-        FAIL_ON: ${{ inputs.fail-on }}
-        MUTATION: ${{ inputs.mutation }}
-      run: |
-        set +e
-        args=(check --base "$BASE" --head "$HEAD" --format markdown
-              --output "$RUNNER_TEMP/honestagent.md" --fail-on "$FAIL_ON")
-        [ "$MUTATION" = "true" ] && args+=(--mutation)
-        honestagent "${args[@]}"
-        echo "rc=$?" >> "$GITHUB_OUTPUT"
-        cat "$RUNNER_TEMP/honestagent.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
-
-    - name: Sticky comment
-      if: inputs.comment == 'true' && github.event_name == 'pull_request' && steps.check.outputs.rc != '2'
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        REPO: ${{ github.repository }}
-        PR: ${{ github.event.pull_request.number }}
-      run: |
-        body="$RUNNER_TEMP/honestagent.md"
-        id=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
-              --jq '.[] | select(.user.login == "github-actions[bot]")
-                        | select(.body | startswith("<!-- honestagent -->")) | .id' | head -n1) || id=""
-        if [ -n "$id" ]; then
-          gh api -X PATCH "repos/$REPO/issues/comments/$id" -F "body=@$body" > /dev/null
-        else
-          gh api -X POST "repos/$REPO/issues/$PR/comments" -F "body=@$body" > /dev/null
-        fi || echo "::warning::HonestAgent could not post the PR comment (read-only token?)."
-
-    - name: Result
-      shell: bash
-      env: { RC: "${{ steps.check.outputs.rc }}" }
-      run: exit "${RC:-2}"              # no rc means the check step itself broke
-```
-
-Design notes:
-- Workflow values go through `env:`, never pasted into `run:` with `${{ }}`. This blocks
-  script injection from PR titles or branch names.
-- **One comment.** The comment is found by the hidden marker `<!-- honestagent -->` on the
-  first line, posted by the GitHub Actions account. It is updated in place on every push,
-  never duplicated.
-- The report also goes to the job summary, so fork PRs still show it.
-- The job exits with the CLI exit code. So branch protection can require the check.
-- If the CLI exits `2`, no comment is posted; the job fails with the error in the log.
-- Install comes from `github.action_path`, so the action version and the package version
-  are the same.
-
-User workflow (documented in the README):
-
-```yaml
-on: pull_request
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  honestagent:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }      # both SHAs and the merge-base must be present
-      - uses: ankitraj20616/HonestAgent@v0
-        with: { fail-on: has_problems }
-```
-
-**Fork PRs:** on `pull_request` from a fork, `GITHUB_TOKEN` is read-only. The comment step
-fails, prints a warning and goes on. The job result (pass/fail) and the job summary still
-work. We document that users must **not** switch to `pull_request_target` to get the
-comment: that runs with a write token, and with `mutation: true` it would run untrusted PR
-code.
-
-### 12.3 Claude Code hook (F11, `hooks/claude-code/settings.json`)
-
-Checked against the official docs (https://code.claude.com/docs/en/hooks, read on
-2026-10-24). Facts we depend on:
-- Hooks live in `.claude/settings.json` (project) or `~/.claude/settings.json` (user), as
-  `hooks -> <event> -> [ { matcher, hooks: [ { type: "command", command, timeout } ] } ]`.
-- The hook gets JSON on stdin. Common fields: `session_id`, `transcript_path`, `cwd`,
-  `permission_mode`, `hook_event_name`.
-- Exit `0` = success; "Claude never sees stderr from a hook that exits 0".
-- Exit `2` on `Stop` = "Prevents Claude from stopping, continues the conversation", and
-  Claude gets the stderr text as the reason to continue.
-- Exit `2` on `PostToolUse` = "Shows stderr to Claude; the tool already ran".
-- Any other exit code is a non-blocking error; the action goes ahead. ("If your hook is
-  meant to enforce a policy, use `exit 2`.")
-- `Stop` input has `stop_hook_active`: "`true` when Claude Code is already continuing as a
-  result of a stop hook. Check this value ... to avoid blocking on a condition that will
-  never resolve." Claude Code also caps stop-hook continuations at 8 in a row.
-- Matcher `"Edit|Write"` matches either tool exactly. `${CLAUDE_PROJECT_DIR}` is the
-  project root. Default command timeout is 600 seconds.
-
-Mapping: the CLI exits `1` when the gate fails, but Claude Code treats `1` as
-"non-blocking". So the hook command maps CLI `1` -> hook `2`, and sends the report to
-stderr so Claude sees it. CLI `2` (tool error) maps to hook `1`: the user sees an error,
-the agent is not blocked by a broken tool.
-
-Loop guard: on the first stop with problems we block. If `stop_hook_active` is already
-`true` and the gate still fails, we exit `1` (non-blocking): the agent stops, the user sees
-the findings, and the PR gate still catches it later. This avoids an agent loop on a
-finding the agent cannot fix.
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "timeout": 120,
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" || exit 1; input=$(cat); honestagent check --working --format text 1>&2; rc=$?; if [ $rc -eq 0 ]; then exit 0; fi; if [ $rc -eq 1 ] && ! printf '%s' \"$input\" | grep -Eq '\"stop_hook_active\" *: *true'; then exit 2; fi; exit 1"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "timeout": 60,
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" || exit 1; honestagent check --working --format text 1>&2; rc=$?; if [ $rc -eq 0 ]; then exit 0; fi; if [ $rc -eq 1 ]; then exit 2; fi; exit 1"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-- The `Stop` hook is the main one. The `PostToolUse` one is optional (the README says so):
-  it gives faster feedback but runs after every edit, so it is noisy on big repos.
-- `--working` includes untracked files, so a new test file the agent just wrote is seen.
-- On a block, the agent gets the text report. It must fix the tests, or add an allow
-  marker with a reason. The marker then shows in the PR report under "Allowed", so a human
-  still sees it.
-- Windows: Claude Code runs shell-form hooks in Git Bash when it is installed. The README
-  says Git Bash is needed for this snippet.
-- In M4 the same hook ships as a Claude Code plugin; the logic stays in the CLI.
+### 9.6 What we verify about the SQL
+- Every operator on SQLite and PostgreSQL (integration tests).
+- The differential property test (14.3) runs the compiled filter on real tables and compares
+  with the Python evaluator for every row.
+- Snapshot tests of the compiled SQL text (with `literal_binds` off) for each example policy,
+  so a change in the generated SQL is visible in review.
 
 ---
 
-## 13. Mutation check (`mutation.py`, F12, M3)
+## 10. Decisions, logging and explain (`decision.py`)
 
-Opt-in: `--mutation` or `mutation.enabled = true`. Uses `mutmut` from the optional extra
-`honestagent[mutation]`. Some mutmut details below must be confirmed in the M3 spike
-(mutmut 3 changed its CLI); they are marked "verify".
+### 10.1 Decision
+```python
+@dataclass(frozen=True, slots=True)
+class Decision:
+    allowed: bool
+    action: str
+    resource_type: str                 # model.__name__
+    resource_id: object | None         # None for list filters and require()
+    actor_id: object | None            # from policy.actor_id(actor); never the whole actor
+    kind: Literal["check", "filter", "load", "require"]
+    matched_rules: tuple[str, ...]     # names of allow rules that were TRUE (check only)
+    denied_by: tuple[str, ...]         # names of deny rules that were TRUE or UNKNOWN (check only)
+    duration_us: int
+```
 
-Steps:
-1. **Mode and dependency check.** Mode must be `refs` (`--base/--head`); with `--staged`
-   or `--working`, exit `2`: "--mutation needs --base/--head (real refs)."
-   Then `importlib.util.find_spec("mutmut")`. Missing -> exit `2`:
-   "Mutation check needs mutmut. Install it with: pip install 'honestagent[mutation]'".
-2. **Targets.** From `ChangeSet.sources()`: changed source lines. With `_pyast.py`, map each
-   changed line to the function that holds it. Lines outside functions are skipped
-   (mutmut 3 mutates inside functions; verify).
-3. **Temp worktree.** `tmp = tempfile.mkdtemp(prefix="honestagent-mut-")`, then
-   `git worktree add --detach <tmp> <head SHA>`. The user's working tree is never touched.
-4. **Run.** In `<tmp>`: `mutmut run <mutant name globs for the target functions>`
-   (verify the name format, for example `pkg.mod.x_total__mutmut_*`). The process runs in
-   its own process group with the remaining `timeout_sec` budget. At most `max_mutants`
-   mutants are run, picked in sorted name order so the pick is deterministic.
-5. **Results.** `mutmut results` lists survived mutants; `mutmut show <name>` gives the
-   diff (verify both). We keep only mutants whose changed line is in `changed_lines`.
-6. **Findings.** Each surviving mutant -> HA100 (medium): file, line, message "A mutant
-   survived: `a < b` changed to `a <= b` and no test failed.", `before` / `after` = the
-   original and mutated line.
-7. **Cleanup** (in `finally`): kill the process group if still running,
-   `git worktree remove --force <tmp>`, `git worktree prune`, remove `<tmp>`.
+- `FastAuthz(on_decision=callback)` calls the callback for every decision. Errors inside the
+  callback are logged and never change the decision.
+- The logger `fastauthz.decisions` logs at DEBUG by default, INFO for denies if
+  `config.LOG_DENIES_AT_INFO` is `True`.
+- Decisions hold **ids only**, never actor or resource objects, so logs do not leak personal
+  data. This helps with privacy laws (GDPR, India's DPDP) that ask for access logs.
+- For `filter` and `load`, `matched_rules` is empty (the database decides per row; we cannot
+  know which rule matched without extra queries).
 
-Limits and notes:
-- Timeout reached: kill, keep the results so far, add a skipped note "Mutation check
-  stopped after 300 s; N of M mutants ran."
-- The tests run with the current Python environment, so the project's test dependencies
-  must be installed (in the Action: the user installs them before our step).
-- `git worktree add` writes a small entry under `.git/worktrees/`; step 7 removes it.
-- mutmut support on Windows is limited (verify); M3 targets Linux and macOS first.
+### 10.2 Explain
+`policy.explain(actor, action, obj) -> Explanation` evaluates every rule for that
+(action, resource) separately and returns:
+
+```
+Explanation(allowed=False, rules=[
+    RuleResult(name="Post.edit#1", effect="allow", result=FALSE,   because="R.author_id (7) == A.id (3) is FALSE", source="authz.py:21"),
+    RuleResult(name="Post.*#3",    effect="allow", result=FALSE,   because="role 'admin' not in actor roles {'viewer'}",  source="authz.py:23"),
+    RuleResult(name="Post.delete#4", effect="deny", result=UNKNOWN, because="R.locked is None (UNKNOWN)", source="authz.py:24"),
+])
+```
+
+- `Explanation.__str__` prints this as a readable table. It is meant for debugging and tests,
+  not for end users (it shows values).
+- `explain` uses the Python engine only. For DB objects it needs the relationships it reads to
+  be loaded (7, lazy loading guard); otherwise it shows `MISSING`.
+
+---
+
+## 11. Errors (`errors.py`)
+
+```
+FastAuthzError                    # base class
+├── ExpressionError               # bad rule expression (built at import time)
+├── PolicyError                   # freeze() found errors; .problems: list[PolicyProblem]
+├── PolicyFrozenError             # changing a frozen policy
+├── UnknownResourceError          # resource type not declared
+├── UnknownActionError            # action not declared for the resource
+├── NotFilterableError            # filter/query/load on a rule with check= but no sql=
+└── Denied                        # access denied; .decision: Decision
+```
+
+- `Denied` is raised by `check()`. It carries the `Decision`, never the explanation (no values
+  leak through error messages).
+- The FastAPI layer turns `Denied` into HTTP 403 or 404 (12.5). All other errors are bugs in the
+  app's policy and surface as 500 during development, or at start time.
+
+---
+
+## 12. FastAPI integration (`fastapi.py`, `openapi.py`)
+
+### 12.1 FastAuthz object
+```python
+FastAuthz(
+    policy: Policy,
+    *,
+    actor: Callable[..., Any],              # a FastAPI dependency that returns the current user (or None)
+    session: Callable[..., Any] | None,     # a FastAPI dependency that returns Session or AsyncSession
+    deny_status: Literal[403, 404] = 404,   # for load(); require()/check() always use 403
+    on_decision: Callable[[Decision], None] | None = None,
+)
+```
+- The constructor calls `policy.freeze()`. Policy errors stop the app at import / start.
+- `actor` and `session` are normal FastAPI dependencies. fastauthz never creates sessions
+  and never handles authentication. It reuses what the app has.
+
+### 12.2 Dependency factories
+Each factory is called when the route is defined (import time). It checks its arguments right
+away (unknown resource, unknown action, non-filterable rule -> error at start), then returns a
+dependency function with a proper signature so FastAPI can inject `actor` and `session`.
+
+| Factory | Returns to the route | Runs |
+|---|---|---|
+| `authz.query(Model, action)` | `Select[tuple[Model]]` = `select(Model).where(filter)` | no query; route adds limit/order and runs it |
+| `authz.filter(Model, action)` | `ColumnElement[bool]` | no query; for custom joins |
+| `authz.load(Model, action, *, param=None, id_column=None)` | the `Model` instance | one `SELECT ... WHERE id = :id AND filter` |
+| `authz.require(action, Model)` | `None` | no query; uses actor-only parts of the rules (12.4) |
+| `authz.guard` | a `Guard` bound to the request's actor | nothing until used |
+
+`Guard` (for service code that needs several checks):
+```python
+async def publish(post_id: int, guard: Annotated[Guard, Depends(authz.guard)], session: SessionDep):
+    post = await session.get(Post, post_id)
+    guard.check("publish", post)          # raises Denied -> 403
+    if guard.can("feature", post): ...
+    stmt = select(Comment).where(guard.filter("read", Comment))
+```
+
+### 12.3 `load()` in detail
+1. Path parameter name: `param` if given, else `f"{model.__name__.lower()}_id"` (e.g. `post_id`),
+   else `"id"` if the route has only `{id}`. Checked against the route path in `install()`
+   (12.6); a mismatch is a startup error.
+2. Converts the raw path value with the type of the id column (`int`, `UUID`, `str`), using
+   the column's `python_type`. A bad value gives 422 (same as FastAPI's own validation).
+3. Runs `select(Model).where(Model.<id_column> == :id, filter)` with `session.execute` or
+   `await session.execute` (`_compat.is_async_session`).
+4. Row found -> return it. Not found:
+   - `deny_status=404` -> 404. The user cannot tell "does not exist" from "not allowed".
+     This is the safe default and avoids leaking which ids exist.
+   - `deny_status=403` -> one more query `select(exists().where(id == :id, scope))`. Exists -> 403,
+     else 404. The extra query runs only on the deny path. The scope is kept in this query, so
+     a user still gets 404 (never 403) for rows of another tenant. Ids of other tenants do not leak.
+5. Emits a `Decision(kind="load")`.
+
+One query in the happy path, the same as a plain `session.get()`. The check and the load
+cannot get out of sync (no time-of-check / time-of-use gap between two queries).
+
+### 12.4 `require()` in detail
+For actions with no object yet (usually `create`):
+- Evaluates the condition **without the scope** (8.4) and with `resource=None`. Actor-only parts
+  (`who`, `roles`, `A.x` tests) work. Any `R.x` in a rule gives `MISSING` -> `UNKNOWN` -> deny.
+  Deny rules are still applied.
+- So `policy.allow("create", Post, roles=["editor"])` works with `require()`, but
+  `policy.allow("create", Post, when=R.org_id == A.org_id)` does not. For payload-based
+  checks, build the object and call `guard.check("create", Post(**body.model_dump()))`.
+- `install()` warns at start if a route uses `require()` for an action whose every allow rule
+  needs `R` (that route could never succeed).
+
+### 12.5 Errors to HTTP
+`authz.install(app)` adds one exception handler for `Denied`:
+- Status 403 (or 404 from `load()`).
+- Body in RFC 9457 "problem details" format, `Content-Type: application/problem+json`:
+  `{"type": "about:blank", "title": "Forbidden", "status": 403, "detail": "You do not have permission to edit this Post."}`
+- The detail text comes from `config.DENY_DETAIL_TEMPLATE` and never includes rule names,
+  values or the explanation.
+- If the app already has a handler for `Denied`, `install()` does not replace it.
+
+### 12.6 OpenAPI
+`install()` wraps `app.openapi` once:
+1. Builds the normal schema (calls the original `app.openapi`).
+2. Finds every route that uses a fastauthz dependency. Each dependency function carries an
+   attribute `__fastauthz__ = PermissionInfo(model, action, kind)`. Route discovery goes through
+   `_compat.iter_routes(app)` (12.7).
+3. For each such operation:
+   - adds `403` (and `404` for `load()`) to `responses`, with the problem-details schema;
+   - adds `x-fastauthz: [{"resource": "Post", "action": "edit"}]`;
+   - appends one line to the description: "**Permission:** `edit` on `Post`".
+4. Caches the result, like FastAPI does.
+
+So Swagger UI shows which permission every route needs, without extra work.
+
+### 12.7 `_compat.py`
+The only module allowed to touch internals. Functions:
+- `iter_routes(app) -> Iterator[APIRoute]` - walks routes, including nested routers and the
+  route tree introduced in FastAPI 0.137.
+- `route_dependencies(route) -> Iterator[Callable]` - walks the route's dependency tree.
+- `is_async_session(session) -> bool`
+- `is_loaded(obj, attr) -> bool` - uses `sqlalchemy.inspect(obj).unloaded`.
+- `relationship_target(model, name) -> type` and `relationship_direction(model, name)`.
+- `column_python_type(model, name) -> type`.
+
+Each function has contract tests in `tests/compat/` that run on every FastAPI and SQLAlchemy
+version in the CI matrix (15.2). A new FastAPI release that changes internals fails our
+**nightly** job before users see it.
+
+### 12.8 Sync routes
+Dependencies are `async def` when the session is async, and plain `def` when the session is
+sync (FastAPI then runs them in its threadpool). The factory picks the right one at start by
+checking whether the user's `session` dependency is a coroutine function or an async generator.
+
+---
+
+## 13. Tools for users
+
+### 13.1 Test helpers (`testing.py`)
+```python
+from fastauthz.testing import assert_allowed, assert_denied, PolicyCase, check_cases
+
+assert_allowed(policy, alice, "edit", post)          # on failure, prints the Explanation
+assert_denied(policy, bob, "edit", post)
+
+check_cases(policy, [
+    PolicyCase(alice, "edit",   post,  True),
+    PolicyCase(bob,   "edit",   post,  False),
+    PolicyCase(None,  "read",   draft, False),
+])                                                    # one report with all failures
+```
+
+### 13.2 Filter consistency check
+```python
+assert_filter_consistent(policy, session, Post, actors=[alice, bob, None], actions=["read", "edit"])
+```
+For each actor and action: loads all rows of `Post` (with needed relationships eager-loaded),
+evaluates each row in Python, runs the SQL filter, and compares the two sets of ids. Any
+difference fails with the row id and the explanation. Users run this in their own test suite,
+mainly to prove that their `check=` and `sql=` twins agree. Max rows:
+`config.CONSISTENCY_MAX_ROWS` (default 10,000); more rows raise an error asking for a smaller
+test dataset.
+
+### 13.3 Actor override in tests
+```python
+with override_actor(app, authz, alice):
+    response = client.get("/posts")
+```
+Uses `app.dependency_overrides` for the `actor` dependency and restores it on exit.
+
+### 13.4 CLI (`cli.py`, stdlib `argparse`, no extra dependency)
+```
+fastauthz check   app.authz:policy [--strict] [--format text|json]
+fastauthz matrix  app.authz:policy [--format markdown|json|csv] [--output FILE]
+fastauthz explain app.authz:policy --resource Post --action edit
+fastauthz version
+```
+- `app.authz:policy` is `module:attribute`, imported with `importlib`. The current directory
+  is added to `sys.path` (like uvicorn does).
+- `check`: runs `validate()`, prints problems with codes and `file:line`. Exit codes:
+  `0` no errors, `1` errors (or warnings with `--strict`), `2` bad usage / import failure.
+- `matrix`: a table of resource x action -> the rules in plain words, e.g.
+  `Post / edit: author (R.author_id == A.id) OR role admin; denied if R.locked is TRUE`.
+  Good for security reviews, audits and docs. Deterministic order (sorted).
+- `explain`: prints every rule for one (resource, action) with its source line.
 
 ---
 
 ## 14. Testing strategy
 
-Rule: write the failing test first. No network, no real GitHub, no real agents.
+### 14.1 Rules
+- Tests first for every feature (red -> green -> refactor).
+- No network. No external services except a **local** PostgreSQL (Docker locally, a service
+  container in CI). SQLite in-memory for the fast default run.
+- `uv run pytest` runs the fast suite (unit + property on SQLite + FastAPI on SQLite) in under
+  60 seconds. `uv run pytest -m postgres` adds PostgreSQL.
 
-### 14.1 Recorded PR fixtures
+### 14.2 Unit tests
+- `expr`: every builder, operator, flattening, `__bool__` error, private-name error, literal
+  types, depth counting.
+- `truth`: the full Kleene tables (all 9 pairs for And/Or, 3 for Not), `Is` table, `MISSING`.
+- `evaluate`: every node; `None` vs `MISSING`; lazy-load guard; custom check exceptions.
+- `roles`: expansion, cycles, cache.
+- `policy`: every `FA0xx` problem has at least one test that triggers it and one that does not.
+- `sql`: every node to SQL; `fold` simplification table; bound parameters only (assert no
+  literal value appears in compiled SQL text).
+- `fastapi`: each dependency, sync and async, 403/404 rules, problem-details body, OpenAPI
+  additions, `install()` idempotent.
+- `cli`: each command and exit code (run in-process with `main(argv)`).
 
-```
-tests/fixtures/prs/
-  ha001_test_function_deleted/
-    before/            # the files before the change (only the ones that matter)
-      src/shop/cart.py
-      tests/test_cart.py
-    after/             # the same tree after the change; a missing file = deleted
-      src/shop/cart.py
-      tests/test_cart.py
-    expected.json      # verdict + expected findings
-  ha001_renamed_out_of_collection/
-  ha002_skip_decorator_added/
-  ha003_assert_true/
-  ha003_expected_value_rewrite/
-  ha004_fail_under_lowered/
-  ha005_continue_on_error/
-  ha006_snapshot_with_source/
-  ha007_rule_disabled_in_config/   # also checks the base config is the one used
-  allow_marker_with_reason/
-  allow_marker_without_reason/     # expects an HA000 note
-  clean_refactor_moved_test/       # must stay "Looks good"
-  real_m0_<n>/                     # real cases saved in M0
-```
+### 14.3 Differential property tests (the most important tests)
+Using Hypothesis:
+1. **Strategy for policies:** random expression trees within the allowed grammar (section 5.4):
+   random `Compare`/`In`/`Is` over a fixed test schema (`Item(id, owner_id, org_id, status,
+   score, published, deleted_at, group -> Group(org_id), tags -> Tag(name))`), random actor
+   attribute references, random `And`/`Or`/`Not` nesting up to depth 4, random allow/deny rules.
+2. **Strategy for data:** random rows including `NULL`s in every nullable column, random
+   actors including `None` and actors with missing attributes.
+3. **Property:** for every actor, action:
+   `{row.id for row in rows if policy.can(actor, action, row)}` ==
+   `{id for id in session.scalars(select(Item.id).where(policy.filter(actor, action, Item)))}`.
+4. Runs on SQLite in every CI run (`max_examples=500`) and PostgreSQL in CI
+   (`max_examples=2000`). Nightly runs use `max_examples=20000`.
+5. Every bug Hypothesis finds becomes a fixed example (`@example(...)`) so it stays covered.
 
-`expected.json`:
+### 14.4 Integration tests
+- Three example apps (`examples/`) with full HTTP tests through `httpx.AsyncClient` +
+  `ASGITransport`: list, load, create, deny paths, 403 vs 404, OpenAPI snapshot.
+- SQLModel models tested once (they are SQLAlchemy models; we prove it works).
 
-```json
-{
-  "verdict": "has_problems",
-  "findings": [
-    { "rule_id": "HA001", "severity": "high", "file": "tests/test_cart.py", "line": 12, "allowed": false }
-  ]
-}
-```
-
-Helper in `tests/conftest.py`:
-
-```python
-def make_repo(tmp_path, case, mode="refs") -> RepoUnderTest:
-    """git init; copy before/ ; commit; copy after/ (delete missing files);
-    then commit (refs), `git add -A` (staged) or leave it (working)."""
-```
-
-- It sets `GIT_AUTHOR_*` / `GIT_COMMITTER_*` names and dates, `init.defaultBranch=main`
-  and `core.autocrlf=false`, so SHAs and output are the same on every machine.
-- One parametrized test runs **every** case in all three modes and compares the result to
-  `expected.json` (only the listed fields, so messages can change without breaking it).
-- Each rule also has small unit tests on in-memory `ChangeSet`s built by hand, for edge
-  cases (aliases, nested classes, syntax errors).
-
-### 14.2 Other tests
-
-- **Verdict:** every row of the table, allowed findings ignored, low never counts, every
-  `--fail-on` value.
-- **Allow:** marker on the line, on the line above, wrong rule ID, no reason, config glob.
-- **Git layer:** temp repos for rename, binary, large file, untracked, empty repo,
-  bad ref, shallow clone without merge-base, a path with spaces.
-- **Config:** both files present, unknown key, bad rule ID, `allow` without a reason, CLI
-  override, config read from the base ref (a head-only config change has no effect).
-- **CLI:** Typer's `CliRunner` for every command and every exit code (0, 1, 2), stdout vs
-  stderr split.
-- **Golden files:** `tests/golden/<case>.md` and `<case>.json` for a few fixture cases,
-  plus a long case that triggers markdown truncation. The version is pinned to a test value
-  so goldens do not change on release. `UPDATE_GOLDEN=1 uv run pytest` rewrites them.
-- **No network:** an autouse fixture replaces `socket.socket` with one that raises.
-- **Hook snippet:** a test (Linux/macOS) runs the hook command with fake stdin JSON
-  (`stop_hook_active` true and false) in a fixture repo and checks the exit codes 0 / 1 / 2.
-- **Mutation (M3):** a tiny fixture project with one weak test; marked `mutation` and
-  skipped when mutmut is not installed.
-- **Action and pre-commit:** checked by hand on a sandbox repo in M2 (`pre-commit try-repo`,
-  a test PR). Not in CI.
-- **CI matrix:** Ubuntu, macOS, Windows, Python 3.12 and 3.13. Then `uv run ruff check .`
-  and `uv run pyright`.
-
----
-
-## 15. Performance and limits
-
-| What | Target / limit (constant in `config.py`) |
+### 14.5 Quality gates (CI fails if any fails)
+| Gate | Target |
 |---|---|
-| `check` on a 50-file PR, no mutation | < 2 s |
-| `check --staged` on a typical commit | < 1 s (pre-commit must feel instant) |
-| Max size of one file we read | `MAX_FILE_BYTES = 512_000` (bigger -> skipped) |
-| Max changed files | `MAX_CHANGED_FILES = 2_000` (rest -> skipped) |
-| Snippet size | `SNIPPET_MAX_LINES = 6`, `SNIPPET_MAX_CHARS = 300` |
-| Markdown size | `MARKDOWN_MAX_CHARS = 65_536`, target `60_000` |
-| Mutation | `max_mutants = 50`, `timeout_sec = 300` (config) |
-
-How: one `git diff --name-status`, one `--numstat`, one `-U0` diff for the whole range
-(split per file in Python), and one `git cat-file --batch` process for all blobs. Each file
-side is parsed once (cached). Rules only touch files they care about (by path).
+| Branch coverage, core modules (`expr, truth, evaluate, roles, policy, sql, decision`) | 100% |
+| Branch coverage, whole package | >= 95% |
+| Mutation testing (`mutmut`) on `truth`, `evaluate`, `sql` | >= 90% mutants killed (run nightly + before release) |
+| `pyright --strict` on `src/` and `tests/typing/` | 0 errors |
+| `ruff check` and `ruff format --check` | clean |
+| Import test without sqlalchemy/fastapi installed | passes |
+| Docs examples (every code block in `docs/` is tested with `pytest --doctest-glob` or extracted) | pass |
 
 ---
 
-## 16. Security notes
+## 15. Compatibility, versions and CI
 
-- **We never run the user's code** in the core. We parse with `ast`; we never import test
-  modules, never load `conftest.py`, never run pytest. The only exception is M3 mutation,
-  which runs the tests inside a temp worktree.
-- **We never write to the user's repo**: no edits, no commits, no `git push`, no branch
-  changes. `GIT_OPTIONAL_LOCKS=0` keeps even read calls from writing lock files. Mutation
-  writes only in its temp worktree and removes it.
-- **No shell.** Git runs with list args. Refs are resolved to SHAs with
-  `--end-of-options` first.
-- **YAML** is read with `yaml.safe_load` only. TOML with `tomllib`.
-- **Token only in the Action.** The core has no network code. `GITHUB_TOKEN` is passed to
-  `gh` through env, never printed, never written to the report. Workflow values reach
-  scripts through `env:`, not `${{ }}` inside `run:`.
-- **Untrusted text in reports.** File content in the PR comment is escaped (table cells,
-  code fences), and the hidden marker is stripped from snippets, so a PR cannot fake or
-  hijack the sticky comment.
-- **Fork PRs:** we document `pull_request`, not `pull_request_target`.
-- **Allow markers are visible on purpose.** An agent can add one, but it needs a reason,
-  and every allowed finding is listed in the report for a human to read.
-- **The gate cannot be switched off from inside the change.** Config comes from the base
-  ref, and any weakening of it is an HA007 finding.
+### 15.1 Supported versions (at 1.0)
+| Thing | Supported |
+|---|---|
+| Python | 3.11, 3.12, 3.13, 3.14, 3.15 (incl. free-threaded 3.14t in CI as non-blocking) |
+| FastAPI | `>=0.115` (floor confirmed in M0 spike) up to latest |
+| Starlette | whatever FastAPI pins |
+| SQLAlchemy | `>=2.0` (2.0.x and 2.1.x) |
+| SQLModel | latest (tested, not a dependency) |
+| Databases | SQLite, PostgreSQL 14-18. MySQL/MariaDB: should work (standard SQL), tested from 1.1 (Later) |
+
+### 15.2 CI matrix (GitHub Actions)
+- **Every PR:** Python {3.11, 3.15} x FastAPI {floor, latest} x SQLAlchemy {2.0 latest, 2.1 latest}
+  x DB {SQLite, PostgreSQL 18}, plus lint, type check, docs build.
+- **Nightly:** full Python list, FastAPI pre-releases from PyPI (`--prerelease allow`),
+  SQLAlchemy main branch, long Hypothesis run, mutation testing. Failures open an issue
+  automatically.
+- Dependencies are tested with `uv` resolution strategies `lowest-direct` and `highest` so both
+  the floor and the newest versions really work.
+
+### 15.3 Versioning and deprecation
+- Semantic Versioning. `0.x` releases until 1.0 (API may change; each change is in the changelog).
+- After 1.0: no breaking change without a major version. A deprecated feature warns
+  (`FastAuthzDeprecationWarning`) for at least two minor releases before removal.
+- Each release supports Python versions that are not end-of-life on the release day.
 
 ---
 
-## 17. Later (not v1)
+## 16. Performance
 
-- JavaScript / TypeScript rules (Jest, Vitest).
-- Hosted GitHub App and paid team tier (org policy, history, private-repo app).
-- Trust score 0-100.
-- Optional LLM second opinion.
-- HTML proof report.
-- Codex and other agent hooks.
-- Web dashboard.
-- SARIF output for GitHub code scanning.
+### 16.1 Targets (checked by `benchmarks/`, run in CI, tracked over time)
+| Operation | Target (p50, policy with 50 rules, CPython 3.14, laptop-class CPU) |
+|---|---|
+| `policy.can()` in memory, no relationships | < 20 µs |
+| `compile_filter()` (fold + to SQL) | < 100 µs |
+| `load()` | 1 SQL query on success (same as `session.get`) |
+| `query()` | 0 extra queries; only WHERE clauses / EXISTS subqueries added |
+| `freeze()` for 500 rules | < 50 ms (runs once at start) |
+
+### 16.2 How
+- Condition trees are built and cached per `(model, action)` at freeze time.
+- `fold` is a single pass. Role expansion is cached.
+- No reflection at request time: model columns and relationship targets are looked up during
+  `freeze()` and stored.
+- A benchmark regression of more than 20% fails the nightly job (not the PR job, to avoid noise).
+
+---
+
+## 17. Security
+
+### 17.1 Threat model (what can go wrong and what stops it)
+| Risk | Defence |
+|---|---|
+| A list endpoint forgets to filter -> data leak | `query()` / `filter()` dependencies; docs show only filtered patterns; `fastauthz matrix` makes rules reviewable. (We cannot detect a raw `select()` the user writes by hand. Docs say so.) |
+| Typo in action or role name silently denies or allows | Startup errors FA001, FA007; `load()`/`require()` check action names at import |
+| `NULL` / missing values open access | Three-valued logic, fail closed (section 6) |
+| `and`/`or` used instead of `&`/`\|` drops a condition | `__bool__` raises (5.2) |
+| Missing parentheses (`R.a == 1 & ...`) | FA014 warning |
+| SQL injection via actor or literal values | Values are always bound parameters (9.3); no string policies, no `eval` |
+| Enumeration of ids through 403 vs 404 | `load()` defaults to 404 for both |
+| Tenant leak through an admin rule | Scope is added to allow rules by default; bypass needs explicit `bypass_scope=True`, listed by `fastauthz check` |
+| Custom check crashes and is treated as allow | Exceptions -> `UNKNOWN` -> deny, logged |
+| Lazy load in Python check reads stale or missing data | Lazy-load guard (7); DB checks use SQL |
+| Slow queries from deep relationships (DoS) | `MAX_RELATION_DEPTH`; `EXISTS` subqueries |
+| Error messages leak policy details | `Denied` detail uses a fixed template (12.5) |
+| Decision logs leak personal data | Decisions store ids only (10.1) |
+| Policy changed at runtime by other code | `freeze()` makes it immutable |
+
+### 17.2 Supply chain and releases
+- Releases from GitHub Actions only, with PyPI Trusted Publishing (OIDC; no API tokens stored).
+- Build provenance attestations (PEP 740) uploaded with each release.
+- Zero runtime dependencies in the core; `fastapi` and `sqlalchemy` only as extras with lower
+  bounds and no upper bounds (upper bounds break users; CI catches real breaks).
+- Dependabot for GitHub Actions and dev dependencies; actions pinned by commit SHA.
+- `SECURITY.md`: report privately through GitHub Security Advisories. Target: first reply in
+  3 days, fix or plan in 14 days for high severity.
+- OpenSSF Scorecard action runs weekly; the badge goes in the README.
+
+---
+
+## 18. Packaging
+
+```toml
+[project]
+name = "fastauthz"
+requires-python = ">=3.11"
+dependencies = []                          # core: zero runtime dependencies
+
+[project.optional-dependencies]
+sqlalchemy = ["sqlalchemy>=2.0"]
+fastapi    = ["fastapi>=0.115"]
+standard   = ["fastauthz[sqlalchemy,fastapi]"]
+
+[project.scripts]
+fastauthz = "fastauthz.cli:main"
+```
+
+- Users install `pip install "fastauthz[standard]"` (same naming idea as `fastapi[standard]`).
+- Build backend: `hatchling`. Version from `src/fastauthz/_version.py`.
+- Wheel is pure Python (`py3-none-any`).
+- License: MIT (same as FastAPI, Pydantic and SQLAlchemy).
+
+---
+
+## 19. Documentation (user-facing, `docs/`)
+
+- Site built with MkDocs (Material theme), published to GitHub Pages from `main`.
+- Pages: Get started (5-minute tutorial), Concepts (actor, resource, action, rule, scope),
+  Rules reference (every operator, with SQL output), Roles, Relationships, FastAPI guide,
+  Testing your policy, CLI, Security model (section 17 in user words), Recipes (owner-only,
+  multi-tenant SaaS, per-org roles, soft delete, public + private), FAQ, API reference
+  (generated from docstrings with mkdocstrings), Changelog.
+- Every code sample in the docs runs in CI (14.5).
+- Comparison page: fastauthz vs hand-written checks vs casbin vs Cerbos vs oso (archived),
+  written fairly, with "when to use the other tool".
+
+---
+
+## 20. Later (not v1.0)
+
+One line each. Not designed. Do not build early.
+- Field-level permissions (hide `salary` unless the actor is HR).
+- Recursive hierarchies of unlimited depth (folders in folders) with recursive CTEs.
+- Zanzibar-style relationship graph and a "who can access X?" reverse query.
+- Policies stored in the database or reloaded at runtime.
+- Other ORMs and databases: Tortoise, Beanie/MongoDB, Piccolo.
+- MySQL / MariaDB in the CI matrix (1.1).
+- Decision caching per request.
+- Litestar and Django Ninja adapters.
+- Admin UI or policy editor.
+- GraphQL (Strawberry) integration.

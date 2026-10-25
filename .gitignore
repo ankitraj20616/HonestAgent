@@ -224,5 +224,4 @@ __marimo__/
 .claude/worktrees/
 
 # personal Hinglish guides, not for the repo
-SAMJHO_SAARTHI.md
-SAMJHO_HONESTAGENT.md
+SAMJHO_*.md

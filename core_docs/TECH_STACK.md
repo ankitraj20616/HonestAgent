@@ -1,141 +1,82 @@
 # Tech Stack
-## HonestAgent - test-integrity gate for agent pull requests
+## fastauthz
 
-**Version:** 1.0 (v1 docs)
-**Date:** 2026-10-24
-**Platforms:** Linux, macOS and Windows. A pure-Python CLI that shells out to `git`.
+> What we use, and why. Add a new library only if this file says why.
+> Fewer dependencies = fewer things that break for our users.
 
 ---
 
-## 1. Summary (one table)
+## 1. Runtime (what users install)
 
-| Layer | Choice | Why (short) |
+| Part | Choice | Why |
 |---|---|---|
-| Language | **Python 3.12+** | I know it best. The first target is Python + pytest, so the tool reads Python with Python's own parser. |
-| Package manager | **uv** | Fast. One tool for venv, lock file, run, build and publish. |
-| CLI | **Typer** | Commands and flags from type hints. Little code. |
-| Terminal output | **Rich** | Clear colored text report, tables, no extra work. |
-| Data models | **Pydantic v2** | `Finding`, `Report` and `Config` models with checks. The JSON report comes straight from the model. |
-| Python parsing | **stdlib `ast`** | Compares before and after test code by structure, not by text. No extra dependency. |
-| TOML | **stdlib `tomllib`** | Reads `pyproject.toml` and `.honestagent.toml`. Read-only is all we need. |
-| YAML | **PyYAML** (`safe_load`) | Reads CI files (`.github/workflows/*`, `.pre-commit-config.yaml`) for HA005. |
-| INI files | **stdlib `configparser`** | Reads `setup.cfg`, `tox.ini`, `.coveragerc`, `pytest.ini` for HA004 / HA005. |
-| Git | **system `git`** via `subprocess` (list args) | Most reliable. Works the same on all three OSes. Gives before / after file text and temp worktrees. |
-| GitHub | **`gh` CLI** (Action only) | Creates or updates the one PR comment. Already on GitHub runners. Never used by the core. |
-| Mutation (M3) | **mutmut** (optional extra) | Plants small bugs in changed lines and checks that the tests fail. Python-native, works with pytest. |
-| Tests | **pytest** | Standard. Rules are tested on recorded PR fixtures. |
-| Lint / format | **ruff** | One fast tool for lint and format. |
-| Types | **pyright** | Strict type checks catch mistakes in agent-written code early. |
+| Language | **Python 3.11+** | 3.10 reaches end of life in Oct 2026. 3.11 gives `StrEnum`, `Self`, better errors. |
+| Core | **No dependencies** | The core (`expr`, `truth`, `evaluate`, `roles`, `policy`, `decision`) uses only the standard library. |
+| SQL | **SQLAlchemy 2.0+** (extra `[sqlalchemy]`) | The ORM most FastAPI apps use. SQLModel is built on it, so it works too. |
+| Web | **FastAPI 0.115+** (extra `[fastapi]`) | The framework we serve. Final lowest version is picked in the M0 spike. |
+| CLI | **stdlib `argparse`** | The CLI is small. No need for Typer or Click as a dependency. |
 
-No other runtime dependencies in v1. Adding one needs a line in this file with a "why".
+Install for users: `pip install "fastauthz[standard]"` (= core + SQLAlchemy + FastAPI).
+
+**Rules for runtime dependencies**
+- Lower bounds only (`>=`). No upper bounds. Upper bounds break users' installs. Our CI catches
+  real breaks (TDD 15).
+- No new runtime dependency without an ADR in `decisions/`.
 
 ---
 
-## 2. Why Python (and no other language)
+## 2. Development
 
-- The tool checks Python projects first. Python's `ast` module is the most exact way to read
-  Python test code, and it ships with the language.
-- The work is small and fast: read a few files from git, compare trees, print a report.
-  Speed is not a problem.
-- I review Python best. Agents write most of the code, but I still review all of it.
-- When JavaScript support comes (Later), it will be a new set of rules, not a rewrite.
-
----
-
-## 3. Runtime dependencies
-
-| Package | Used in | Notes |
+| Need | Tool | Why |
 |---|---|---|
-| `typer` | `cli.py` | Pulls in `click` |
-| `rich` | `report/text.py`, CLI errors | Plain text when output is not a terminal |
-| `pydantic` (v2) | `models.py`, `config.py` | JSON report via `model_dump_json` |
-| `pyyaml` | HA005 | Always `safe_load`, never `load` |
-
-Stdlib only for the rest: `ast`, `tomllib`, `configparser`, `subprocess`, `pathlib`,
-`tempfile`, `json`.
-
-Optional extra `[mutation]`: `mutmut`. Installed with `pip install "honestagent[mutation]"`.
-If `--mutation` is used without it, the CLI exits with code `2` and a clear install message.
+| Project and env | **uv** | Fast. Lock file. Can test lowest and highest versions (`--resolution lowest-direct`). |
+| Build backend | **hatchling** | Simple, standard, pure-Python wheels. |
+| Tests | **pytest** | Standard. |
+| Async tests | **anyio** pytest plugin | FastAPI and Starlette use anyio. |
+| Random / property tests | **Hypothesis** | Proves Python checks and SQL filters agree (TDD 14.3). |
+| HTTP tests | **httpx** (`AsyncClient` + `ASGITransport`) | Tests FastAPI apps without a server. |
+| Coverage | **coverage.py** (branch mode) | Gates: 100% core, 95% overall. |
+| Mutation tests | **mutmut** | Checks that tests really catch bugs in `truth`, `evaluate`, `sql`. |
+| Lint and format | **ruff** | One fast tool for both. |
+| Types | **pyright** (strict) | Public API must be fully typed (`py.typed`). |
+| Benchmarks | **pytest-benchmark** | Tracks speed targets (TDD 16). |
+| Git hooks | **pre-commit** | ruff + basic file checks before each commit. |
+| Databases in tests | **SQLite** (in memory) + **PostgreSQL** (local Docker / CI service) | SQLite for speed, PostgreSQL for real behavior. |
+| Postgres driver | **psycopg 3** (sync) and **asyncpg** (async) | The two drivers FastAPI users use most. |
+| Async SQLite driver | **aiosqlite** | For async tests on SQLite. |
 
 ---
 
-## 4. Dev tooling
+## 3. Docs
 
-| Tool | Command | Why |
+| Need | Tool | Why |
 |---|---|---|
-| uv | `uv sync` | Install the package and dev tools from the lock file |
-| pytest | `uv run pytest` | All tests, offline, on fixtures in `tests/fixtures/prs/<case>/` |
-| ruff | `uv run ruff check .` / `uv run ruff format .` | Lint and format |
-| pyright | `uv run pyright` | Type checks |
-| the tool itself | `uv run honestagent check` | Dogfood on this repo |
-
-All four checks (`pytest`, `ruff check`, `pyright`, plus a self-check) run in this repo's own CI.
-Dev tools live in a uv dev group, not in the runtime dependencies.
+| Docs site | **MkDocs** with the **Material** theme | Same look as the FastAPI docs; users know it. Check its status again in M4 (Material went into maintenance mode; its team is building a successor, Zensical). |
+| API reference | **mkdocstrings** (Python handler) | Built from docstrings, so it cannot drift from the code. |
+| Hosting | **GitHub Pages** | Free. Built by GitHub Actions from `main`. |
 
 ---
 
-## 5. Packaging and release
+## 4. CI and release
 
-- **PyPI name:** `honestagent`. Import name: `honestagent`. Command: `honestagent`.
-- **Layout:** `src/` layout, one package (`src/honestagent`), entry point `honestagent = "honestagent.cli:app"`.
-- **Build and publish:** `uv build`, then `uv publish` (M4).
-- **Optional extra:** `[mutation]` adds mutmut.
-- **pre-commit:** `.pre-commit-hooks.yaml` in the repo root (hook id `honestagent`).
-- **GitHub Action:** composite `action.yml` in the repo root. It installs the package with
-  the chosen Python and calls the CLI. Listed on GitHub Marketplace in M4.
-- **Claude Code hook:** a sample `hooks/claude-code/settings.json` in v1. A Claude Code plugin
-  listing comes with the launch (M4).
-- **Versions:** semantic versions, starting at `0.1.0`. The JSON report has its own
-  `schema_version` (starts at `1`).
-
----
-
-## 6. Supported Python versions
-
-- HonestAgent itself runs on **Python 3.12 and newer**. CI tests 3.12 and 3.13.
-- It only **reads** the user's files with `ast`; it does not import or run them. So it can
-  check projects that target older Python 3 versions, as long as the code parses with the
-  3.12+ parser.
-- The GitHub Action installs its own Python (`python-version` input, default 3.12), so the
-  user's project Python does not matter there.
-- The mutation check (M3) runs the user's tests, so the project's test dependencies must
-  be installed in the same environment.
-
----
-
-## 7. Supported operating systems
-
-| OS | Status | Notes |
-|---|---|---|
-| Linux | Supported | Main dev and CI platform |
-| macOS | Supported | Same code; tested in CI |
-| Windows | Supported | Same code; tested in CI. Paths are handled with `pathlib` and shown with `/` in reports. |
-
-- Needs `git` on the `PATH`. Nothing else.
-- No OS-specific code in the core. Git is the only outside program the core calls.
-- mutmut on Windows may need WSL. Checked in M3; if so, the docs say it plainly.
-
----
-
-## 8. What was removed from the old stack, and why
-
-This repo used to plan a different, much bigger product (see
-`decisions/ADR-001-pivot-to-test-integrity-gate.md`). Its stack is gone:
-
-| Removed | Why |
+| Need | Tool |
 |---|---|
-| FastAPI, Uvicorn | No server. HonestAgent is a CLI that runs and exits. |
-| SQLAlchemy, Alembic, SQLite | No database. Each run is stateless; the report is the output. |
-| Tauri, React, TypeScript, Vite | No UI. The outputs are text: terminal, Markdown, JSON. |
-| Tailwind, shadcn/ui, xterm.js, CodeMirror | No UI, so no UI libraries. |
-| Node.js | No UI build and no JS tools. |
-| structlog, watchfiles, platformdirs, PTY wrappers | Nothing long-running to log, watch or manage. |
-| Agent CLIs as dependencies | HonestAgent never runs an agent. It only reads what the agent changed. |
+| CI | **GitHub Actions** (matrix in TDD 15.2) |
+| Publish to PyPI | **PyPI Trusted Publishing** (OIDC). No API tokens stored. |
+| Build proof | **PEP 740 attestations** uploaded with each release |
+| Dependency updates | **Dependabot** (GitHub Actions + dev dependencies) |
+| Supply-chain score | **OpenSSF Scorecard** action |
+| Security reports | **GitHub Security Advisories** (see `SECURITY.md`) |
 
 ---
 
-## 9. Later (not v1)
+## 5. Not used (and why)
 
-- Parsers for JavaScript / TypeScript tests (Jest, Vitest).
-- SARIF output for GitHub code scanning.
-- Anything hosted (GitHub App, team tier) would need its own stack decision then, in a new ADR.
+| Not used | Why |
+|---|---|
+| Pydantic as a dependency | Not needed by the core. FastAPI brings it anyway. |
+| Typer / Click / Rich | The CLI is small. `argparse` keeps the core dependency-free. |
+| A policy language (Polar, Rego, YAML) | Plain Python is easier, and editors and pyright can check it. |
+| Any server or database of our own | fastauthz is a library inside the user's app. |
+| Any LLM or paid API | Not needed. The library must be deterministic. |
+| mypy | One type checker is enough. pyright is faster and stricter. |
